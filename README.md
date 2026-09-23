@@ -86,6 +86,24 @@ cp .env.example .env
 
 Variáveis `VITE_*` são públicas no bundle e nunca devem conter segredos.
 
+Ao alterar uma porta publicada, mantenha a URL/origem correspondente consistente.
+Por exemplo, para publicar a API em `9090`:
+
+```powershell
+$env:BACKEND_PORT = "9090"
+$env:VITE_API_URL = "http://localhost:9090"
+```
+
+Para publicar a SPA em `5180`:
+
+```powershell
+$env:FRONTEND_PORT = "5180"
+$env:FRONTEND_ORIGIN = "http://localhost:5180"
+```
+
+Depois execute novamente `docker compose up --build -d`, pois `VITE_API_URL` é
+incorporada ao bundle durante o build do frontend.
+
 ## Gates locais
 
 ### Backend

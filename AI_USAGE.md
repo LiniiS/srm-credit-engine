@@ -27,7 +27,7 @@
 - **Risco:** manter ferramentas de desenvolvimento vulneráveis a leitura arbitrária de arquivos e path traversal.
 - **Correção aplicada:** Vite atualizado para 6.4.3, Vitest/coverage para 4.1.11, ESLint para 9.39.5 e `typescript-eslint` para 8.70.1; lockfile regenerado.
 - **Teste que evita regressão:** `npm audit` passou com zero vulnerabilidades; lint, typecheck, testes e build foram reexecutados.
-- **Commit:** não executado; operações Git são exclusivamente humanas neste repositório.
+- **Commit:** o agente não executou o commit; a autora o realizou posteriormente em `474d0db feat(web): add API readiness status page`, que contém o lockfile e as versões corrigidas.
 - **Lição:** lockfile e audit fazem parte da validação de uma fundação reproduzível.
 
 ### Healthcheck do frontend resolveu localhost por IPv6
@@ -37,7 +37,7 @@
 - **Risco:** container funcional permanecer `unhealthy` por diferença de resolução de loopback.
 - **Correção aplicada:** healthcheck passou a consultar explicitamente `127.0.0.1`.
 - **Teste que evita regressão:** `docker compose ps` confirmou os três serviços como `healthy`.
-- **Commit:** não executado; operações Git são exclusivamente humanas neste repositório.
+- **Commit:** o agente não executou o commit; a autora o realizou posteriormente em `f59b23a build(infra): orchestrate executable application stack`, que contém o healthcheck corrigido no Compose.
 - **Lição:** healthcheck deve validar a interface efetivamente escutada pela imagem, não depender da preferência IPv4/IPv6 de `localhost`.
 
 ### Gate documental varreu dependências geradas
@@ -47,7 +47,7 @@
 - **Risco:** falso negativo no gate documental e ruído que esconderia defeitos reais.
 - **Correção aplicada:** a busca de Markdown passou a podar diretórios gerados por nome em qualquer profundidade (`node_modules`, `target`, `dist` e `coverage`).
 - **Teste que evita regressão:** `check-docs.sh . story` passou com zero erros mantendo `node_modules` instalado.
-- **Commit:** não executado; operações Git são exclusivamente humanas neste repositório.
+- **Commit:** o agente não executou o commit; a autora o realizou posteriormente em `b239d74 docs(project): document executable foundation`, que contém a correção do verificador documental.
 - **Lição:** gates que percorrem o repositório devem excluir artefatos gerados independentemente da profundidade.
 
 ### Skills BMAD de planejamento indisponíveis

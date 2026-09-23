@@ -348,10 +348,10 @@ Nenhum bloqueio de planejamento. A indisponibilidade de Docker durante a impleme
 - **Branch observada:** `feature/e0-s1-foundation`
 - **Plano de implementação:** contexto e ADRs → backend/Flyway → frontend → containers/Compose → documentação → gates → revisão BMAD.
 - **Debug log:** Maven exigiu Java 21 portátil; Docker Desktop foi iniciado para Testcontainers; a porta 5432 estava ocupada por container externo e o smoke usou `POSTGRES_PORT=5433`; o healthcheck nginx foi corrigido para IPv4; o gate documental passou a excluir diretórios gerados.
-- **Completion Notes:** caminho ponta a ponta executável, sem domínio, com readiness dependente do banco, SPA acessível, Flyway técnico e três containers healthy.
+- **Completion Notes:** caminho ponta a ponta executável, sem domínio, com readiness dependente do banco, SPA acessível, Flyway técnico e três containers healthy. A cobertura backend é N/A nesta fundação: a única classe de produção é o bootstrap, explicitamente excluído do JaCoCo, e nenhuma cobertura de 80% é declarada para o backend nesta story.
 - **Decisões locais e justificativas:** nginx-unprivileged para runtime estático; tabela `application_metadata` estritamente técnica para provar Flyway; URL pública da API incorporada no build Vite; versões patch fixas e lockfile auditado.
 - **Desvios da story:** nenhum desvio funcional. O diff de revisão foi produzido sem staging porque Git mutável é proibido. A porta PostgreSQL externa foi sobrescrita somente na validação local devido a conflito alheio ao projeto.
-- **Riscos/pendências remanescentes:** polling contínuo da readiness e E2E automatizado do navegador não pertencem a E0-S1; os três documentos de escala/EDA/observabilidade seguem previstos apenas para release.
+- **Riscos/pendências remanescentes:** polling contínuo da readiness e E2E automatizado do navegador não pertencem a E0-S1; os três documentos de escala/EDA/observabilidade seguem previstos apenas para release. O threshold JaCoCo deverá tornar-se efetivo quando as próximas stories introduzirem classes de produção além do bootstrap.
 
 ### Evidências dos critérios de aceite
 
@@ -363,7 +363,7 @@ Nenhum bloqueio de planejamento. A indisponibilidade de Docker durante a impleme
 | AC4 | Passed | `docker compose config`, `.env.example` e inspeção de manifests confirmaram configuração externa sem segredo real. |
 | AC5 | Passed | builds multi-stage; `id` retornou `creditengine` (uid 100) e `nginx` (uid 101). |
 | AC6 | Passed | `spotless:check` e `verify`: 3 testes, 0 falhas/erros/skips. |
-| AC7 | Passed | lint, typecheck, 4 testes e build passaram; cobertura 100% statements/lines/functions e 81,25% branches. |
+| AC7 | Passed | lint, typecheck, 5 testes e build passaram; cobertura 100% statements/lines/functions e 87,5% branches. |
 | AC8 | Passed | README seguido para config, down/up, status, URLs e smoke; gate documental com 0 erros. |
 
 ### File List
@@ -372,6 +372,7 @@ Nenhum bloqueio de planejamento. A indisponibilidade de Docker durante a impleme
 |---|---|---|
 | Criado | `backend/` | Aplicação Spring Boot, wrapper, Flyway, testes e imagem não-root. |
 | Criado | `frontend/` | SPA React strict, testes, lockfile, nginx e imagem não-root. |
+| Criado | `frontend/src/shared/api/health.test.ts` | Teste determinístico do timeout da requisição de readiness. |
 | Alterado | `.env.example`, `compose.yaml` | Variáveis e orquestração dos três serviços. |
 | Criado | `README.md` | Instruções operacionais verificadas. |
 | Alterado | `AI_USAGE.md`, `docs/architecture/c4-container.md` | Uso material de IA e estado arquitetural implementado. |
@@ -391,13 +392,14 @@ Nenhum bloqueio de planejamento. A indisponibilidade de Docker durante a impleme
 | 2026-09-23 | `backend/.\\mvnw.cmd -q verify` | Passed | 3 testes; Flyway/Testcontainers PostgreSQL 16.6 e readiness com DB. |
 | 2026-09-23 | `frontend/npm run lint` | Passed | Zero warnings. |
 | 2026-09-23 | `frontend/npm run typecheck` | Passed | TypeScript strict. |
-| 2026-09-23 | `frontend/npm run test -- --run` | Passed | 4/4; cobertura 100/81,25/100/100. |
+| 2026-09-23 | `frontend/npm run test -- --run` | Passed | 5/5; cobertura 100/87,5/100/100. |
 | 2026-09-23 | `frontend/npm run build` | Passed | Bundle Vite de produção. |
 | 2026-09-23 | `docker compose config` | Passed | Variáveis resolvidas. |
 | 2026-09-23 | `docker compose down` + `up --build -d` + `ps` | Passed | PostgreSQL em 5433 por conflito local; três healthy. |
 | 2026-09-23 | `pg_isready`, Flyway SQL, API/CORS e SPA HTTP/browser | Passed | Banco accepting; `1:true`; API 200 UP; SPA 200 e estado disponível. |
 | 2026-09-23 | `check-docs.sh . story` | Passed | 0 erros; 3 avisos esperados de release. |
 | 2026-09-23 | `npm audit` | Passed | 0 vulnerabilidades. |
+| 2026-09-23 | JaCoCo backend | N/A | A única classe de produção é o bootstrap excluído; threshold passa a ser efetivo quando surgirem classes de produção. |
 
 ### Change Log
 
@@ -405,6 +407,7 @@ Nenhum bloqueio de planejamento. A indisponibilidade de Docker durante a impleme
 |---|---|---|
 | 2026-09-23 | Story preparada a partir dos artefatos BMAD e ADRs aceitos; nenhuma implementação realizada. | Codex |
 | 2026-09-23 | E0-S1 implementada, validada e revisada; readiness passou a incluir PostgreSQL e CORS ganhou teste explícito. | Codex |
+| 2026-09-23 | Achados pré-merge corrigidos: rastreabilidade de commits, coordenação de portas, timeout determinístico e cobertura backend registrada como N/A. | Codex |
 
 ### Handoff / próximo passo exato
 
