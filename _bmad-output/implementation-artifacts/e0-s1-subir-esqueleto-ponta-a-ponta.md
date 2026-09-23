@@ -1,7 +1,7 @@
 # Story E0-S1 — Subir o esqueleto ponta a ponta
 
 - **Épico:** E0 — Fundação executável e guardrails
-- **Status:** Review
+- **Status:** Done
 - **Tipo:** Fundação técnica vertical
 - **Prioridade:** Must
 - **Data de preparação:** 2026-09-23
@@ -348,7 +348,7 @@ Nenhum bloqueio de planejamento. A indisponibilidade de Docker durante a impleme
 - **Branch observada:** `feature/e0-s1-foundation`
 - **Plano de implementação:** contexto e ADRs → backend/Flyway → frontend → containers/Compose → documentação → gates → revisão BMAD.
 - **Debug log:** Maven exigiu Java 21 portátil; Docker Desktop foi iniciado para Testcontainers; a porta 5432 estava ocupada por container externo e o smoke usou `POSTGRES_PORT=5433`; o healthcheck nginx foi corrigido para IPv4; o gate documental passou a excluir diretórios gerados.
-- **Completion Notes:** caminho ponta a ponta executável, sem domínio, com readiness dependente do banco, SPA acessível, Flyway técnico e três containers healthy. A cobertura backend é N/A nesta fundação: a única classe de produção é o bootstrap, explicitamente excluído do JaCoCo, e nenhuma cobertura de 80% é declarada para o backend nesta story.
+- **Completion Notes:** caminho ponta a ponta executável, sem domínio, com readiness dependente do banco, SPA acessível, Flyway técnico e três containers healthy. A cobertura backend é N/A nesta fundação: a única classe de produção é o bootstrap, explicitamente excluído do JaCoCo, e nenhuma cobertura de 80% é declarada para o backend nesta story. Todos os critérios de aceite foram atendidos, os testes automatizados e manuais passaram, os achados da revisão foram corrigidos e a aprovação final foi realizada pela autora.
 - **Decisões locais e justificativas:** nginx-unprivileged para runtime estático; tabela `application_metadata` estritamente técnica para provar Flyway; URL pública da API incorporada no build Vite; versões patch fixas e lockfile auditado.
 - **Desvios da story:** nenhum desvio funcional. O diff de revisão foi produzido sem staging porque Git mutável é proibido. A porta PostgreSQL externa foi sobrescrita somente na validação local devido a conflito alheio ao projeto.
 - **Riscos/pendências remanescentes:** polling contínuo da readiness e E2E automatizado do navegador não pertencem a E0-S1; os três documentos de escala/EDA/observabilidade seguem previstos apenas para release. O threshold JaCoCo deverá tornar-se efetivo quando as próximas stories introduzirem classes de produção além do bootstrap.
@@ -408,6 +408,7 @@ Nenhum bloqueio de planejamento. A indisponibilidade de Docker durante a impleme
 | 2026-09-23 | Story preparada a partir dos artefatos BMAD e ADRs aceitos; nenhuma implementação realizada. | Codex |
 | 2026-09-23 | E0-S1 implementada, validada e revisada; readiness passou a incluir PostgreSQL e CORS ganhou teste explícito. | Codex |
 | 2026-09-23 | Achados pré-merge corrigidos: rastreabilidade de commits, coordenação de portas, timeout determinístico e cobertura backend registrada como N/A. | Codex |
+| 2026-09-23 | Story encerrada como `Done`: todos os critérios de aceite foram atendidos, os testes automatizados e manuais passaram, os achados da revisão foram corrigidos e a aprovação final foi humana. | Autora |
 
 ### Handoff / próximo passo exato
 
