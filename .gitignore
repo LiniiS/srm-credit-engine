@@ -1,0 +1,44 @@
+# Environment files
+.env
+!.env.example
+
+# Dependencies and build outputs
+node_modules/
+target/
+dist/
+coverage/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDEs and editors
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# Operating systems
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local agent integrations
+.claude/
+
+# Generated BMAD skills
+/.agents/skills/bmad/
+/.agents/skills/bmad-build/
+/.agents/skills/bmod-core-tools/
+/.agents/skills/bmod-method/
+
+# Generated BMAD runtimes
+/_bmad/core-tools/
+/_bmad/method/
+/_bmad/scripts/
