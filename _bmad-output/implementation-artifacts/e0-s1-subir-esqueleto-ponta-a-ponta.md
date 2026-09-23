@@ -1,7 +1,7 @@
 # Story E0-S1 — Subir o esqueleto ponta a ponta
 
 - **Épico:** E0 — Fundação executável e guardrails
-- **Status:** Ready for Dev
+- **Status:** Review
 - **Tipo:** Fundação técnica vertical
 - **Prioridade:** Must
 - **Data de preparação:** 2026-09-23
@@ -110,50 +110,50 @@ Extraído de `_bmad-output/planning-artifacts/epics.md`:
 
 ## Tasks e subtasks
 
-- [ ] **T1 — Consolidar a estrutura executável do monorepo** (AC1, AC6, AC7)
-  - [ ] Manter aplicações independentes em `backend/` e `frontend/`, sem transferir código de negócio para manifests da raiz.
-  - [ ] Definir manifests/lockfiles e wrappers necessários para builds reproduzíveis.
-  - [ ] Remover ou substituir placeholders vazios somente quando sua finalidade estiver coberta pela estrutura final.
+- [x] **T1 — Consolidar a estrutura executável do monorepo** (AC1, AC6, AC7)
+  - [x] Manter aplicações independentes em `backend/` e `frontend/`, sem transferir código de negócio para manifests da raiz.
+  - [x] Definir manifests/lockfiles e wrappers necessários para builds reproduzíveis.
+  - [x] Remover ou substituir placeholders vazios somente quando sua finalidade estiver coberta pela estrutura final.
 
-- [ ] **T2 — Criar o backend mínimo Java 21/Spring Boot 3** (AC2, AC3, AC6)
-  - [ ] Configurar build Maven e Maven Wrapper no diretório `backend/`.
-  - [ ] Criar bootstrap Spring Boot sem endpoints de domínio.
-  - [ ] Habilitar endpoint de readiness necessário ao Compose e ao smoke test da SPA.
-  - [ ] Configurar datasource PostgreSQL e Flyway por variáveis de ambiente.
-  - [ ] Adicionar migration inicial mínima, sem antecipar tabelas de negócio de E1–E4.
-  - [ ] Adicionar Spotless e testes fundacionais, incluindo Testcontainers PostgreSQL 16 para Flyway.
+- [x] **T2 — Criar o backend mínimo Java 21/Spring Boot 3** (AC2, AC3, AC6)
+  - [x] Configurar build Maven e Maven Wrapper no diretório `backend/`.
+  - [x] Criar bootstrap Spring Boot sem endpoints de domínio.
+  - [x] Habilitar endpoint de readiness necessário ao Compose e ao smoke test da SPA.
+  - [x] Configurar datasource PostgreSQL e Flyway por variáveis de ambiente.
+  - [x] Adicionar migration inicial mínima, sem antecipar tabelas de negócio de E1–E4.
+  - [x] Adicionar Spotless e testes fundacionais, incluindo Testcontainers PostgreSQL 16 para Flyway.
 
-- [ ] **T3 — Criar o frontend mínimo React/TypeScript/Vite** (AC2, AC7)
-  - [ ] Configurar React, Vite, TypeScript strict, lint, Vitest e Testing Library.
-  - [ ] Manter bootstrap em `src/app/` e infraestrutura HTTP mínima em `src/shared/`, sem criar features financeiras vazias.
-  - [ ] Criar página mínima que consulte o health/readiness da API usando `VITE_API_URL`.
-  - [ ] Representar estados de carregamento, disponibilidade e indisponibilidade com HTML semântico, texto e foco visível.
-  - [ ] Testar os estados observáveis da integração sem reimplementar lógica de negócio.
+- [x] **T3 — Criar o frontend mínimo React/TypeScript/Vite** (AC2, AC7)
+  - [x] Configurar React, Vite, TypeScript strict, lint, Vitest e Testing Library.
+  - [x] Manter bootstrap em `src/app/` e infraestrutura HTTP mínima em `src/shared/`, sem criar features financeiras vazias.
+  - [x] Criar página mínima que consulte o health/readiness da API usando `VITE_API_URL`.
+  - [x] Representar estados de carregamento, disponibilidade e indisponibilidade com HTML semântico, texto e foco visível.
+  - [x] Testar os estados observáveis da integração sem reimplementar lógica de negócio.
 
-- [ ] **T4 — Containerizar backend e frontend** (AC1, AC5)
-  - [ ] Criar Dockerfile multi-stage do backend com runtime Java 21 e usuário não-root.
-  - [ ] Criar Dockerfile multi-stage do frontend com servidor estático e usuário não-root.
-  - [ ] Adicionar `.dockerignore` específicos para reduzir contexto e impedir inclusão acidental de artefatos/segredos.
-  - [ ] Configurar healthcheck real para o frontend, além dos healthchecks de PostgreSQL e API.
+- [x] **T4 — Containerizar backend e frontend** (AC1, AC5)
+  - [x] Criar Dockerfile multi-stage do backend com runtime Java 21 e usuário não-root.
+  - [x] Criar Dockerfile multi-stage do frontend com servidor estático e usuário não-root.
+  - [x] Adicionar `.dockerignore` específicos para reduzir contexto e impedir inclusão acidental de artefatos/segredos.
+  - [x] Configurar healthcheck real para o frontend, além dos healthchecks de PostgreSQL e API.
 
-- [ ] **T5 — Consolidar `compose.yaml` e variáveis** (AC1, AC2, AC3, AC4)
-  - [ ] Orquestrar PostgreSQL 16, backend e frontend com dependências condicionadas à saúde.
-  - [ ] Alinhar portas, URL interna do banco e URL pública da API.
-  - [ ] Garantir que defaults locais funcionem sem `.env` e possam ser sobrescritos.
-  - [ ] Atualizar `.env.example` com todas e somente as variáveis necessárias, acompanhadas de valores fictícios seguros.
+- [x] **T5 — Consolidar `compose.yaml` e variáveis** (AC1, AC2, AC3, AC4)
+  - [x] Orquestrar PostgreSQL 16, backend e frontend com dependências condicionadas à saúde.
+  - [x] Alinhar portas, URL interna do banco e URL pública da API.
+  - [x] Garantir que defaults locais funcionem sem `.env` e possam ser sobrescritos.
+  - [x] Atualizar `.env.example` com todas e somente as variáveis necessárias, acompanhadas de valores fictícios seguros.
 
-- [ ] **T6 — Documentar a execução mínima** (AC8)
-  - [ ] Atualizar README com pré-requisitos, setup, URLs, healthchecks, gates e encerramento do ambiente.
-  - [ ] Registrar limitações e deixar explícito que esta story não entrega negócio.
-  - [ ] Atualizar C4 Container apenas se nomes, portas ou responsabilidades implementados divergirem do documento atual.
-  - [ ] Registrar em `AI_USAGE.md` apenas contribuições materiais e fatos reais da implementação.
+- [x] **T6 — Documentar a execução mínima** (AC8)
+  - [x] Atualizar README com pré-requisitos, setup, URLs, healthchecks, gates e encerramento do ambiente.
+  - [x] Registrar limitações e deixar explícito que esta story não entrega negócio.
+  - [x] Atualizar C4 Container apenas se nomes, portas ou responsabilidades implementados divergirem do documento atual.
+  - [x] Registrar em `AI_USAGE.md` apenas contribuições materiais e fatos reais da implementação.
 
-- [ ] **T7 — Executar e registrar verificações** (AC1–AC8)
-  - [ ] Executar gates do backend e frontend.
-  - [ ] Executar `docker compose config`.
-  - [ ] Em ambiente limpo, executar `docker compose up --build`, `docker compose ps` e o smoke test SPA→API.
-  - [ ] Executar o gate documental em fase `story`.
-  - [ ] Registrar resultados reais, falhas e evidências no Dev Agent Record; não marcar task concluída sem execução.
+- [x] **T7 — Executar e registrar verificações** (AC1–AC8)
+  - [x] Executar gates do backend e frontend.
+  - [x] Executar `docker compose config`.
+  - [x] Em ambiente limpo, executar `docker compose up --build`, `docker compose ps` e o smoke test SPA→API.
+  - [x] Executar o gate documental em fase `story`.
+  - [x] Registrar resultados reais, falhas e evidências no Dev Agent Record; não marcar task concluída sem execução.
 
 ## Limites de escopo
 
@@ -313,18 +313,18 @@ Arquivos vazios de placeholder na raiz (`pom.xml`, `package.json`, `README.md`) 
 
 ## Definition of Done específica
 
-- [ ] AC1–AC8 atendidos com evidências reais registradas.
-- [ ] Backend passa `spotless:check` e `verify`, incluindo Flyway em PostgreSQL 16 via Testcontainers.
-- [ ] Frontend passa lint, typecheck, testes e build com TypeScript strict.
-- [ ] `docker compose config` passa.
-- [ ] Em ambiente/volume limpo, Compose constrói e deixa PostgreSQL, API e frontend healthy.
-- [ ] Smoke path SPA→readiness da API funciona e a falha é apresentada de forma textual e acessível.
-- [ ] Flyway é a única fonte de schema; H2 e criação automática concorrente estão ausentes.
-- [ ] Dockerfiles usam runtime não-root e não incluem segredos/artefatos desnecessários.
-- [ ] `.env.example`, README e documentação afetada correspondem à configuração real.
-- [ ] Gate documental `story` passa sem erros.
-- [ ] Story registra tasks, arquivos, comandos, resultados, decisões locais e pendências reais.
-- [ ] Plano de commits atômicos está preparado para execução humana; nenhum commit foi feito pelo Codex.
+- [x] AC1–AC8 atendidos com evidências reais registradas.
+- [x] Backend passa `spotless:check` e `verify`, incluindo Flyway em PostgreSQL 16 via Testcontainers.
+- [x] Frontend passa lint, typecheck, testes e build com TypeScript strict.
+- [x] `docker compose config` passa.
+- [x] Em ambiente/volume limpo, Compose constrói e deixa PostgreSQL, API e frontend healthy.
+- [x] Smoke path SPA→readiness da API funciona e a falha é apresentada de forma textual e acessível.
+- [x] Flyway é a única fonte de schema; H2 e criação automática concorrente estão ausentes.
+- [x] Dockerfiles usam runtime não-root e não incluem segredos/artefatos desnecessários.
+- [x] `.env.example`, README e documentação afetada correspondem à configuração real.
+- [x] Gate documental `story` passa sem erros.
+- [x] Story registra tasks, arquivos, comandos, resultados, decisões locais e pendências reais.
+- [x] Plano de commits atômicos está preparado para execução humana; nenhum commit foi feito pelo Codex.
 
 ## Ambiguidades e bloqueios conhecidos
 
@@ -342,48 +342,70 @@ Nenhum bloqueio de planejamento. A indisponibilidade de Docker durante a impleme
 
 ### Dev Agent Record
 
-- **Agent/model:**
-- **Data de início:**
-- **Data de conclusão:**
-- **Branch sugerida:** `chore/e0-s1-executable-skeleton`
-- **Plano de implementação:**
-- **Debug log:**
-- **Completion Notes:**
-- **Decisões locais e justificativas:**
-- **Desvios da story:**
-- **Riscos/pendências remanescentes:**
+- **Agent/model:** Codex (GPT-5)
+- **Data de início:** 2026-09-23
+- **Data de conclusão:** 2026-09-23
+- **Branch observada:** `feature/e0-s1-foundation`
+- **Plano de implementação:** contexto e ADRs → backend/Flyway → frontend → containers/Compose → documentação → gates → revisão BMAD.
+- **Debug log:** Maven exigiu Java 21 portátil; Docker Desktop foi iniciado para Testcontainers; a porta 5432 estava ocupada por container externo e o smoke usou `POSTGRES_PORT=5433`; o healthcheck nginx foi corrigido para IPv4; o gate documental passou a excluir diretórios gerados.
+- **Completion Notes:** caminho ponta a ponta executável, sem domínio, com readiness dependente do banco, SPA acessível, Flyway técnico e três containers healthy.
+- **Decisões locais e justificativas:** nginx-unprivileged para runtime estático; tabela `application_metadata` estritamente técnica para provar Flyway; URL pública da API incorporada no build Vite; versões patch fixas e lockfile auditado.
+- **Desvios da story:** nenhum desvio funcional. O diff de revisão foi produzido sem staging porque Git mutável é proibido. A porta PostgreSQL externa foi sobrescrita somente na validação local devido a conflito alheio ao projeto.
+- **Riscos/pendências remanescentes:** polling contínuo da readiness e E2E automatizado do navegador não pertencem a E0-S1; os três documentos de escala/EDA/observabilidade seguem previstos apenas para release.
 
 ### Evidências dos critérios de aceite
 
 | AC | Status | Teste/comando/evidência |
 |---|---|---|
-| AC1 | Pending | |
-| AC2 | Pending | |
-| AC3 | Pending | |
-| AC4 | Pending | |
-| AC5 | Pending | |
-| AC6 | Pending | |
-| AC7 | Pending | |
-| AC8 | Pending | |
+| AC1 | Passed | `docker compose up --build -d` com `POSTGRES_PORT=5433`; `docker compose ps` mostrou os três serviços healthy. |
+| AC2 | Passed | SPA real exibiu “API disponível”; testes cobrem UP, DOWN, HTTP 503 e erro de rede. |
+| AC3 | Passed | Testcontainers PostgreSQL 16.6 e consulta real a `flyway_schema_history` retornou `1:true`. |
+| AC4 | Passed | `docker compose config`, `.env.example` e inspeção de manifests confirmaram configuração externa sem segredo real. |
+| AC5 | Passed | builds multi-stage; `id` retornou `creditengine` (uid 100) e `nginx` (uid 101). |
+| AC6 | Passed | `spotless:check` e `verify`: 3 testes, 0 falhas/erros/skips. |
+| AC7 | Passed | lint, typecheck, 4 testes e build passaram; cobertura 100% statements/lines/functions e 81,25% branches. |
+| AC8 | Passed | README seguido para config, down/up, status, URLs e smoke; gate documental com 0 erros. |
 
 ### File List
 
 | Operação | Arquivo | Motivo |
 |---|---|---|
-|  |  |  |
+| Criado | `backend/` | Aplicação Spring Boot, wrapper, Flyway, testes e imagem não-root. |
+| Criado | `frontend/` | SPA React strict, testes, lockfile, nginx e imagem não-root. |
+| Alterado | `.env.example`, `compose.yaml` | Variáveis e orquestração dos três serviços. |
+| Criado | `README.md` | Instruções operacionais verificadas. |
+| Alterado | `AI_USAGE.md`, `docs/architecture/c4-container.md` | Uso material de IA e estado arquitetural implementado. |
+| Criado/alterado | `docs/database/ddl.sql`, `docs/database/er.md` | Estado técnico efetivo da migration separado do modelo futuro. |
+| Alterado | `.gitignore` | Exclusão de metadata incremental TypeScript gerada. |
+| Alterado | `.agents/skills/srm-documentacao/scripts/check-docs.sh` | Exclusão de diretórios gerados na validação de links. |
+| Criado | `_bmad-output/implementation-artifacts/epic-0-context.md` | Contexto compilado do épico para o workflow. |
+| Criado | `_bmad-output/implementation-artifacts/spec-e0-s1-subir-esqueleto-ponta-a-ponta.md` | Especificação e registro de revisão bmad-build. |
+| Alterado | Esta story | Tasks, evidências, gates, decisões e handoff. |
+| Removido antes de versionar | `package.json`, `pom.xml` da raiz | Placeholders vazios e ambíguos; manifests reais vivem nas aplicações. |
 
 ### Testes e gates executados
 
 | Data | Comando | Resultado | Observações |
 |---|---|---|---|
-|  |  |  |  |
+| 2026-09-23 | `backend/.\\mvnw.cmd -q spotless:check` | Passed | Java 21. |
+| 2026-09-23 | `backend/.\\mvnw.cmd -q verify` | Passed | 3 testes; Flyway/Testcontainers PostgreSQL 16.6 e readiness com DB. |
+| 2026-09-23 | `frontend/npm run lint` | Passed | Zero warnings. |
+| 2026-09-23 | `frontend/npm run typecheck` | Passed | TypeScript strict. |
+| 2026-09-23 | `frontend/npm run test -- --run` | Passed | 4/4; cobertura 100/81,25/100/100. |
+| 2026-09-23 | `frontend/npm run build` | Passed | Bundle Vite de produção. |
+| 2026-09-23 | `docker compose config` | Passed | Variáveis resolvidas. |
+| 2026-09-23 | `docker compose down` + `up --build -d` + `ps` | Passed | PostgreSQL em 5433 por conflito local; três healthy. |
+| 2026-09-23 | `pg_isready`, Flyway SQL, API/CORS e SPA HTTP/browser | Passed | Banco accepting; `1:true`; API 200 UP; SPA 200 e estado disponível. |
+| 2026-09-23 | `check-docs.sh . story` | Passed | 0 erros; 3 avisos esperados de release. |
+| 2026-09-23 | `npm audit` | Passed | 0 vulnerabilidades. |
 
 ### Change Log
 
 | Data | Alteração | Autor/agente |
 |---|---|---|
 | 2026-09-23 | Story preparada a partir dos artefatos BMAD e ADRs aceitos; nenhuma implementação realizada. | Codex |
+| 2026-09-23 | E0-S1 implementada, validada e revisada; readiness passou a incluir PostgreSQL e CORS ganhou teste explícito. | Codex |
 
 ### Handoff / próximo passo exato
 
-Implementar T1–T7 na ordem, começando pela estrutura e pelos testes fundacionais. Se surgir necessidade de schema de negócio, dependência estrutural material ou mudança dos limites aprovados, interromper e solicitar decisão antes de alterar a story ou os ADRs.
+Revisão humana e execução manual do plano de commits atômicos. Nenhuma operação Git mutável foi executada pelo agente.
