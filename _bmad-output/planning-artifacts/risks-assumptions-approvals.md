@@ -1,4 +1,4 @@
-# Riscos, premissas e aprovações necessárias
+# Riscos, premissas e decisões consolidadas
 
 ## Premissas usadas no planejamento
 
@@ -6,9 +6,9 @@
 |---|---|---|
 | P-01 | Maven será usado, coerente com os gates prescritos. | Ajustar build, CI e documentação. |
 | P-02 | BRL e USD têm duas casas decimais no MVP. | Generalizar escala/formatadores e casos de teste. |
-| P-03 | Cada recebível tem id externo único dentro do cedente. | Redesenhar identidade e garantia de dupla liquidação. |
-| P-04 | Taxa base é mensal, versionada por data de vigência. | Alterar fórmula, schema e API. |
-| P-05 | Autenticação não é exigida na demonstração local. | Criar novo épico de segurança e modelo de autorização. |
+| P-03 | Cada recebível é identificado por `(assignor_id, external_id)`. | Decisão aceita; alteração exige novo ADR ou substituição do ADR-0005. |
+| P-04 | Taxa base é mensal, por moeda e versionada por vigência; seeds iniciais são fictícios. | Decisão aceita; fonte oficial futura exige revisão. |
+| P-05 | Autenticação e autorização estão fora do MVP e são limitação conhecida. | Inclusão exige novo épico e modelo de autorização. |
 | P-06 | Relatório usa consistência forte do mesmo PostgreSQL. | Redesenhar SLA/arquitetura de leitura. |
 | P-07 | Uma implantação local é suficiente; escala de 1M tx/min é somente design. | Escopo e arquitetura deixam de caber no prazo. |
 
@@ -16,29 +16,36 @@
 
 | ID | Prob. | Impacto | Risco | Mitigação proposta |
 |---|---:|---:|---|---|
-| R-01 | Média | Alto | Convenção financeira ambígua produz resultado “correto” tecnicamente e errado para o negócio. | Aprovar ADR-0003/0004 e casos de referência antes de código. |
+| R-01 | Baixa | Alto | Implementação diverge das convenções financeiras aceitas. | ADR-0003/0004, casos de referência ACT/30 e testes de calendário/câmbio. |
 | R-02 | Média | Alto | Optimistic locking isolado permite dupla liquidação com agregados distintos. | Constraint única por recebível + testes concorrentes adversos. |
-| R-03 | Média | Alto | Prazo de 3–4 dias não comporta todo hardening sênior/especialista. | Priorizar cortes verticais; escala/EDA ficam documentais; Grafana pode ser opcional. |
-| R-04 | Média | Médio | Meta de extrato não é reproduzível sem ambiente/dataset definidos. | Aprovar protocolo de benchmark e registrar hardware/plano. |
+| R-03 | Média | Alto | Prazo de 3–4 dias não comporta todo hardening sênior/especialista. | Priorizar cortes verticais; escala/EDA ficam documentais; Prometheus/Grafana ficam em profile opcional. |
+| R-04 | Média | Médio | Meta de extrato não é reproduzível sem protocolo documentado. | Benchmark com 1 milhão de registros, p95 ≤ 300 ms e registro de hardware, seed, warm-up e plano. |
 | R-05 | Baixa | Alto | Taxa velha ou invertida causa perda financeira. | Clock controlado, nomenclatura base/quote, testes de ambos os sentidos e bloqueio de expiração. |
 | R-06 | Média | Médio | Dependência de matemática decimal ou jOOQ aumenta tempo de build/configuração. | Spike curto na story E0/E2 e isolamento atrás de API interna. |
 | R-07 | Média | Médio | Diretório vazio `supabase/` induz implementação proibida/confunde avaliação. | Remoção humana aprovada antes da implementação; nenhum arquivo foi removido agora. |
 | R-08 | Média | Médio | Skills BMAD de planejamento não estão instaladas, reduzindo validação automatizada do método. | Artefatos compatíveis foram produzidos; instalar/rodar validadores BMAD é decisão do usuário. |
 | R-09 | Média | Médio | Repositório inteiro aparece untracked, dificultando distinguir baseline de mudanças. | Usuário deve revisar e estabelecer baseline; agente não executa Git mutável. |
 
-## Decisões que precisam de aprovação
+## Decisões aprovadas em 2026-09-23
 
-1. Aprovar ou rejeitar os ADRs 0001–0009; nenhum está aceito.
-2. Confirmar dias corridos/30, taxa mensal, `DECIMAL128`, potência decimal e `HALF_EVEN` final.
-3. Confirmar a convenção USD/BRL e idade máxima proposta de 15 minutos.
-4. Confirmar que `(assignor_id, external_receivable_id)` identifica unicamente um recebível.
-5. Confirmar a política definida de replay da resposta existente e `409 Conflict` para reutilização divergente da chave.
-6. Confirmar que autenticação/autorização estão fora do MVP local.
-7. Aprovar metas p95 e fornecer ambiente/dataset de referência.
-8. Confirmar Prometheus/Grafana no Compose ou apenas endpoint Prometheus + logs nesta entrega.
-9. Autorizar futuramente a remoção de `supabase/`; não realizada nesta fase.
-10. Decidir se deseja instalar as skills BMAD específicas de planejamento para validar/normalizar estes artefatos antes da implementação.
+1. Monólito modular com arquitetura hexagonal seletiva.
+2. PostgreSQL 16, Flyway, JPA para escrita e jOOQ para relatórios.
+3. ACT/30, vencimento no próximo dia útil brasileiro configurável, DECIMAL128, potência decimal e `HALF_EVEN` final.
+4. Taxa base mensal por moeda e vigência, iniciada por seeds fictícios identificados.
+5. Câmbio BASE/QUOTE, conversão ao final, snapshot e validade configurável inicialmente em 15 minutos.
+6. Identidade `(assignor_id, external_id)`, estado persistente e proteção por versão/constraints contra dupla liquidação.
+7. REST, OpenAPI e RFC 9457 `ProblemDetail`.
+8. Logs JSON, métricas e Prometheus/Grafana em profile opcional.
+9. React por features e WCAG 2.2 AA como requisito bloqueante.
+10. Autenticação e autorização fora do MVP, registradas como limitação.
+11. Benchmark local com 1 milhão de registros e p95 ≤ 300 ms.
+12. GitHub Flow, branches curtas, Rebase and merge e SemVer.
+
+## Pendências operacionais, não arquiteturais
+
+- Definir/remover o diretório vazio `supabase/` antes da implementação, sem usá-lo no produto.
+- Instalar skills BMAD específicas de planejamento apenas se a responsável desejar validação adicional; isso não bloqueia as decisões aceitas.
 
 ## Gate de início da implementação
 
-Nenhuma story deve entrar em desenvolvimento até que, no mínimo, ADR-0001 a ADR-0006 e as decisões 2–7 acima sejam resolvidos. Após a aprovação, os documentos devem ser atualizados para registrar as escolhas; só então E0-S1 pode começar.
+Os ADRs 0001–0009 estão aceitos e o gate arquitetural de aprovação foi atendido. E0-S1 pode começar após refinamento da story e confirmação de sua Definition of Ready; isso não autoriza implementação nesta fase documental.

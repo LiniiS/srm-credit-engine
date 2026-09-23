@@ -1,11 +1,11 @@
 # Épicos e stories — SRM Credit Engine
 
-- **Status:** Proposto para aprovação
+- **Status:** Aprovado para implementação por stories
 - **Rota de planejamento:** PRD + arquitetura + épicos/stories
 
 ## Inventário coberto
 
-RF-01–RF-12 e RNF-01–RNF-13 são cobertos pela matriz de rastreabilidade. Cada story entrega um corte verificável; nenhuma autoriza implementação antes da aprovação dos ADRs relacionados.
+RF-01–RF-12 e RNF-01–RNF-13 são cobertos pela matriz de rastreabilidade. Cada story entrega um corte verificável e deve seguir os ADRs 0001–0009 aceitos.
 
 ## E0 — Fundação executável e guardrails
 
@@ -36,6 +36,11 @@ RF-01–RF-12 e RNF-01–RNF-13 são cobertos pela matriz de rastreabilidade. Ca
 - Dado o provedor mock disponível, quando sincronizado, então a taxa é persistida e a requisição aceita.
 - Dadas falhas transitórias, então timeout/retry/circuit breaker são observáveis e nenhuma chamada externa ocorre em transação aberta.
 
+### E1-S3 — Disponibilizar taxa base por moeda e vigência
+
+- Dadas BRL e USD, quando a aplicação iniciar em ambiente local, então seeds fictícios e identificados disponibilizam taxa base mensal versionada por moeda e vigência.
+- Dada uma data de cálculo, então é selecionada a versão vigente da moeda do título e seu valor é preservado no snapshot da operação.
+
 ## E2 — Precificação determinística
 
 ### E2-S1 — Aplicar Strategy por tipo
@@ -45,8 +50,10 @@ RF-01–RF-12 e RNF-01–RNF-13 são cobertos pela matriz de rastreabilidade. Ca
 
 ### E2-S2 — Simular em moeda do título
 
-- Dados valor, vencimento, taxa base e tipo válidos, então a resposta contém VP, deságio, prazo e parâmetros aplicados como strings decimais.
+- Dados valor, vencimento, taxa base e tipo válidos, então o vencimento é ajustado ao próximo dia útil brasileiro configurável e o prazo ACT/30 é usado no cálculo.
+- Então a resposta contém VP, deságio, prazo, vencimento ajustado e parâmetros aplicados como strings decimais.
 - Dado um caso de referência aprovado, então o centavo final coincide exatamente.
+- Dados valores de fronteira, então cálculo intermediário DECIMAL128, potência decimal e arredondamento final `HALF_EVEN` produzem resultado determinístico.
 
 ### E2-S3 — Simular cross-currency
 
@@ -59,6 +66,7 @@ RF-01–RF-12 e RNF-01–RNF-13 são cobertos pela matriz de rastreabilidade. Ca
 
 - Dado lote válido, quando confirmado, então batch, itens e snapshots são gravados numa transação e o total é consistente.
 - Dado qualquer item inválido, então nada do lote é persistido.
+- Dado `(assignor_id, external_id)`, então ele identifica unicamente o recebível, cujo estado persistente só permite uma liquidação vencedora.
 
 ### E3-S2 — Repetir com a mesma chave sem duplicar
 
@@ -78,7 +86,7 @@ RF-01–RF-12 e RNF-01–RNF-13 são cobertos pela matriz de rastreabilidade. Ca
 ### E4-S1 — Consultar extrato paginado com jOOQ
 
 - Dados período obrigatório e filtros opcionais de cedente/moeda, então a consulta retorna página estável, ordenada e limitada a 100 itens.
-- Dada base de referência com 1M itens, então o plano usa índices previstos e atende ao p95 aprovado.
+- Dada base de referência com 1 milhão de registros, então o plano usa índices previstos e a consulta atende p95 local ≤ 300 ms sob protocolo documentado.
 
 ## E5 — Experiência do operador
 
@@ -104,7 +112,7 @@ RF-01–RF-12 e RNF-01–RNF-13 são cobertos pela matriz de rastreabilidade. Ca
 ### E6-S1 — Padronizar API, segurança e observabilidade
 
 - Toda rota aparece no OpenAPI; erros usam RFC 9457 e não vazam internals.
-- Logs possuem correlação e dados sensíveis mascarados; métricas cobrem latência, resultado e circuit breaker.
+- Logs JSON possuem correlação e dados sensíveis mascarados; métricas cobrem latência, resultado e circuit breaker; Prometheus/Grafana sobem em profile opcional.
 
 ### E6-S2 — Fechar documentação e evidências
 
@@ -113,11 +121,10 @@ RF-01–RF-12 e RNF-01–RNF-13 são cobertos pela matriz de rastreabilidade. Ca
 
 ## Ordem recomendada
 
-1. Aprovar PRD, ADRs e métricas.
-2. E0 — foundation/guardrails.
-3. E1 — câmbio.
-4. E2 — pricing vertical completo.
-5. E3 — settlement e concorrência.
-6. E4 — reporting jOOQ e performance.
-7. E5 — frontend integrado.
-8. E6 — hardening, observabilidade e documentação final.
+1. E0 — foundation/guardrails.
+2. E1 — câmbio e taxa base.
+3. E2 — pricing vertical completo.
+4. E3 — settlement e concorrência.
+5. E4 — reporting jOOQ e performance.
+6. E5 — frontend integrado.
+7. E6 — hardening, observabilidade e documentação final.

@@ -1,10 +1,11 @@
-# Diagrama entidade-relacionamento — proposta
+# Diagrama entidade-relacionamento — planejamento aprovado
 
 ```mermaid
 erDiagram
   CURRENCY ||--o{ EXCHANGE_RATE : "base"
   CURRENCY ||--o{ EXCHANGE_RATE : "quote"
   CURRENCY ||--o{ RECEIVABLE : "denomina"
+  CURRENCY ||--o{ BASE_RATE : "taxa mensal"
   CURRENCY ||--o{ SETTLEMENT_BATCH : "pagamento"
   ASSIGNOR ||--o{ RECEIVABLE : "possui"
   ASSIGNOR ||--o{ SETTLEMENT_BATCH : "cede"
@@ -39,8 +40,9 @@ erDiagram
   }
   BASE_RATE {
     uuid id PK
+    char currency_code FK
     numeric rate_monthly
-    date effective_from UK
+    date effective_from
   }
   ASSIGNOR {
     uuid id PK
@@ -74,6 +76,8 @@ erDiagram
     uuid batch_id FK
     uuid receivable_id FK,UK
     uuid base_rate_id FK
+    date original_due_date
+    date adjusted_due_date
     int term_days
     numeric base_rate_applied
     numeric spread_applied
@@ -86,4 +90,3 @@ erDiagram
 ```
 
 Este diagrama deve ser reconciliado com cada migration Flyway antes de ser tratado como fonte do sistema implementado.
-

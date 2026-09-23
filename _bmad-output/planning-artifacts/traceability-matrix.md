@@ -11,7 +11,7 @@ Esta matriz liga requisitos a entregáveis de planejamento e às verificações 
 | RF-06 | Épico E3; modelo relacional; ADR-0005 | Integração transacional com rollback integral. |
 | RF-07 | Stories E3-S2/E3-S3; ADR-0005 | Teste de replay para chave+payload iguais, `409 Conflict` para reutilização divergente e concorrência com exatamente um vencedor. |
 | RF-08 | Story E3-S4; contrato de consulta | Teste de contrato e reconstrução de snapshots. |
-| RF-09 | Épico E4; jOOQ; índices propostos | Teste de integração, paginação e `EXPLAIN ANALYZE` com 1M itens. |
+| RF-09 | Épico E4; jOOQ; índices planejados | Teste de integração, paginação e `EXPLAIN ANALYZE` com 1M itens. |
 | RF-10 | Épico E5; painel web | Vitest/Testing Library/MSW, axe e teste E2E do fluxo. |
 | RF-11 | Story E5-S2; grid e filtros | Testes de URL, paginação server-side e estados loading/empty/error. |
 | RF-12 | Épico E6; ADR-0006 | Validação OpenAPI e contratos de `ProblemDetail`. |

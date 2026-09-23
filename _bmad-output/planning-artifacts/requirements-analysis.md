@@ -60,12 +60,13 @@ A mesa precisa antecipar recebíveis em BRL e USD com cálculo reproduzível, li
 - Design para 1 milhão de transações/minuto e EDA são documentação evolutiva, não código desta entrega.
 - Autenticação/autorização, operação real de câmbio, Kubernetes e IaC não fazem parte do MVP, salvo aprovação de novo escopo.
 
-## Lacunas que exigem decisão humana
+## Decisões aprovadas e condicionantes
 
-1. Convenção de prazo e taxa base: dias corridos/30 e taxa mensal foram assumidos para proposta.
-2. Arredondamento: `HALF_EVEN`, cálculo intermediário `DECIMAL128` e arredondamento final por moeda foram assumidos.
-3. Câmbio: `base/quote` significa unidades de quote por 1 base; é preciso aprovar idade máxima da taxa.
-4. Identidade do recebível: é necessário confirmar se existe identificador externo único por cedente.
-5. Semântica de reenvio idempotente definida: mesma chave e payload reproduzem a resposta existente; payload divergente com a mesma chave gera `409 Conflict`.
-6. Metas p95 dependem de hardware, dataset e protocolo de medição aprovados.
-7. Autenticação está fora do desafio; confirmar se o risco é aceitável para a demonstração.
+1. Prazo financeiro: ACT/30, contando dias corridos até o vencimento ajustado para o próximo dia útil conforme calendário brasileiro configurável.
+2. Taxa base: mensal, por moeda e vigência, com carga inicial por seeds fictícios.
+3. Precisão: `DECIMAL128`, potência decimal e um único arredondamento final `HALF_EVEN` na escala da moeda.
+4. Câmbio: `BASE/QUOTE` significa unidades de quote por 1 base; a conversão ocorre ao final, com snapshot e validade configurável inicialmente em 15 minutos.
+5. Identidade do recebível: `(assignor_id, external_id)`, com estado persistente e proteção transacional contra dupla liquidação.
+6. Semântica de reenvio idempotente: mesma chave e payload reproduzem a resposta existente; payload divergente com a mesma chave gera `409 Conflict`.
+7. Desempenho: benchmark reproduzível com 1 milhão de registros e meta local p95 ≤ 300 ms; hardware, dataset e protocolo devem acompanhar o resultado.
+8. Segurança: autenticação e autorização permanecem fora do MVP e devem ser apresentadas como limitação explícita.

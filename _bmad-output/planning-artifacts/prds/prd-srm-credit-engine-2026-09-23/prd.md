@@ -1,7 +1,7 @@
 # PRD — SRM Credit Engine
 
-- **Versão:** 0.1
-- **Status:** Proposto para aprovação
+- **Versão:** 1.0
+- **Status:** Aprovado para implementação por stories
 - **Data:** 2026-09-23
 
 ## Visão do produto
@@ -54,13 +54,17 @@ Inclui RF-01 a RF-12 e RNF-01 a RNF-13 definidos na análise. O corte vertical p
 
 ## Regras de negócio
 
-1. `VP = VF / (1 + taxaBase + spread)^n`; `n` e arredondamento dependem da aprovação do ADR-0003.
+1. `VP = VF / (1 + taxaBase + spread)^n`; pela convenção ACT/30, o vencimento é ajustado ao próximo dia útil no calendário brasileiro configurável, `termDays` usa dias corridos reais até a data ajustada e `n = termDays / 30`.
 2. O spread é resolvido por tipo de recebível via Strategy.
 3. A conversão cambial ocorre depois do VP e usa a taxa vigente não expirada.
 4. Liquidação grava snapshots de todos os parâmetros financeiros.
 5. O lote é persistido por inteiro ou não é persistido.
 6. Um recebível identificado externamente pode integrar no máximo uma liquidação concluída.
 7. Mesma `Idempotency-Key` e mesmo payload reproduzem a resposta existente; payload diferente com a mesma chave é conflito e retorna 409.
+8. Taxa base é mensal, por moeda e versionada por vigência; seeds iniciais são fictícios e identificados como demonstração.
+9. Cálculo intermediário usa DECIMAL128 e potência decimal; o resultado final arredonda uma única vez com `HALF_EVEN`.
+10. Câmbio usa BASE/QUOTE, conversão após o VP, snapshot da taxa e validade configurável inicialmente em 15 minutos.
+11. O recebível é identificado por `(assignor_id, external_id)`, tem estado persistente e não pode integrar duas liquidações vencedoras.
 
 ## Requisitos de acessibilidade
 
@@ -79,13 +83,13 @@ Inclui RF-01 a RF-12 e RNF-01 a RNF-13 definidos na análise. O corte vertical p
 - Teste concorrente produz exatamente um vencedor.
 - Todos os requisitos têm story e verificação rastreáveis.
 - Gates backend/frontend/documentação e smoke test do Compose passam.
-- Extrato cumpre o p95 aprovado no ambiente de referência.
+- Extrato com 1 milhão de registros cumpre p95 local ≤ 300 ms sob protocolo documentado.
 - Nenhum fluxo primário possui violação axe; checklist manual WCAG 2.2 AA por teclado e leitor de tela está concluído sem bloqueantes.
 
 ## Dependências e restrições
 
-Java 21, Spring Boot 3, React, TypeScript strict, Vite, PostgreSQL 16, Docker Compose, Flyway, Testcontainers e jOOQ. Dependências adicionais materiais só entram após ADR aceito.
+Java 21, Spring Boot 3, React, TypeScript strict, Vite, PostgreSQL 16, Docker Compose, Flyway, Testcontainers e jOOQ. Logs são JSON; métricas usam Prometheus e Prometheus/Grafana ficam disponíveis em profile opcional. Autenticação e autorização estão fora do MVP e são limitação conhecida. Dependências adicionais materiais exigem nova decisão arquitetural.
 
-## Aprovação necessária
+## Aprovação
 
-O PRD só fica pronto para implementação após aprovação das convenções financeiras, identidade do recebível, política de câmbio expirado, metas mensuráveis e ADRs propostos.
+As convenções financeiras, identidade do recebível, política cambial, meta de benchmark, acessibilidade, arquitetura e fluxo Git foram aprovados pela responsável e registrados nos ADRs 0001–0009.
