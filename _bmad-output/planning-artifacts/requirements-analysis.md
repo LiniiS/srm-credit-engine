@@ -50,6 +50,7 @@ A mesa precisa antecipar recebíveis em BRL e USD com cálculo reproduzível, li
 | RNF-10 | Testabilidade | Regras financeiras têm testes unitários; persistência/concorrência usam PostgreSQL 16 via Testcontainers. |
 | RNF-11 | Arquitetura | Dependências de módulos/camadas são verificadas por ArchUnit; frontend usa TypeScript strict. |
 | RNF-12 | Auditabilidade | Liquidação persiste taxas, spreads, câmbio, prazo e valores calculados como snapshots. |
+| RNF-13 | Acessibilidade | Todos os fluxos web do MVP atendem WCAG 2.2 nível AA, com verificação automatizada e manual por teclado e leitor de tela. |
 
 ## Restrições e não objetivos
 

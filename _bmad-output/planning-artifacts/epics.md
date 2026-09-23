@@ -5,7 +5,7 @@
 
 ## Inventário coberto
 
-RF-01–RF-12 e RNF-01–RNF-12 são cobertos pela matriz de rastreabilidade. Cada story entrega um corte verificável; nenhuma autoriza implementação antes da aprovação dos ADRs relacionados.
+RF-01–RF-12 e RNF-01–RNF-13 são cobertos pela matriz de rastreabilidade. Cada story entrega um corte verificável; nenhuma autoriza implementação antes da aprovação dos ADRs relacionados.
 
 ## E0 — Fundação executável e guardrails
 
@@ -22,6 +22,7 @@ RF-01–RF-12 e RNF-01–RNF-12 são cobertos pela matriz de rastreabilidade. Ca
 - Dado um import proibido entre módulos/camadas, quando ArchUnit executar, então o build falha com a regra violada.
 - Dado um import proibido entre features do frontend, quando o lint executar, então o gate falha.
 - Dado um PR, quando a CI executar, então backend, frontend e `docker compose config` são validados.
+- Dado um componente/fluxo frontend alterado, quando os testes executarem, então Testing Library e axe validam semântica, nome acessível e violações automatizáveis.
 
 ## E1 — Câmbio auditável
 
@@ -84,12 +85,19 @@ RF-01–RF-12 e RNF-01–RNF-12 são cobertos pela matriz de rastreabilidade. Ca
 ### E5-S1 — Simular em tempo real
 
 - Dado formulário válido, após 300 ms sem digitação, então uma única simulação é exibida; requisição anterior é cancelada.
-- Dado erro, então foco, mensagem e associação de campo são acessíveis.
+- Dado o formulário, então HTML semântico/controles nativos são usados antes de ARIA e cada campo possui label, instrução e erro programaticamente associados.
+- Dada submissão inválida, então o foco visível vai ao primeiro campo inválido; dada falha ou sucesso, foco e anúncio levam o operador ao alerta/resultado sem perda de contexto.
+- Dados carregamento, resultado ou erro assíncrono, então uma região `aria-live` anuncia a mudança sem repetir anúncios a cada tecla.
+- Dada operação somente por teclado, então todos os controles e a submissão são alcançáveis e acionáveis sem armadilha.
 
 ### E5-S2 — Liquidar e consultar histórico
 
 - Dada simulação válida, quando confirmada, então a UI gera/reutiliza chave idempotente e apresenta o resultado.
 - Dados filtros, quando alterados, então URL e grid server-side permanecem sincronizados e recarregáveis.
+- Dada mudança de rota, então o título da página é atualizado e o foco visível vai ao heading/conteúdo principal.
+- Dado o extrato, então dados são apresentados em tabela semântica com caption, cabeçalhos e ordenação anunciada; a paginação nomeia seus controles, informa a página atual e funciona integralmente por teclado.
+- Dada preferência `prefers-reduced-motion`, então animações não essenciais são reduzidas; texto, foco, controles e estados atendem contraste WCAG 2.2 AA e não dependem só de cor.
+- Dados os fluxos de simular, liquidar e filtrar/paginar, então Testing Library + axe passam e a verificação manual por teclado e leitor de tela não encontra bloqueantes.
 
 ## E6 — Operabilidade e documentação final
 

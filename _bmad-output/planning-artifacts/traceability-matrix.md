@@ -25,3 +25,4 @@ Esta matriz liga requisitos a entregáveis de planejamento e às verificações 
 | RNF-10 | DoD e épicos E1–E6 | Gates backend/frontend e Testcontainers. |
 | RNF-11 | ADR-0001/0008 | ArchUnit, ESLint boundaries, typecheck. |
 | RNF-12 | ADR-0003/0004/0005; ER | Teste de reconstrução e constraints do banco. |
+| RNF-13 | ADR-0008; stories E5-S1/E5-S2; AC-A11Y-01–06; DoD | Testing Library/user-event, axe, contraste/reduced-motion e checklist manual por teclado e leitor de tela. |

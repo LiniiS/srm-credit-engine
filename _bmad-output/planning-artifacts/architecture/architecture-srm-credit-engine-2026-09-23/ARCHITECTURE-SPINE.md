@@ -18,6 +18,7 @@
 | ARQ-09 | API v1 usa DTOs, OpenAPI e RFC 9457 `ProblemDetail`. | ADR-0006 |
 | ARQ-10 | Integração externa é protegida por timeout/retry/circuit breaker; logs e métricas são estruturados. | ADR-0007 |
 | ARQ-11 | Frontend é organizado por features, TanStack Query, RHF/Zod e filtros na URL. | ADR-0008 |
+| ARQ-12 | A experiência web atende WCAG 2.2 AA, prioriza HTML semântico e trata teclado, foco, anúncios, contraste e redução de movimento como requisitos arquiteturais. | ADR-0008 |
 
 ## Containers
 
@@ -48,6 +49,15 @@ Prometheus/Grafana são desejáveis para demonstração, mas a inclusão no Comp
 
 `app/` compõe providers e rotas; `features/pricing`, `features/settlements`, `features/exchange-rates` contêm UI, hooks, schemas e serviços; `shared/` contém somente infraestrutura transversal. Fórmula financeira não existe no cliente.
 
+## Arquitetura de acessibilidade do frontend
+
+- Componentes de `shared/ui` oferecem semântica e comportamento acessível por padrão: HTML nativo antes de ARIA, foco visível, contraste AA e suporte a `prefers-reduced-motion`.
+- `app/` concentra título de página e gerenciamento de foco em mudanças de rota, levando o foco ao heading/conteúdo principal.
+- Formulários associam label, instrução e erro ao controle. Em submissão inválida, o primeiro campo inválido recebe foco; sucesso e falha de submissão são anunciados e o foco segue para a confirmação/alerta quando necessário.
+- Resultados de simulação, carregamento e falhas assíncronas usam regiões `aria-live` estáveis, com mensagens concisas e sem anunciar cada tecla durante o debounce.
+- O grid é uma tabela HTML com caption, cabeçalhos e estado de ordenação. A paginação é uma navegação nomeada com botões, página atual anunciada e operação completa por teclado.
+- Cores não são a única indicação de estado; texto e foco atendem contraste WCAG 2.2 AA. Movimentos não essenciais são removidos/reduzidos conforme preferência do sistema.
+
 ## Verificações automáticas planejadas
 
 - ArchUnit para camadas, ciclos e acesso somente a APIs públicas dos módulos.
@@ -55,11 +65,11 @@ Prometheus/Grafana são desejáveis para demonstração, mas a inclusão no Comp
 - Testcontainers para Flyway, repositórios, jOOQ, idempotência e concorrência.
 - Validação OpenAPI e `application/problem+json`.
 - ESLint boundaries/no-restricted-imports e TypeScript strict.
-- Vitest/Testing Library/MSW e acessibilidade automatizada.
+- Vitest/Testing Library/user-event/MSW verificam fluxos por teclado, foco, labels, títulos, regiões live, tabela e paginação; axe cobre violações automatizáveis.
+- Verificação manual planejada por teclado e leitor de tela nos fluxos de simular, liquidar, filtrar/paginar e tratar erros; contraste e redução de movimento também são inspecionados.
 
 ## Deliberadamente em aberto
 
 - As decisões listadas em `docs/adr/` permanecem `Proposto` até aprovação humana.
 - Maven foi assumido por coerência com os gates do repositório, mas o `pom.xml` atual está vazio.
 - Autenticação e topologia de produção não são definidas no MVP.
-
