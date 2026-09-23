@@ -1,6 +1,6 @@
 # ADR-0004: Padronizar câmbio e vigência
 
-- **Status:** Proposto
+- **Status:** Aceito
 - **Data:** 2026-09-23
 - **Decisores:** responsável pelo projeto
 - **Relacionado a:** RF-01, RF-02, RF-05
@@ -17,7 +17,7 @@ Cross-currency exige direção inequívoca, instante de seleção e política pa
 
 ## Decisão
 
-Propor opção 1. Ex.: USD/BRL=5,10 significa 1 USD=5,10 BRL; BRL→USD divide, USD→BRL multiplica. Seleciona-se a taxa vigente no instante da operação, converte-se após o VP e grava-se id+valor. Idade máxima proposta: 15 minutos para sync externo e configuração explícita para operação manual.
+Adotar a opção 1. Ex.: USD/BRL=5,10 significa 1 USD=5,10 BRL; BRL→USD divide, USD→BRL multiplica. Seleciona-se a taxa vigente no instante da operação, converte-se após o VP e grava-se id+valor. A validade é configurável, inicialmente 15 minutos.
 
 ## Limites e regras resultantes
 
@@ -34,4 +34,3 @@ Propor opção 1. Ex.: USD/BRL=5,10 significa 1 USD=5,10 BRL; BRL→USD divide, 
 - Positivas: direção e histórico claros.
 - Negativas: operações podem ser recusadas durante indisponibilidade prolongada.
 - Revisitar se: mesa definir fonte oficial, janela ou regra de fixing distinta.
-

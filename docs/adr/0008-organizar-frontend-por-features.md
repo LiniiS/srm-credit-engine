@@ -1,6 +1,6 @@
 # ADR-0008: Organizar frontend por features
 
-- **Status:** Proposto
+- **Status:** Aceito
 - **Data:** 2026-09-23
 - **Decisores:** responsável pelo projeto
 - **Relacionado a:** painel, grid e separação UI/estado
@@ -17,7 +17,7 @@ A SPA precisa separar UI, estado de servidor, validação e transporte sem dupli
 
 ## Decisão
 
-Propor opção 1. TanStack Query guarda estado remoto; formulário/URL guardam estado local compartilhável; debounce de 300 ms e AbortSignal cancelam simulações obsoletas. A SPA deve atender WCAG 2.2 nível AA em todos os fluxos do MVP.
+Adotar a opção 1. TanStack Query guarda estado remoto; formulário/URL guardam estado local compartilhável; debounce de 300 ms e AbortSignal cancelam simulações obsoletas. WCAG 2.2 nível AA é requisito bloqueante em todos os fluxos do MVP.
 
 ## Limites e regras resultantes
 

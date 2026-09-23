@@ -1,6 +1,6 @@
 # ADR-0005: Garantir liquidação idempotente e concorrente
 
-- **Status:** Proposto
+- **Status:** Aceito
 - **Data:** 2026-09-23
 - **Decisores:** responsável pelo projeto
 - **Relacionado a:** RF-06, RF-07, RNF-02, RNF-03
@@ -18,11 +18,12 @@ Retries podem duplicar uma requisição e chaves distintas podem disputar o mesm
 
 ## Decisão
 
-Propor opção 1 sob READ COMMITTED. A constraint única em `settlement_item.receivable_id` é a garantia final; version/state melhora semântica; idempotency key e hash tratam retry.
+Adotar a opção 1 sob READ COMMITTED. O recebível é identificado unicamente por `(assignor_id, external_id)`, possui estado persistente e versionado, e a constraint única em `settlement_item.receivable_id` é a garantia final contra dupla liquidação. Idempotency key e hash tratam retry.
 
 ## Limites e regras resultantes
 
 - Uma transação persiste batch, itens e transições de recebíveis.
+- A constraint única `(assignor_id, external_id)` define identidade; o estado persistente só permite transições válidas e auditáveis.
 - Mesma `Idempotency-Key` com o mesmo hash de payload reproduz a resposta do recurso existente.
 - Mesma `Idempotency-Key` com hash de payload diferente retorna `409 Conflict`, pois a chave já identifica outra representação da operação.
 - Violação por disputa/optimistic lock retorna 409; nenhuma chamada externa dentro da transação.

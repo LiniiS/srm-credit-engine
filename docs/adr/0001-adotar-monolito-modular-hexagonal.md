@@ -1,6 +1,6 @@
 # ADR-0001: Adotar monólito modular com hexagonal seletiva
 
-- **Status:** Proposto
+- **Status:** Aceito
 - **Data:** 2026-09-23
 - **Decisores:** responsável pelo projeto
 - **Relacionado a:** arquitetura em três camadas; restrições de stack
@@ -17,7 +17,7 @@ O backend precisa separar aplicação, negócio e persistência, preservar regra
 
 ## Decisão
 
-Propor opção 1, com módulos `currency`, `pricing`, `settlement`, `reporting` e `shared`. Hexagonal é aplicada onde isola regra, persistência ou integração; reporting usa duas camadas como permitido.
+Adotar a opção 1, com módulos `currency`, `pricing`, `settlement`, `reporting` e `shared`. Hexagonal é aplicada onde isola regra, persistência ou integração; reporting usa duas camadas como permitido.
 
 ## Limites e regras resultantes
 
@@ -35,4 +35,3 @@ Propor opção 1, com módulos `currency`, `pricing`, `settlement`, `reporting` 
 - Positivas: transação local, menor operação e extração futura possível.
 - Negativas: disciplina de pacotes é necessária; um único deployment escala como unidade.
 - Revisitar se: módulos exigirem escalabilidade/deploy independentes comprovados.
-

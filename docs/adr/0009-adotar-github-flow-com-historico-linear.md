@@ -1,6 +1,6 @@
 # ADR-0009: Adotar GitHub Flow com histórico linear
 
-- **Status:** Proposto
+- **Status:** Aceito
 - **Data:** 2026-09-23
 - **Decisores:** responsável pelo projeto
 - **Relacionado a:** expectativas de versionamento sênior/especialista
@@ -17,7 +17,7 @@ O desafio avalia commits atômicos, PRs, histórico limpo, SemVer e gestão de c
 
 ## Decisão
 
-Propor opção 1. Cada story usa branch curta, commits Conventional Commits atômicos e PR com gates. Tags SemVer e simulação de `revert`/`cherry-pick` são responsabilidade humana.
+Adotar a opção 1. Cada story usa branch curta, commits Conventional Commits atômicos e PR com gates; o merge padrão é **Rebase and merge**. Releases usam SemVer. Tags e simulação de `revert`/`cherry-pick` são responsabilidade humana.
 
 ## Limites e regras resultantes
 
@@ -33,4 +33,3 @@ Propor opção 1. Cada story usa branch curta, commits Conventional Commits atô
 - Positivas: narrativa auditável e `bisect`/revert simples.
 - Negativas: exige disciplina manual e rebase cuidadoso.
 - Revisitar se: equipe/release train justificar branches de longa duração.
-

@@ -1,6 +1,6 @@
 # ADR-0002: Adotar PostgreSQL, Flyway, JPA e jOOQ
 
-- **Status:** Proposto
+- **Status:** Aceito
 - **Data:** 2026-09-23
 - **Decisores:** responsável pelo projeto
 - **Relacionado a:** persistência ACID, extrato analítico, Docker Compose
@@ -18,7 +18,7 @@ A escrita exige integridade relacional e a leitura exige SQL controlável em vol
 
 ## Decisão
 
-Propor opção 1 no mesmo banco, um CQRS leve sem event sourcing. Flyway é a única fonte do schema; PostgreSQL Testcontainers valida migrações e concorrência.
+Adotar a opção 1 no mesmo banco, um CQRS leve sem event sourcing. Flyway é a única fonte do schema; PostgreSQL Testcontainers valida migrações e concorrência.
 
 ## Limites e regras resultantes
 
@@ -36,4 +36,3 @@ Propor opção 1 no mesmo banco, um CQRS leve sem event sourcing. Flyway é a ú
 - Positivas: ACID, SQL observável e ambiente fiel.
 - Negativas: geração/configuração jOOQ aumenta o build.
 - Revisitar se: volume analítico justificar store separado, fora deste MVP.
-

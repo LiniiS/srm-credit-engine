@@ -1,6 +1,6 @@
 # ADR-0006: Padronizar contratos e erros HTTP
 
-- **Status:** Proposto
+- **Status:** Aceito
 - **Data:** 2026-09-23
 - **Decisores:** responsável pelo projeto
 - **Relacionado a:** RF-12, RNF-04
@@ -17,7 +17,7 @@ Frontend e auditoria precisam de contrato estável, status semânticos e erros s
 
 ## Decisão
 
-Propor opção 1. Decimais trafegam como strings; datas ISO; respostas paginadas são explícitas; códigos de domínio complementam status HTTP.
+Adotar a opção 1. A API é REST sob `/api/v1`, documentada por OpenAPI e usa RFC 9457 `ProblemDetail`. Decimais trafegam como strings; datas ISO; respostas paginadas são explícitas; códigos de domínio complementam status HTTP.
 
 ## Limites e regras resultantes
 
@@ -34,4 +34,3 @@ Propor opção 1. Decimais trafegam como strings; datas ISO; respostas paginadas
 - Positivas: cliente previsível e diagnóstico seguro.
 - Negativas: DTOs/mappers adicionais.
 - Revisitar se: houver consumidores externos com versionamento incompatível.
-

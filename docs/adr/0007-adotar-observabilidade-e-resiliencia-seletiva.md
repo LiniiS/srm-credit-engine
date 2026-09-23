@@ -1,6 +1,6 @@
 # ADR-0007: Adotar observabilidade e resiliência seletiva
 
-- **Status:** Proposto
+- **Status:** Aceito
 - **Data:** 2026-09-23
 - **Decisores:** responsável pelo projeto
 - **Relacionado a:** requisitos sênior de observabilidade e resiliência
@@ -17,7 +17,7 @@ Falhas de câmbio devem ser controladas e operações financeiras precisam ser d
 
 ## Decisão
 
-Propor opção 1. Timeout, retry com backoff para falhas transitórias e circuit breaker ficam no adapter FX. Settlement não recebe retry automático. Prometheus/Grafana no Compose é recomendado, mas pode ser cortado se o prazo exigir, preservando endpoint de métricas.
+Adotar a opção 1. Timeout, retry com backoff para falhas transitórias e circuit breaker ficam no adapter FX. Settlement não recebe retry automático. Logs são estruturados em JSON; métricas são publicadas via Micrometer/Prometheus; Prometheus e Grafana integram o Compose em profile opcional de observabilidade.
 
 ## Limites e regras resultantes
 
@@ -34,4 +34,3 @@ Propor opção 1. Timeout, retry com backoff para falhas transitórias e circuit
 - Positivas: falhas explicáveis e integração protegida.
 - Negativas: tuning e Compose mais pesados.
 - Revisitar se: SLOs ou plataforma corporativa definirem outra stack.
-
