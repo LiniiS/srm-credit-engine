@@ -15,6 +15,7 @@
 | 2026-09-23 | Planejamento inicial | Analisar o desafio e criar requisitos, rastreabilidade, PRD, arquitetura, dados, APIs, C4/ER, ADRs e stories sem implementar | Artefatos propostos em `_bmad-output/planning-artifacts/` e `docs/` | Aprovação humana pendente; skills BMAD específicas de planejamento não estavam instaladas |
 | 2026-09-23 | Consistência de idempotência e gate documental | Uniformizar replay/409 e tornar o gate sensível a story, release, Compose e migrations Flyway | Planejamento corrigido e `check-docs.sh` story aprovado com avisos esperados | Nenhum código de aplicação alterado; ADR-0005 permaneceu Proposto |
 | 2026-09-23 | Auditoria de acessibilidade | Auditar ADR frontend, arquitetura, PRD, stories, critérios e DoD contra WCAG 2.2 AA | Requisitos de semântica, teclado, foco, anúncios, tabela, contraste, movimento e testes tornados verificáveis e rastreáveis | Nenhum código implementado; ADR-0008 permaneceu Proposto |
+| 2026-09-23 | Consolidação após revisão humana | Propagar a aprovação formal dos nove ADRs e das decisões financeiras, arquiteturais, operacionais, de acessibilidade e Git | ADR-0001 a ADR-0009 promovidos para Aceito; Architecture Spine, PRD, stories e riscos reconciliados | A responsável revisou e aprovou as decisões; o Codex apenas registrou e verificou consistência, sem implementar ou operar Git |
 
 ## Problemas detectados
 
