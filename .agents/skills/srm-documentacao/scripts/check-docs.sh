@@ -85,8 +85,9 @@ while IFS= read -r md; do
     [[ -e "$dir/$path" ]] || echo "$md -> $target" >> "$tmp_broken"
   done < <(grep -oE '\]\([^)]+\)' "$md" | sed -E 's/^\]\(//; s/\)$//')
 done < <(find . \
-          \( -path './node_modules' -o -path './.git' -o -path './_bmad' -o -path './_bmad-output' \
-             -o -path './.bmad' -o -path './.claude' -o -path './.cursor' \) -prune \
+          \( -type d \( -name node_modules -o -name target -o -name dist -o -name coverage \
+             -o -name .git -o -name _bmad -o -name _bmad-output -o -name .bmad \
+             -o -name .claude -o -name .cursor \) \) -prune \
           -o -name '*.md' -print)
 if [[ -s "$tmp_broken" ]]; then
   while IFS= read -r l; do err "Link quebrado: $l"; done < "$tmp_broken"

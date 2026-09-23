@@ -1,4 +1,22 @@
-# Diagrama entidade-relacionamento — planejamento aprovado
+# Diagrama entidade-relacionamento
+
+## Estado implementado na E0-S1
+
+A fundação cria somente a tabela técnica abaixo. Nenhuma entidade de negócio é
+antecipada nesta story.
+
+```mermaid
+erDiagram
+  APPLICATION_METADATA {
+    varchar metadata_key PK
+    varchar metadata_value
+  }
+```
+
+O DDL vigente está em `docs/database/ddl.sql` e deriva da migration Flyway
+`V1__initialize_platform.sql`.
+
+## Modelo de negócio aprovado para stories posteriores
 
 ```mermaid
 erDiagram
@@ -89,4 +107,6 @@ erDiagram
   }
 ```
 
-Este diagrama deve ser reconciliado com cada migration Flyway antes de ser tratado como fonte do sistema implementado.
+Este trecho representa o planejamento aprovado, não o schema já implementado.
+Ele será reconciliado incrementalmente com cada migration Flyway das stories
+correspondentes.

@@ -20,5 +20,4 @@ C4Container
   Rel(obs, api, "Coleta", "/actuator/prometheus")
 ```
 
-O `compose.yaml` existente já nomeia `frontend`, `backend` e `postgres`; observabilidade ainda não está configurada e permanece proposta.
-
+Na fundação E0-S1, o `compose.yaml` implementa `frontend` (`5173`), `backend` (`8080`) e `postgres` (`5432`), todos com healthchecks. A SPA consulta a readiness técnica do backend em `/actuator/health/readiness`; funcionalidades de negócio, provedor de câmbio e observabilidade permanecem propostas para stories posteriores.
