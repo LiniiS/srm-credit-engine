@@ -60,7 +60,7 @@ Inclui RF-01 a RF-12 e RNF-01 a RNF-12 definidos na análise. O corte vertical p
 4. Liquidação grava snapshots de todos os parâmetros financeiros.
 5. O lote é persistido por inteiro ou não é persistido.
 6. Um recebível identificado externamente pode integrar no máximo uma liquidação concluída.
-7. Mesma `Idempotency-Key` e mesmo payload devolvem o resultado original; payload diferente é rejeitado.
+7. Mesma `Idempotency-Key` e mesmo payload reproduzem a resposta existente; payload diferente com a mesma chave é conflito e retorna 409.
 
 ## Métricas de sucesso
 
@@ -77,4 +77,3 @@ Java 21, Spring Boot 3, React, TypeScript strict, Vite, PostgreSQL 16, Docker Co
 ## Aprovação necessária
 
 O PRD só fica pronto para implementação após aprovação das convenções financeiras, identidade do recebível, política de câmbio expirado, metas mensuráveis e ADRs propostos.
-

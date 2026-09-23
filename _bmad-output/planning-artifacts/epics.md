@@ -61,8 +61,8 @@ RF-01–RF-12 e RNF-01–RNF-12 são cobertos pela matriz de rastreabilidade. Ca
 
 ### E3-S2 — Repetir com a mesma chave sem duplicar
 
-- Dado mesmo payload e `Idempotency-Key`, quando repetido, então o mesmo recurso é retornado.
-- Dada mesma chave com payload divergente, então a API retorna 422.
+- Dada a mesma `Idempotency-Key` com o mesmo payload, quando repetida, então a resposta existente é reproduzida sem novo efeito.
+- Dada a mesma `Idempotency-Key` com payload divergente, então a API retorna `409 Conflict` com código `IDEMPOTENCY_KEY_REUSED`.
 
 ### E3-S3 — Impedir dupla liquidação concorrente
 
@@ -113,4 +113,3 @@ RF-01–RF-12 e RNF-01–RNF-12 são cobertos pela matriz de rastreabilidade. Ca
 6. E4 — reporting jOOQ e performance.
 7. E5 — frontend integrado.
 8. E6 — hardening, observabilidade e documentação final.
-

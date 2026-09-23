@@ -5,7 +5,7 @@
 | AC-FIN-01 | Precisão | O centavo final coincide com casos de referência aprovados; nenhum binário floating-point é usado. | Unitários parametrizados + regra arquitetural. |
 | AC-INT-01 | Atomicidade | Falha em qualquer item deixa zero batches/itens/alterações de estado persistidos. | Testcontainers com falha induzida. |
 | AC-CON-01 | Concorrência | N liquidações simultâneas do mesmo recebível produzem exatamente um sucesso. | PostgreSQL 16, latch/barreira, chaves iguais e distintas. |
-| AC-IDEM-01 | Idempotência | Replay equivalente retorna o mesmo id; chave colidida com payload diferente retorna 422. | Teste de integração/contrato. |
+| AC-IDEM-01 | Idempotência | Mesma chave e mesmo payload reproduzem a resposta existente; mesma chave com payload diferente retorna 409 e código `IDEMPOTENCY_KEY_REUSED`. | Teste de integração/contrato cobrindo status, corpo e `Location` do replay. |
 | AC-SEC-01 | Segurança | Entradas inválidas são rejeitadas; respostas/logs não expõem stack, SQL, credenciais ou documento completo. | Testes negativos e inspeção automatizada. |
 | AC-API-01 | Contrato | OpenAPI cobre todas as rotas; erros são `application/problem+json`. | Validação do spec e testes de contrato. |
 | AC-PERF-01 | Extrato | Com 1M itens, período+cedente atende p95 ≤ 300 ms no ambiente aprovado. | Seed, warm-up, amostra e `EXPLAIN ANALYZE` documentados. |
@@ -17,4 +17,3 @@
 | AC-DOC-01 | Documentação | README/docs refletem portas, stack, endpoints, schema e decisões reais. | `check-docs.sh` em modo release. |
 
 As metas temporais só se tornam compromisso após aprovação do hardware, dataset e método de medição.
-

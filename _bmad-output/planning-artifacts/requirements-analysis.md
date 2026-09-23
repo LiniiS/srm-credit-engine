@@ -65,7 +65,6 @@ A mesa precisa antecipar recebíveis em BRL e USD com cálculo reproduzível, li
 2. Arredondamento: `HALF_EVEN`, cálculo intermediário `DECIMAL128` e arredondamento final por moeda foram assumidos.
 3. Câmbio: `base/quote` significa unidades de quote por 1 base; é preciso aprovar idade máxima da taxa.
 4. Identidade do recebível: é necessário confirmar se existe identificador externo único por cedente.
-5. Semântica de reenvio idempotente: proposta de retornar o mesmo recurso; payload divergente com a mesma chave gera 422.
+5. Semântica de reenvio idempotente definida: mesma chave e payload reproduzem a resposta existente; payload divergente com a mesma chave gera `409 Conflict`.
 6. Metas p95 dependem de hardware, dataset e protocolo de medição aprovados.
 7. Autenticação está fora do desafio; confirmar se o risco é aceitável para a demonstração.
-

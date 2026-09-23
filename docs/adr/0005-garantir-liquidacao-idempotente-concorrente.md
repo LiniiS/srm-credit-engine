@@ -23,12 +23,14 @@ Propor opção 1 sob READ COMMITTED. A constraint única em `settlement_item.rec
 ## Limites e regras resultantes
 
 - Uma transação persiste batch, itens e transições de recebíveis.
-- Mesmo key+hash retorna o recurso; mesmo key+hash diferente retorna 422.
+- Mesma `Idempotency-Key` com o mesmo hash de payload reproduz a resposta do recurso existente.
+- Mesma `Idempotency-Key` com hash de payload diferente retorna `409 Conflict`, pois a chave já identifica outra representação da operação.
 - Violação por disputa/optimistic lock retorna 409; nenhuma chamada externa dentro da transação.
 
 ## Verificação
 
 - Testcontainers com N threads, barreira simultânea e chaves iguais/diferentes; exatamente um vencedor.
+- Teste de contrato comprova replay da resposta existente para key+payload iguais e `409 Conflict` para reutilização divergente.
 - Teste de rollback após falha no último item.
 
 ## Consequências
@@ -36,4 +38,3 @@ Propor opção 1 sob READ COMMITTED. A constraint única em `settlement_item.rec
 - Positivas: segurança mesmo em corrida adversa.
 - Negativas: exige mapear constraints/exceções cuidadosamente.
 - Revisitar se: throughput medido mostrar contenção que exija particionamento.
-

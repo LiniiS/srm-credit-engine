@@ -86,8 +86,8 @@ Usa header obrigatório `Idempotency-Key` e o mesmo corpo da simulação, acresc
 ```
 
 - Primeiro processamento: `201 Created`.
-- Repetição com chave e payload equivalentes: proposta `200 OK` com o mesmo id.
-- Mesma chave com payload diferente: `422 Unprocessable Content`.
+- Repetição com a mesma chave e payload equivalente: replay da resposta existente, com o mesmo status, corpo e header `Location` persistidos para a operação original.
+- Mesma chave com payload diferente: `409 Conflict`, código `IDEMPOTENCY_KEY_REUSED`.
 - Recebível já liquidado/conflito concorrente: `409 Conflict`.
 
 ## Extrato
@@ -120,4 +120,3 @@ Usa header obrigatório `Idempotency-Key` e o mesmo corpo da simulação, acresc
 ```
 
 O contrato final será gerado/validado por OpenAPI durante implementação. Entidades de persistência e detalhes internos nunca fazem parte da API.
-

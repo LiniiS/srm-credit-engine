@@ -9,7 +9,7 @@ Esta matriz liga requisitos a entregáveis de planejamento e às verificações 
 | RF-04 | Story E2-S2; `POST /pricing/simulations` | Casos de fórmula e contrato; garantir ausência de persistência. |
 | RF-05 | Story E2-S3; ADR-0004 | Casos BRL→USD, USD→BRL e mesma moeda com valores de referência. |
 | RF-06 | Épico E3; modelo relacional; ADR-0005 | Integração transacional com rollback integral. |
-| RF-07 | Stories E3-S2/E3-S3; ADR-0005 | Teste concorrente com chaves iguais e diferentes; exatamente um vencedor. |
+| RF-07 | Stories E3-S2/E3-S3; ADR-0005 | Teste de replay para chave+payload iguais, `409 Conflict` para reutilização divergente e concorrência com exatamente um vencedor. |
 | RF-08 | Story E3-S4; contrato de consulta | Teste de contrato e reconstrução de snapshots. |
 | RF-09 | Épico E4; jOOQ; índices propostos | Teste de integração, paginação e `EXPLAIN ANALYZE` com 1M itens. |
 | RF-10 | Épico E5; painel web | Vitest/Testing Library/MSW, axe e teste E2E do fluxo. |
@@ -25,4 +25,3 @@ Esta matriz liga requisitos a entregáveis de planejamento e às verificações 
 | RNF-10 | DoD e épicos E1–E6 | Gates backend/frontend e Testcontainers. |
 | RNF-11 | ADR-0001/0008 | ArchUnit, ESLint boundaries, typecheck. |
 | RNF-12 | ADR-0003/0004/0005; ER | Teste de reconstrução e constraints do banco. |
-

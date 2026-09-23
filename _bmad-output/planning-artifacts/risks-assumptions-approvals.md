@@ -32,7 +32,7 @@
 2. Confirmar dias corridos/30, taxa mensal, `DECIMAL128`, potência decimal e `HALF_EVEN` final.
 3. Confirmar a convenção USD/BRL e idade máxima proposta de 15 minutos.
 4. Confirmar que `(assignor_id, external_receivable_id)` identifica unicamente um recebível.
-5. Confirmar resposta de replay idempotente (200) e colisão de payload (422).
+5. Confirmar a política definida de replay da resposta existente e `409 Conflict` para reutilização divergente da chave.
 6. Confirmar que autenticação/autorização estão fora do MVP local.
 7. Aprovar metas p95 e fornecer ambiente/dataset de referência.
 8. Confirmar Prometheus/Grafana no Compose ou apenas endpoint Prometheus + logs nesta entrega.
@@ -42,4 +42,3 @@
 ## Gate de início da implementação
 
 Nenhuma story deve entrar em desenvolvimento até que, no mínimo, ADR-0001 a ADR-0006 e as decisões 2–7 acima sejam resolvidos. Após a aprovação, os documentos devem ser atualizados para registrar as escolhas; só então E0-S1 pode começar.
-
