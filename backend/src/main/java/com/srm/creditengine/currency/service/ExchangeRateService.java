@@ -28,6 +28,7 @@ public class ExchangeRateService {
     var quoteCode = new CurrencyCode(quote);
     requireSupported(baseCode);
     requireSupported(quoteCode);
+    requireDistinct(baseCode, quoteCode);
     return ExchangeRateResult.from(
         repository.append(
             new ExchangeRate(
@@ -44,11 +45,9 @@ public class ExchangeRateService {
   public ExchangeRateResult latest(String base, String quote) {
     var baseCode = new CurrencyCode(base);
     var quoteCode = new CurrencyCode(quote);
-    if (baseCode.equals(quoteCode)) {
-      throw new IllegalArgumentException("currencies must be different");
-    }
     requireSupported(baseCode);
     requireSupported(quoteCode);
+    requireDistinct(baseCode, quoteCode);
     return repository
         .findLatest(baseCode, quoteCode, clock.instant())
         .map(ExchangeRateResult::from)
@@ -58,6 +57,12 @@ public class ExchangeRateService {
   private void requireSupported(CurrencyCode currency) {
     if (!repository.currencyExists(currency)) {
       throw new CurrencyNotSupportedException(currency.value());
+    }
+  }
+
+  private void requireDistinct(CurrencyCode base, CurrencyCode quote) {
+    if (base.equals(quote)) {
+      throw new InvalidExchangeRateException("quoteCurrency", "deve ser diferente de baseCurrency");
     }
   }
 }

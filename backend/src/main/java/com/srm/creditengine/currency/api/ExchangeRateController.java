@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import java.net.URI;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,7 +43,8 @@ public class ExchangeRateController {
         description = "Validation error or unsupported currency",
         content =
             @Content(
-                schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ExchangeRateProblemDetail.class)))
   })
   ResponseEntity<ExchangeRateResponse> register(@Valid @RequestBody ExchangeRateRequest request) {
     var result =
@@ -68,13 +70,15 @@ public class ExchangeRateController {
         description = "Validation error or unsupported currency",
         content =
             @Content(
-                schema = @Schema(implementation = org.springframework.http.ProblemDetail.class))),
+                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ExchangeRateProblemDetail.class))),
     @ApiResponse(
         responseCode = "404",
         description = "No effective exchange rate found",
         content =
             @Content(
-                schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ExchangeRateProblemDetail.class)))
   })
   ExchangeRateResponse latest(
       @RequestParam("base") @Pattern(regexp = "[A-Z]{3}") String base,

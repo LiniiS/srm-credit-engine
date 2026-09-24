@@ -111,12 +111,13 @@ Usa header obrigatório `Idempotency-Key` e o mesmo corpo da simulação, acresc
   "type": "https://srm.example/problems/validation-error",
   "title": "Validation failed",
   "status": 400,
-  "detail": "One or more fields are invalid",
-  "instance": "/api/v1/pricing/simulations",
+  "detail": "Validation failed",
+  "instance": "/api/v1/exchange-rates",
   "code": "VALIDATION_ERROR",
-  "traceId": "...",
-  "violations": [{"field": "items[0].faceValue", "message": "must be positive"}]
+  "violations": [{"field": "quoteCurrency", "message": "deve ser diferente de baseCurrency"}]
 }
 ```
+
+`violations` é retornado nos erros de validação e contém `field` e `message`. O MVP não promete `traceId`, pois ainda não possui correlação real de tracing/logs.
 
 O contrato final será gerado/validado por OpenAPI durante implementação. Entidades de persistência e detalhes internos nunca fazem parte da API.
