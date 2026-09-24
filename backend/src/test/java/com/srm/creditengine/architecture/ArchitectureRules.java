@@ -97,7 +97,11 @@ final class ArchitectureRules {
       public void check(JavaClass source, ConditionEvents events) {
         var sourceModule = moduleOf(source, rootPackage);
         if (sourceModule == null) {
-          if (source.getPackageName().startsWith(rootPackage + ".")) {
+          var approvedBootstrap = source.getName().equals(rootPackage + ".CreditEngineApplication");
+          if (approvedBootstrap) {
+            enforceBootstrapDependencies(source, rootPackage, events);
+          } else if (source.getPackageName().equals(rootPackage)
+              || source.getPackageName().startsWith(rootPackage + ".")) {
             events.add(
                 SimpleConditionEvent.violated(
                     source,
@@ -144,6 +148,26 @@ final class ArchitectureRules {
         }
       }
     };
+  }
+
+  private static void enforceBootstrapDependencies(
+      JavaClass source, String rootPackage, ConditionEvents events) {
+    for (Dependency dependency : source.getDirectDependenciesFromSelf()) {
+      var target = dependency.getTargetClass();
+      var targetModule = moduleOf(target, rootPackage);
+      if (targetModule != null
+          && (!isPublicContract(target, rootPackage, targetModule)
+              || !target
+                  .getModifiers()
+                  .contains(com.tngtech.archunit.core.domain.JavaModifier.PUBLIC))) {
+        events.add(
+            SimpleConditionEvent.violated(
+                dependency,
+                source.getName()
+                    + " bootstrap depends on non-public module type "
+                    + target.getName()));
+      }
+    }
   }
 
   private static boolean isPublicContract(
