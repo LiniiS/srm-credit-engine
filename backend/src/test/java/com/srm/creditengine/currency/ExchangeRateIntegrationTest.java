@@ -1,6 +1,7 @@
 package com.srm.creditengine.currency;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Clock;
@@ -8,6 +9,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -65,11 +68,27 @@ class ExchangeRateIntegrationTest {
   void migration_creates_catalog_schema_constraints_and_index() {
     assertThat(jdbc.queryForList("SELECT code FROM currency ORDER BY code", String.class))
         .containsExactly("BRL", "USD");
+    assertThat(columnDefinition("rate")).isEqualTo("numeric:18:8");
+    assertThat(columnDefinition("effective_at")).isEqualTo("timestamp with time zone::");
+    assertThat(columnDefinition("created_at")).isEqualTo("timestamp with time zone::");
+    assertThat(constraintDefinitions("f"))
+        .contains(
+            "FOREIGN KEY (base_currency) REFERENCES currency(code)",
+            "FOREIGN KEY (quote_currency) REFERENCES currency(code)");
+    assertThat(constraintDefinitions("c"))
+        .anySatisfy(definition -> assertThat(definition).contains("rate >"))
+        .anySatisfy(
+            definition -> assertThat(definition).contains("base_currency <> quote_currency"));
     assertThat(
             jdbc.queryForObject(
-                "SELECT count(*) FROM pg_indexes WHERE indexname='idx_exchange_rate_latest'",
-                Integer.class))
-        .isOne();
+                "SELECT indexdef FROM pg_indexes WHERE indexname='idx_exchange_rate_latest'",
+                String.class))
+        .contains("(base_currency, quote_currency, effective_at DESC, created_at DESC, id DESC)");
+
+    assertRejectedInsert("EUR", "BRL", "5.10000000");
+    assertRejectedInsert("USD", "EUR", "5.10000000");
+    assertRejectedInsert("USD", "BRL", "0.00000000");
+    assertRejectedInsert("USD", "USD", "5.10000000");
     assertThat(jdbc.queryForObject("SELECT count(*) FROM exchange_rate", Integer.class)).isZero();
   }
 
@@ -167,7 +186,11 @@ class ExchangeRateIntegrationTest {
     assertValidation(post("-0.00000001", "2026-09-23T11:00:00Z"), "rate");
     assertValidation(post("1.000000001", "2026-09-23T11:00:00Z"), "rate");
     assertValidation(postJson(requestJson("5.1", "usd", "BRL", "MANUAL")), "baseCurrency");
-    assertValidation(postJson(requestJson("5.1", "USD", "USD", "MANUAL")), null);
+    var equalCurrencies = postJson(requestJson("5.1", "USD", "USD", "MANUAL"));
+    assertValidation(equalCurrencies, "quoteCurrency");
+    assertThat(equalCurrencies.getBody())
+        .contains("\"message\":\"deve ser diferente de baseCurrency\"");
+    assertThat(jdbc.queryForObject("SELECT count(*) FROM exchange_rate", Integer.class)).isZero();
     assertValidation(postJson(requestJson("5.1", "USD", "BRL", " ")), "source");
     assertValidation(
         postJson(
@@ -201,6 +224,98 @@ class ExchangeRateIntegrationTest {
         .contains("\"name\":\"base\"")
         .contains("\"name\":\"quote\"")
         .doesNotContain("\"name\":\"at\"");
+    var document = readJson(specification.getBody());
+    assertProblemSchema(document.at("/paths/~1api~1v1~1exchange-rates/post/responses/400/content"));
+    assertProblemSchema(
+        document.at("/paths/~1api~1v1~1exchange-rates~1latest/get/responses/400/content"));
+    assertProblemSchema(
+        document.at("/paths/~1api~1v1~1exchange-rates~1latest/get/responses/404/content"));
+    assertThat(
+            document
+                .at("/components/schemas/ExchangeRateProblemDetail/properties/code")
+                .isMissingNode())
+        .isFalse();
+    assertThat(
+            document
+                .at(
+                    "/components/schemas/ExchangeRateProblemDetail/properties/violations/items/$ref")
+                .asText())
+        .endsWith("/ExchangeRateViolation");
+    assertThat(
+            document
+                .at("/components/schemas/ExchangeRateViolation/properties/field")
+                .isMissingNode())
+        .isFalse();
+    assertThat(
+            document
+                .at("/components/schemas/ExchangeRateViolation/properties/message")
+                .isMissingNode())
+        .isFalse();
+  }
+
+  private String columnDefinition(String column) {
+    return jdbc.queryForObject(
+        """
+        SELECT data_type || ':' || COALESCE(numeric_precision::text, '') || ':' ||
+               COALESCE(numeric_scale::text, '')
+          FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'exchange_rate' AND column_name = ?
+        """,
+        String.class,
+        column);
+  }
+
+  private java.util.List<String> constraintDefinitions(String type) {
+    return jdbc.queryForList(
+        """
+        SELECT pg_get_constraintdef(constraint_record.oid)
+          FROM pg_constraint constraint_record
+          JOIN pg_class table_record ON table_record.oid = constraint_record.conrelid
+          JOIN pg_namespace schema_record ON schema_record.oid = table_record.relnamespace
+         WHERE schema_record.nspname = 'public'
+           AND table_record.relname = 'exchange_rate'
+           AND constraint_record.contype = ?
+         ORDER BY constraint_record.conname
+        """,
+        String.class,
+        type);
+  }
+
+  private void assertRejectedInsert(String base, String quote, String rate) {
+    assertThatThrownBy(
+            () ->
+                jdbc.update(
+                    """
+                    INSERT INTO exchange_rate
+                        (id, base_currency, quote_currency, rate, source, effective_at, created_at)
+                    VALUES (CAST(? AS uuid), ?, ?, ?, 'SCHEMA_TEST', ?, ?)
+                    """,
+                    UUID.randomUUID().toString(),
+                    base,
+                    quote,
+                    new java.math.BigDecimal(rate),
+                    OffsetDateTime.ofInstant(NOW, ZoneOffset.UTC),
+                    OffsetDateTime.ofInstant(NOW, ZoneOffset.UTC)))
+        .isInstanceOf(DataIntegrityViolationException.class);
+  }
+
+  private com.fasterxml.jackson.databind.JsonNode readJson(String content) {
+    try {
+      return objectMapper.readTree(content);
+    } catch (java.io.IOException exception) {
+      throw new AssertionError(exception);
+    }
+  }
+
+  private void assertProblemSchema(com.fasterxml.jackson.databind.JsonNode content) {
+    assertThat(content.has(MediaType.APPLICATION_PROBLEM_JSON_VALUE)).isTrue();
+    assertThat(
+            content
+                .path(MediaType.APPLICATION_PROBLEM_JSON_VALUE)
+                .path("schema")
+                .path("$ref")
+                .asText())
+        .endsWith("/ExchangeRateProblemDetail");
   }
 
   private org.springframework.http.ResponseEntity<String> post(String rate, String effectiveAt) {
