@@ -2,7 +2,7 @@
 title: 'E0-S2 — Impor limites arquiteturais e CI'
 type: 'feature'
 created: '2026-09-23'
-status: 'in-review'
+status: 'done'
 baseline_commit: '6936f0e3d0879560e997b145caf15a1d0a0dd70d'
 route: 'full'
 route_source: 'auto'
@@ -23,7 +23,7 @@ context:
 # Story E0-S2 — Impor limites arquiteturais e CI
 
 - **Épico:** E0 — Fundação executável e guardrails
-- **Status:** Review
+- **Status:** Done
 - **Predecessora:** E0-S1 concluída
 
 <frozen-after-approval reason="objetivo, critérios e limites aprovados pela autora; alteração exige renegociação">
@@ -179,6 +179,8 @@ git diff --check
 - [x] Revisão não mantém achado Bloqueante ou Importante aberto.
 - [x] Plano de commits atômicos preparado; commits executados somente pela autora.
 
+**Resultado:** Definition of Done integralmente atendida, com nova execução remota verde e aprovação humana final em 2026-09-23.
+
 ## Campos BMAD para implementação, revisão e evidências
 
 ### Dev Agent Record
@@ -259,6 +261,7 @@ git diff --check
 | 2026-09-23 | `docker compose ps`, readiness, frontend e `pg_isready` | Aprovado | três serviços healthy; API 200/UP, frontend 200, PostgreSQL aceitando conexões, CORS para a origem da SPA |
 | 2026-09-23 | Parse local de `.github/workflows/ci.yml` e revisão dos jobs | Aprovado localmente | YAML válido; jobs `backend`, `frontend` e `repository`; execução remota confirmada posteriormente |
 | 2026-09-23 | GitHub Actions no PR | Aprovado remotamente | confirmação humana: jobs `backend`, `frontend` e `repository` verdes |
+| 2026-09-23 | GitHub Actions após as correções finais | Aprovado remotamente | confirmação humana: jobs `backend`, `frontend` e `repository` passaram novamente |
 | 2026-09-23 | Revisão final local: `spotless:check`, `verify`, `npm ci`, lint, typecheck, testes, build, Compose, documentação e diff | Aprovado nos comandos | backend verde; frontend 3 arquivos/13 testes, cobertura 100% statements/lines/functions e 87,5% branches; npm audit 0 vulnerabilidades; docs 0 erros/3 avisos de release |
 | 2026-09-23 | Correções da revisão: `spotless:check` e `verify` | Aprovado | 16 testes backend, 0 falhas/erros/ignorados; fixtures específicas de raiz/bootstrap, módulo, camadas e reporting |
 | 2026-09-23 | Correções da revisão: lint, typecheck, testes e build frontend | Aprovado | 3 arquivos/14 testes; configuração ESLint real e overrides de aliases exercitados; cobertura 100% statements/lines/functions e 87,5% branches |
@@ -273,10 +276,10 @@ git diff --check
 - **Achados Bloqueantes:** nenhum.
 - **Achados Importantes:** todos resolvidos: pacote raiz fechado com allowlist do bootstrap; módulo desconhecido isolado; direções de camada e reporting cobertos; configuração ESLint efetiva exercitada pela API oficial.
 - **Sugestões:** testar dependências permitidas e a exceção de reporting; avaliar pinagem das actions por SHA e `timeout-minutes`; remover ou configurar aliases atualmente usados apenas nas provas de `no-restricted-imports`.
-- **Checks remotos:** confirmação humana de `backend`, `frontend` e `repository` verdes no PR; AC5 encerrado.
-- **Limitações remanescentes:** axe não cobre contraste no jsdom nem substitui teclado/leitor de tela; a CI do PR precisa rodar novamente após o push humano das correções.
-- **Recomendação:** **Aprovar após nova CI verde no PR**; manter em `Review` até a confirmação humana.
-- **Aprovação humana:** PR e checks remotos confirmados pela autora; aprovação final da story ainda pendente após correções.
+- **Checks remotos:** confirmação humana de nova execução verde de `backend`, `frontend` e `repository` após as correções; AC5 definitivamente comprovado.
+- **Limitações remanescentes:** nenhuma limitação bloqueante ou importante; axe continua não substituindo validação manual WCAG nas stories funcionais futuras.
+- **Recomendação:** **Aprovada para merge**; todos os critérios e a Definition of Done foram atendidos.
+- **Aprovação humana:** concedida pela autora em 2026-09-23 após resolução dos achados e nova CI verde.
 
 ## Review Triage Log
 
@@ -337,6 +340,7 @@ git diff --check
 | 2026-09-23 | T1–T6 implementadas e validadas localmente; story movida para `Review`, com AC5 aguardando evidência da CI no PR. | Codex |
 | 2026-09-23 | Revisão final contra `origin/main`; checks remotos `backend`, `frontend` e `repository` confirmados verdes e AC5 encerrado. Achados Importantes de falso verde mantêm a recomendação de correção antes do merge. | Codex + confirmação da autora |
 | 2026-09-23 | Quatro achados Importantes corrigidos exclusivamente nos guardrails e fixtures de teste; gates locais completos aprovados; story mantida em `Review`. | Codex |
+| 2026-09-23 | Nova execução remota de `backend`, `frontend` e `repository` aprovada; autora concedeu aprovação humana final e a story foi promovida para `Done`. | Autora + Codex |
 
 ### Handoff / próximo passo exato
 
