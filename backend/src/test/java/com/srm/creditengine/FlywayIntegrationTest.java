@@ -47,6 +47,11 @@ class FlywayIntegrationTest {
 
     assertThat(installedRank).isEqualTo(1);
     assertThat(schemaVersion).isEqualTo("1");
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT installed_rank FROM flyway_schema_history WHERE version = '2' AND success",
+                Integer.class))
+        .isEqualTo(2);
     assertThat(restTemplate.getForEntity("/actuator/health/readiness", String.class).getBody())
         .isEqualTo("{\"status\":\"UP\"}");
   }

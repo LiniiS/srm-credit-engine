@@ -1,9 +1,8 @@
 # Diagrama entidade-relacionamento
 
-## Estado implementado na E0-S1
+## Estado implementado até E1-S1
 
-A fundação cria somente a tabela técnica abaixo. Nenhuma entidade de negócio é
-antecipada nesta story.
+A fundação mantém metadados técnicos e agora inclui o catálogo USD/BRL e o histórico append-only de taxas.
 
 ```mermaid
 erDiagram
@@ -11,10 +10,26 @@ erDiagram
     varchar metadata_key PK
     varchar metadata_value
   }
+  CURRENCY ||--o{ EXCHANGE_RATE : "base"
+  CURRENCY ||--o{ EXCHANGE_RATE : "quote"
+  CURRENCY {
+    char code PK
+    varchar name
+    smallint minor_units
+  }
+  EXCHANGE_RATE {
+    uuid id PK
+    char base_currency FK
+    char quote_currency FK
+    numeric rate
+    varchar source
+    timestamptz effective_at
+    timestamptz created_at
+  }
 ```
 
 O DDL vigente está em `docs/database/ddl.sql` e deriva da migration Flyway
-`V1__initialize_platform.sql`.
+`V1__initialize_platform.sql` e `V2__create_exchange_rates.sql`.
 
 ## Modelo de negócio aprovado para stories posteriores
 
