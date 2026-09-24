@@ -2,7 +2,7 @@
 title: 'E1-S1 — Registrar e consultar taxas'
 type: 'feature'
 created: '2026-09-23'
-status: 'in-review'
+status: 'done'
 baseline_commit: '6445775d9f0387ed36005e2d21205010053208b1'
 route: 'full'
 route_source: 'auto'
@@ -21,7 +21,7 @@ context:
 # Story E1-S1 — Registrar e consultar taxas
 
 - **Épico:** E1 — Câmbio auditável
-- **Status:** Review
+- **Status:** Done
 - **Prioridade:** Must
 - **Predecessoras:** E0-S1 e E0-S2 concluídas
 
@@ -192,7 +192,7 @@ git diff --check
 - [x] `effectiveAt`/`createdAt` usam `Instant`/UTC e `TIMESTAMPTZ`; ambos são normalizados para micros antes da persistência, `createdAt` é produzido pelo servidor, e consulta/testes usam ordenação total.
 - [x] Sem `double`/`float`, segredo, internals em erros ou funcionalidade fora do escopo.
 - [x] Documentação, File List, Completion Notes, evidências e AI_USAGE atualizados com fatos reais.
-- [ ] Revisão sem achado Bloqueante/Importante aberto e aprovação humana final.
+- [x] Revisão sem achado Bloqueante/Importante aberto e aprovação humana final.
 - [x] Plano de commits preparado; Git mutável reservado somente à autora.
 
 ## Campos BMAD para implementação, revisão e evidências
@@ -204,7 +204,7 @@ git diff --check
 - **Plano de implementação:** T1 → T7
 - **Decisões locais / desvios:**
 - **Completion Notes:** Implementado o módulo `currency` vertical com migration V2, catálogo USD/BRL, BigDecimal, JPA append-only, seleção temporal total, RFC 9457/OpenAPI e testes PostgreSQL 16. A revisão corrigiu a documentação OpenAPI, a identificação segura de campos inválidos e a precisão temporal para micros. Os três achados Importantes finais foram resolvidos: moedas iguais agora produzem violação determinística em `quoteCurrency` sem escrita; a migration é verificada estruturalmente e por inserções inválidas em PostgreSQL real; e o OpenAPI referencia o schema efetivo de `ProblemDetail`, sem `traceId` fictício. Imagens reconstruídas, três serviços healthy e regressões backend/frontend aprovadas.
-- **Riscos e dívidas remanescentes:** não há achado Bloqueante ou Importante aberto. Permanecem somente as Sugestões registradas na revisão, a aprovação humana final e o warning futuro de self-attach do Mockito. Os checks remotos anteriores foram confirmados pela autora, sem IDs/URLs de execução registrados localmente; as correções atuais ainda dependem de nova execução remota após push humano.
+- **Riscos e dívidas remanescentes:** não há achado Bloqueante ou Importante aberto. Permanecem somente as Sugestões não bloqueantes registradas na revisão e o warning futuro de self-attach do Mockito. Os checks remotos finais das correções foram confirmados pela autora, sem IDs/URLs de execução registrados localmente.
 
 ### Evidências por critério
 
@@ -242,17 +242,17 @@ git diff --check
 | 2026-09-24 | `/v3/api-docs` | aprovado | POST 400 e GET 400/404 referenciam `ExchangeRateProblemDetail`; campos RFC 9457, `code` e `violations`; item com `field`/`message`; sem `traceId` |
 | 2026-09-24 | `check-docs.sh . story` | aprovado com 3 avisos de release | 0 erros |
 | 2026-09-24 | `git diff --check` | aprovado | exit 0 |
-| 2026-09-24 | GitHub Actions do PR em `778c3ecfe8c9dd1a7a27596d98b324953079d2a5` | aprovado, conforme confirmação da autora | jobs `backend`, `frontend` e `repository` verdes |
+| 2026-09-24 | GitHub Actions do PR, após as correções finais | aprovado, conforme confirmação da autora | jobs `backend`, `frontend` e `repository` executados novamente e verdes |
 
 ### Review Record
 
 - **Revisor/agente:** Codex (GPT-5), revisão final `origin/main...778c3ecfe8c9dd1a7a27596d98b324953079d2a5`, com lentes `blind-hunter`, `edge-case-hunter`, `verification-gap` e `intent-alignment`.
-- **Checks remotos:** PR aberto; jobs `backend`, `frontend` e `repository` aprovados no GitHub Actions, conforme confirmação da autora. Branch local limpa e sincronizada com `origin/feature/e1-s1-exchange-rates` no commit revisado.
+- **Checks remotos:** PR aberto; após a resolução dos três achados Importantes, os jobs `backend`, `frontend` e `repository` foram executados novamente e aprovados no GitHub Actions, conforme confirmação da autora.
 - **Achados Bloqueantes:** nenhum.
 - **Achados Importantes:** nenhum aberto. Os três achados foram resolvidos e comprovados por testes: violação por campo para moedas iguais; introspecção e exercício das constraints/índice da V2; schema real de erro referenciado nas respostas OpenAPI e documentação sem promessa de `traceId`.
 - **Sugestões:** cobrir a fronteira inclusiva `effectiveAt == Clock.instant()`; afirmar todos os campos e o `Location` exato do POST; tratar parâmetros GET ausentes no contrato estável; restringir o advice global e endurecer append-only na superfície Spring Data/banco. A ausência de GET por id torna o `Location` não dereferenciável, mas criar esse endpoint anteciparia escopo e requer decisão posterior.
-- **Recomendação:** **Aprovar após os checks remotos das correções**. AC1–AC6 estão atendidos e não há achado Bloqueante ou Importante aberto. Manter em Review até aprovação humana final.
-- **Aprovação humana:** concedida pela autora em 2026-09-23 para início da implementação.
+- **Recomendação:** **Aprovada**. AC1–AC6 estão atendidos, os checks locais e remotos estão verdes e não há achado Bloqueante ou Importante aberto.
+- **Aprovação humana:** aprovação final concedida pela autora em 2026-09-24 após confirmar a resolução dos três achados Importantes e a nova execução bem-sucedida dos jobs `backend`, `frontend` e `repository` no GitHub Actions.
 
 ### Change Log
 
@@ -265,6 +265,7 @@ git diff --check
 | 2026-09-24 | E1-S1 implementada; bloqueantes de formatação/OpenAPI, precisão temporal e contradição documental corrigidos; gates integrais aprovados e story movida para Review. | Codex |
 | 2026-09-24 | Consistência final: `effectiveAt` normalizado para micros, igualdade temporal POST/GET e rejeição sem escrita de moeda não catalogada comprovadas. | Codex |
 | 2026-09-24 | Três achados Importantes resolvidos: violação por campo para moedas iguais, prova estrutural/negativa da migration e schema `ProblemDetail` efetivo no OpenAPI/documentação. | Codex |
+| 2026-09-24 | Aprovação humana final registrada após nova execução verde dos jobs remotos; Definition of Done concluída e story promovida de Review para Done. | Autora + Codex |
 
 ### Handoff / próximo passo exato
 
