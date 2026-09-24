@@ -7,7 +7,7 @@ baseline_commit: '6445775d9f0387ed36005e2d21205010053208b1'
 route: 'full'
 route_source: 'auto'
 review: 'thorough'
-review_source: 'auto'
+review_source: 'pinned'
 lenses_ran: ['blind-hunter', 'edge-case-hunter', 'verification-gap', 'intent-alignment']
 review_loop_iteration: 0
 context:
@@ -203,8 +203,8 @@ git diff --check
 - **Branch/baseline observada:** `feature/e1-s1-exchange-rates` / `6445775d9f0387ed36005e2d21205010053208b1`
 - **Plano de implementação:** T1 → T7
 - **Decisões locais / desvios:**
-- **Completion Notes:** Implementado o módulo `currency` vertical com migration V2, catálogo USD/BRL, BigDecimal, JPA append-only, seleção temporal total, RFC 9457/OpenAPI e testes PostgreSQL 16. A revisão corrigiu a documentação OpenAPI, a identificação segura do campo `effectiveAt` inválido, a descrição contraditória do estado atual no README e a precisão temporal: `effectiveAt` e o instante do `Clock` usado em `createdAt` são truncados para micros antes da persistência, e o teste integrado comprova igualdade literal de ambos entre POST e GET. Também foi comprovado que POST com moeda bem formatada não catalogada retorna `CURRENCY_NOT_SUPPORTED` sem escrita. Imagens reconstruídas, três serviços healthy, smoke e documentação aprovados.
-- **Riscos e dívidas remanescentes:** aprovação humana final; warning futuro de self-attach do Mockito; `npm ci` no workspace Windows permanece bloqueado por um binário aberto, mas a instalação limpa e todos os gates frontend passaram em diretório temporário.
+- **Completion Notes:** Implementado o módulo `currency` vertical com migration V2, catálogo USD/BRL, BigDecimal, JPA append-only, seleção temporal total, RFC 9457/OpenAPI e testes PostgreSQL 16. A revisão corrigiu a documentação OpenAPI, a identificação segura de campos inválidos e a precisão temporal para micros. Os três achados Importantes finais foram resolvidos: moedas iguais agora produzem violação determinística em `quoteCurrency` sem escrita; a migration é verificada estruturalmente e por inserções inválidas em PostgreSQL real; e o OpenAPI referencia o schema efetivo de `ProblemDetail`, sem `traceId` fictício. Imagens reconstruídas, três serviços healthy e regressões backend/frontend aprovadas.
+- **Riscos e dívidas remanescentes:** não há achado Bloqueante ou Importante aberto. Permanecem somente as Sugestões registradas na revisão, a aprovação humana final e o warning futuro de self-attach do Mockito. Os checks remotos anteriores foram confirmados pela autora, sem IDs/URLs de execução registrados localmente; as correções atuais ainda dependem de nova execução remota após push humano.
 
 ### Evidências por critério
 
@@ -214,8 +214,8 @@ git diff --check
 | AC2 | Done | Teste preserva versões; porta não expõe update/delete. |
 | AC3 | Done | Testes provam futura ignorada e ordenação total. |
 | AC4 | Done | Teste prova 404 `EXCHANGE_RATE_NOT_FOUND`. |
-| AC5 | Done | Testes HTTP/domínio provam 400 e ausência de escrita. |
-| AC6 | Done | V2 e Testcontainers PostgreSQL 16 em `mvnw verify`; POST com EUR retorna `CURRENCY_NOT_SUPPORTED` e não escreve. |
+| AC5 | Done | Testes HTTP/domínio provam 400 e ausência de escrita; moedas iguais retornam `VALIDATION_ERROR` com `violations[0].field=quoteCurrency` e mensagem determinística. |
+| AC6 | Done | Testcontainers PostgreSQL 16 comprova FKs, `NUMERIC(18,8)`, `TIMESTAMPTZ`, checks e ordem/direção do índice; inserções inválidas exercitam constraints; POST com EUR retorna `CURRENCY_NOT_SUPPORTED` sem escrita. |
 
 ### File List
 
@@ -227,26 +227,31 @@ git diff --check
 | Alterado | `backend/pom.xml`, `application.yml`, testes baseline | dependências e configuração |
 | Alterado | `README.md`, `AI_USAGE.md`, `docs/api/contracts.md`, `docs/database/{ddl.sql,er.md}` | documentação derivada |
 | Alterado | `backend/src/main/java/com/srm/creditengine/currency/service/ExchangeRateService.java` | normalização de `effectiveAt` e `createdAt` para micros antes da persistência |
-| Alterado | `backend/src/test/java/com/srm/creditengine/currency/ExchangeRateIntegrationTest.java` | prova POST/GET da precisão temporal, moeda não catalogada e contrato OpenAPI |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/service/InvalidExchangeRateException.java` | erro de validação com campo determinístico |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/api/ExchangeRateProblemDetail.java`, `ExchangeRateViolation.java` | schemas OpenAPI do erro efetivamente publicado |
+| Alterado | `backend/src/main/java/com/srm/creditengine/currency/api/ExchangeRateController.java`, `ExchangeRateExceptionHandler.java` | referências OpenAPI e violação por campo para moedas iguais |
+| Alterado | `backend/src/test/java/com/srm/creditengine/currency/ExchangeRateIntegrationTest.java` | precisão temporal, moeda não catalogada, violação por campo, estrutura real da migration e contrato OpenAPI |
 
 ### Testes e gates executados
 
 | Data | Comando | Resultado | Evidência |
 |---|---|---|---|
-| 2026-09-24 | `mvnw.cmd -q spotless:check` e `mvnw.cmd -q verify` | aprovado | 25 testes, 0 falhas/erros/ignorados; ArchUnit 13/13; JaCoCo 97,30% linhas; PostgreSQL 16 |
+| 2026-09-24 | `mvnw.cmd -q spotless:apply`, `spotless:check` e `verify` | aprovado | 25 testes, 0 falhas/erros/ignorados; ArchUnit e PostgreSQL 16/Testcontainers aprovados; JaCoCo 154/160 linhas (96,25%) e 25/32 branches (78,13%) |
 | 2026-09-24 | `npm ci`, lint, typecheck, testes e build em instalação limpa | aprovado | 14/14 testes; 100% linhas e 87,5% branches |
-| 2026-09-24 | `docker compose config`, `up --build -d`, health e smoke | aprovado | PostgreSQL, backend e frontend healthy; POST 201, GET 200 e `effectiveAt`/`createdAt` idênticos após normalização para micros |
-| 2026-09-24 | `/v3/api-docs` e Swagger UI | aprovado | POST 201/400; GET 200/400/404; somente `base`/`quote`; Swagger 200 |
+| 2026-09-24 | `docker compose up --build -d`, health e validação HTTP | aprovado | PostgreSQL, backend e frontend healthy; moedas iguais: HTTP 400 `application/problem+json`, código, campo e mensagem esperados |
+| 2026-09-24 | `/v3/api-docs` | aprovado | POST 400 e GET 400/404 referenciam `ExchangeRateProblemDetail`; campos RFC 9457, `code` e `violations`; item com `field`/`message`; sem `traceId` |
 | 2026-09-24 | `check-docs.sh . story` | aprovado com 3 avisos de release | 0 erros |
 | 2026-09-24 | `git diff --check` | aprovado | exit 0 |
+| 2026-09-24 | GitHub Actions do PR em `778c3ecfe8c9dd1a7a27596d98b324953079d2a5` | aprovado, conforme confirmação da autora | jobs `backend`, `frontend` e `repository` verdes |
 
 ### Review Record
 
-- **Revisor/agente:** Codex (GPT-5), autorrevisão prévia à revisão humana.
-- **Achados Bloqueantes:** formatação OpenAPI corrigida e comprovada por `spotless:check`; imagem final reconstruída e contrato publicado validado.
-- **Achados Importantes:** divergências potenciais de nanos em `effectiveAt`/`createdAt` corrigidas por truncamento para micros antes da persistência; teste e smoke provam igualdade literal POST/GET. Contradição do README sobre a existência do módulo de câmbio corrigida.
-- **Sugestões:** fortalecer no futuro as asserções campo a campo do POST/OpenAPI; o caso de POST com moeda catalogalmente não suportada foi coberto nesta correção final.
-- **Recomendação:** pronta para revisão humana; manter em Review até aprovação.
+- **Revisor/agente:** Codex (GPT-5), revisão final `origin/main...778c3ecfe8c9dd1a7a27596d98b324953079d2a5`, com lentes `blind-hunter`, `edge-case-hunter`, `verification-gap` e `intent-alignment`.
+- **Checks remotos:** PR aberto; jobs `backend`, `frontend` e `repository` aprovados no GitHub Actions, conforme confirmação da autora. Branch local limpa e sincronizada com `origin/feature/e1-s1-exchange-rates` no commit revisado.
+- **Achados Bloqueantes:** nenhum.
+- **Achados Importantes:** nenhum aberto. Os três achados foram resolvidos e comprovados por testes: violação por campo para moedas iguais; introspecção e exercício das constraints/índice da V2; schema real de erro referenciado nas respostas OpenAPI e documentação sem promessa de `traceId`.
+- **Sugestões:** cobrir a fronteira inclusiva `effectiveAt == Clock.instant()`; afirmar todos os campos e o `Location` exato do POST; tratar parâmetros GET ausentes no contrato estável; restringir o advice global e endurecer append-only na superfície Spring Data/banco. A ausência de GET por id torna o `Location` não dereferenciável, mas criar esse endpoint anteciparia escopo e requer decisão posterior.
+- **Recomendação:** **Aprovar após os checks remotos das correções**. AC1–AC6 estão atendidos e não há achado Bloqueante ou Importante aberto. Manter em Review até aprovação humana final.
 - **Aprovação humana:** concedida pela autora em 2026-09-23 para início da implementação.
 
 ### Change Log
@@ -259,6 +264,7 @@ git diff --check
 | 2026-09-23 | Story aprovada humanamente e promovida para `ready-for-dev`; nenhuma implementação realizada. | Autora + Codex |
 | 2026-09-24 | E1-S1 implementada; bloqueantes de formatação/OpenAPI, precisão temporal e contradição documental corrigidos; gates integrais aprovados e story movida para Review. | Codex |
 | 2026-09-24 | Consistência final: `effectiveAt` normalizado para micros, igualdade temporal POST/GET e rejeição sem escrita de moeda não catalogada comprovadas. | Codex |
+| 2026-09-24 | Três achados Importantes resolvidos: violação por campo para moedas iguais, prova estrutural/negativa da migration e schema `ProblemDetail` efetivo no OpenAPI/documentação. | Codex |
 
 ### Handoff / próximo passo exato
 
