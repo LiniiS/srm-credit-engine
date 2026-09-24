@@ -2,12 +2,13 @@
 title: 'E1-S1 — Registrar e consultar taxas'
 type: 'feature'
 created: '2026-09-23'
-status: 'ready-for-dev'
+status: 'in-review'
+baseline_commit: '6445775d9f0387ed36005e2d21205010053208b1'
 route: 'full'
 route_source: 'auto'
-review: ''
-review_source: ''
-lenses_ran: []
+review: 'thorough'
+review_source: 'auto'
+lenses_ran: ['blind-hunter', 'edge-case-hunter', 'verification-gap', 'intent-alignment']
 review_loop_iteration: 0
 context:
   - '{project-root}/AGENTS.md'
@@ -20,7 +21,7 @@ context:
 # Story E1-S1 — Registrar e consultar taxas
 
 - **Épico:** E1 — Câmbio auditável
-- **Status:** Ready for Dev
+- **Status:** Review
 - **Prioridade:** Must
 - **Predecessoras:** E0-S1 e E0-S2 concluídas
 
@@ -118,13 +119,13 @@ Permitir que o operador registre uma taxa de câmbio USD/BRL e consulte a versã
 
 ## Tarefas técnicas ordenadas
 
-- [ ] **T1 — Contrato e domínio (AC1–AC5):** criar tipos e portas em `backend/src/main/java/com/srm/creditengine/currency/domain/`, mantendo taxa em `BigDecimal`, tempos em `Instant`/UTC, par explícito e `Clock` injetável; `createdAt` nunca entra no comando do cliente; testar invariantes sem Spring.
-- [ ] **T2 — Schema e catálogo (AC2, AC6):** criar `V2__create_exchange_rates.sql` com `currency`/`exchange_rate`, USD/BRL como referências do catálogo, `TIMESTAMPTZ`, constraints e índice total; não incluir seeds de taxa base nem alterar V1; atualizar DDL/ER derivados.
-- [ ] **T3 — Persistência (AC1–AC4, AC6):** adicionar JPA e implementar adapter/repositório em `currency/persistence`; selecionar `effective_at <= Clock.instant()` por `effective_at DESC, created_at DESC, id DESC`; entidades não vazam da camada.
-- [ ] **T4 — Caso de uso (AC1–AC6):** implementar registro transacional e consulta read-only em `currency/service`, distinguindo validação sintática, moeda não suportada e ausência de taxa vigente, sem update/delete ou chamada externa.
-- [ ] **T5 — API (AC1, AC3–AC6):** implementar DTOs/controllers em `currency/api`, sem parâmetro público de instante, e handler `ProblemDetail` com `VALIDATION_ERROR`, `CURRENCY_NOT_SUPPORTED` e `EXCHANGE_RATE_NOT_FOUND`, alinhado a ADR-0006.
-- [ ] **T6 — Provas (AC1–AC6):** adicionar testes unitários, MockMvc/contrato e integração Testcontainers PostgreSQL 16; provar catálogo, append-only, UTC, tempo controlado, taxa futura, ordenação total inclusive mesmo `effectiveAt` e, quando possível, mesmo `createdAt`, códigos de erro e ausência de vazamento interno.
-- [ ] **T7 — Documentação e fechamento:** atualizar somente README, DDL/ER, AI_USAGE e esta story com fatos reais; executar gates e revisar o diff contra os limites.
+- [x] **T1 — Contrato e domínio (AC1–AC5):** criar tipos e portas em `backend/src/main/java/com/srm/creditengine/currency/domain/`, mantendo taxa em `BigDecimal`, tempos em `Instant`/UTC, par explícito e `Clock` injetável; `createdAt` nunca entra no comando do cliente; testar invariantes sem Spring.
+- [x] **T2 — Schema e catálogo (AC2, AC6):** criar `V2__create_exchange_rates.sql` com `currency`/`exchange_rate`, USD/BRL como referências do catálogo, `TIMESTAMPTZ`, constraints e índice total; não incluir seeds de taxa base nem alterar V1; atualizar DDL/ER derivados.
+- [x] **T3 — Persistência (AC1–AC4, AC6):** adicionar JPA e implementar adapter/repositório em `currency/persistence`; selecionar `effective_at <= Clock.instant()` por `effective_at DESC, created_at DESC, id DESC`; entidades não vazam da camada.
+- [x] **T4 — Caso de uso (AC1–AC6):** implementar registro transacional e consulta read-only em `currency/service`, distinguindo validação sintática, moeda não suportada e ausência de taxa vigente, sem update/delete ou chamada externa.
+- [x] **T5 — API (AC1, AC3–AC6):** implementar DTOs/controllers em `currency/api`, sem parâmetro público de instante, e handler `ProblemDetail` com `VALIDATION_ERROR`, `CURRENCY_NOT_SUPPORTED` e `EXCHANGE_RATE_NOT_FOUND`, alinhado a ADR-0006.
+- [x] **T6 — Provas (AC1–AC6):** adicionar testes unitários, MockMvc/contrato e integração Testcontainers PostgreSQL 16; provar catálogo, append-only, UTC, tempo controlado, taxa futura, ordenação total inclusive mesmo `effectiveAt` e, quando possível, mesmo `createdAt`, códigos de erro e ausência de vazamento interno.
+- [x] **T7 — Documentação e fechamento:** atualizar somente README, DDL/ER, AI_USAGE e esta story com fatos reais; executar gates e revisar o diff contra os limites.
 
 ## Code Map e arquivos previstos
 
@@ -182,57 +183,70 @@ git diff --check
 
 ## Definition of Done
 
-- [ ] AC1–AC6 atendidos com evidências reais.
-- [ ] Backend `spotless:check` e `verify` passam; cobertura de produção atende ao threshold vigente.
-- [ ] Testcontainers PostgreSQL 16 comprova migration e persistência; nenhum H2.
-- [ ] Catálogo contém USD/BRL como referência, sem seeds de taxa base; moeda não suportada e par sem taxa vigente mantêm semânticas distintas.
-- [ ] Frontend e Compose passam como regressão; smoke POST/GET real é registrado.
-- [ ] OpenAPI/DTOs/`ProblemDetail`, códigos estáveis, DDL e ER refletem o comportamento implementado e `docs/api/contracts.md`/ADR-0006.
-- [ ] `effectiveAt`/`createdAt` usam `Instant`/UTC e `TIMESTAMPTZ`; `createdAt` é produzido pelo servidor; consulta e testes usam ordenação total.
-- [ ] Sem `double`/`float`, segredo, internals em erros ou funcionalidade fora do escopo.
-- [ ] Documentação, File List, Completion Notes, evidências e AI_USAGE atualizados com fatos reais.
+- [x] AC1–AC6 atendidos com evidências reais.
+- [x] Backend `spotless:check` e `verify` passam; cobertura de produção atende ao threshold vigente.
+- [x] Testcontainers PostgreSQL 16 comprova migration e persistência; nenhum H2.
+- [x] Catálogo contém USD/BRL como referência, sem seeds de taxa base; moeda não suportada e par sem taxa vigente mantêm semânticas distintas.
+- [x] Frontend e Compose passam como regressão; smoke POST/GET real é registrado.
+- [x] OpenAPI/DTOs/`ProblemDetail`, códigos estáveis, DDL e ER refletem o comportamento implementado e `docs/api/contracts.md`/ADR-0006.
+- [x] `effectiveAt`/`createdAt` usam `Instant`/UTC e `TIMESTAMPTZ`; ambos são normalizados para micros antes da persistência, `createdAt` é produzido pelo servidor, e consulta/testes usam ordenação total.
+- [x] Sem `double`/`float`, segredo, internals em erros ou funcionalidade fora do escopo.
+- [x] Documentação, File List, Completion Notes, evidências e AI_USAGE atualizados com fatos reais.
 - [ ] Revisão sem achado Bloqueante/Importante aberto e aprovação humana final.
-- [ ] Plano de commits preparado; Git mutável executado somente pela autora.
+- [x] Plano de commits preparado; Git mutável reservado somente à autora.
 
 ## Campos BMAD para implementação, revisão e evidências
 
 ### Dev Agent Record
 
-- **Agente/modelo:** não atribuído
-- **Branch/baseline observada:** não registrada
+- **Agente/modelo:** Codex (GPT-5)
+- **Branch/baseline observada:** `feature/e1-s1-exchange-rates` / `6445775d9f0387ed36005e2d21205010053208b1`
 - **Plano de implementação:** T1 → T7
 - **Decisões locais / desvios:**
-- **Completion Notes:**
-- **Riscos e dívidas remanescentes:**
+- **Completion Notes:** Implementado o módulo `currency` vertical com migration V2, catálogo USD/BRL, BigDecimal, JPA append-only, seleção temporal total, RFC 9457/OpenAPI e testes PostgreSQL 16. A revisão corrigiu a documentação OpenAPI, a identificação segura do campo `effectiveAt` inválido, a descrição contraditória do estado atual no README e a precisão temporal: `effectiveAt` e o instante do `Clock` usado em `createdAt` são truncados para micros antes da persistência, e o teste integrado comprova igualdade literal de ambos entre POST e GET. Também foi comprovado que POST com moeda bem formatada não catalogada retorna `CURRENCY_NOT_SUPPORTED` sem escrita. Imagens reconstruídas, três serviços healthy, smoke e documentação aprovados.
+- **Riscos e dívidas remanescentes:** aprovação humana final; warning futuro de self-attach do Mockito; `npm ci` no workspace Windows permanece bloqueado por um binário aberto, mas a instalação limpa e todos os gates frontend passaram em diretório temporário.
 
 ### Evidências por critério
 
 | AC | Status | Teste/comando/evidência |
 |---|---|---|
-| AC1 | Pending | |
-| AC2 | Pending | |
-| AC3 | Pending | |
-| AC4 | Pending | |
-| AC5 | Pending | |
-| AC6 | Pending | |
+| AC1 | Done | `ExchangeRateIntegrationTest` prova 201, Location, UTC, decimal string e igualdade POST/GET de `effectiveAt`/`createdAt` normalizados para micros. |
+| AC2 | Done | Teste preserva versões; porta não expõe update/delete. |
+| AC3 | Done | Testes provam futura ignorada e ordenação total. |
+| AC4 | Done | Teste prova 404 `EXCHANGE_RATE_NOT_FOUND`. |
+| AC5 | Done | Testes HTTP/domínio provam 400 e ausência de escrita. |
+| AC6 | Done | V2 e Testcontainers PostgreSQL 16 em `mvnw verify`; POST com EUR retorna `CURRENCY_NOT_SUPPORTED` e não escreve. |
 
 ### File List
 
 | Operação | Arquivo | Motivo |
 |---|---|---|
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/**` | corte vertical do módulo |
+| Criado | `backend/src/main/resources/db/migration/V2__create_exchange_rates.sql` | catálogo e histórico |
+| Criado | `backend/src/test/java/com/srm/creditengine/currency/**` | provas unitárias e integradas |
+| Alterado | `backend/pom.xml`, `application.yml`, testes baseline | dependências e configuração |
+| Alterado | `README.md`, `AI_USAGE.md`, `docs/api/contracts.md`, `docs/database/{ddl.sql,er.md}` | documentação derivada |
+| Alterado | `backend/src/main/java/com/srm/creditengine/currency/service/ExchangeRateService.java` | normalização de `effectiveAt` e `createdAt` para micros antes da persistência |
+| Alterado | `backend/src/test/java/com/srm/creditengine/currency/ExchangeRateIntegrationTest.java` | prova POST/GET da precisão temporal, moeda não catalogada e contrato OpenAPI |
 
 ### Testes e gates executados
 
 | Data | Comando | Resultado | Evidência |
 |---|---|---|---|
+| 2026-09-24 | `mvnw.cmd -q spotless:check` e `mvnw.cmd -q verify` | aprovado | 25 testes, 0 falhas/erros/ignorados; ArchUnit 13/13; JaCoCo 97,30% linhas; PostgreSQL 16 |
+| 2026-09-24 | `npm ci`, lint, typecheck, testes e build em instalação limpa | aprovado | 14/14 testes; 100% linhas e 87,5% branches |
+| 2026-09-24 | `docker compose config`, `up --build -d`, health e smoke | aprovado | PostgreSQL, backend e frontend healthy; POST 201, GET 200 e `effectiveAt`/`createdAt` idênticos após normalização para micros |
+| 2026-09-24 | `/v3/api-docs` e Swagger UI | aprovado | POST 201/400; GET 200/400/404; somente `base`/`quote`; Swagger 200 |
+| 2026-09-24 | `check-docs.sh . story` | aprovado com 3 avisos de release | 0 erros |
+| 2026-09-24 | `git diff --check` | aprovado | exit 0 |
 
 ### Review Record
 
-- **Revisor/agente:**
-- **Achados Bloqueantes:**
-- **Achados Importantes:**
-- **Sugestões:**
-- **Recomendação:**
+- **Revisor/agente:** Codex (GPT-5), autorrevisão prévia à revisão humana.
+- **Achados Bloqueantes:** formatação OpenAPI corrigida e comprovada por `spotless:check`; imagem final reconstruída e contrato publicado validado.
+- **Achados Importantes:** divergências potenciais de nanos em `effectiveAt`/`createdAt` corrigidas por truncamento para micros antes da persistência; teste e smoke provam igualdade literal POST/GET. Contradição do README sobre a existência do módulo de câmbio corrigida.
+- **Sugestões:** fortalecer no futuro as asserções campo a campo do POST/OpenAPI; o caso de POST com moeda catalogalmente não suportada foi coberto nesta correção final.
+- **Recomendação:** pronta para revisão humana; manter em Review até aprovação.
 - **Aprovação humana:** concedida pela autora em 2026-09-23 para início da implementação.
 
 ### Change Log
@@ -243,7 +257,9 @@ git diff --check
 | 2026-09-23 | Draft refinado com catálogo USD/BRL, convenção UTC, ordenação total e códigos de erro estáveis; nenhuma implementação realizada. | Codex |
 | 2026-09-23 | Parâmetro público `at` removido do GET latest; vigência vinculada exclusivamente ao `Clock` do servidor. | Codex |
 | 2026-09-23 | Story aprovada humanamente e promovida para `ready-for-dev`; nenhuma implementação realizada. | Autora + Codex |
+| 2026-09-24 | E1-S1 implementada; bloqueantes de formatação/OpenAPI, precisão temporal e contradição documental corrigidos; gates integrais aprovados e story movida para Review. | Codex |
+| 2026-09-24 | Consistência final: `effectiveAt` normalizado para micros, igualdade temporal POST/GET e rejeição sem escrita de moeda não catalogada comprovadas. | Codex |
 
 ### Handoff / próximo passo exato
 
-Revisão e aprovação humana da story. Após aprovação, alterar somente os campos de status/DoR/Change Log autorizados antes da implementação.
+Revisão e aprovação humana final. Após os checks remotos, registrar a decisão sem alterar código ou os blocos congelados.
