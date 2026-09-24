@@ -7,7 +7,7 @@ baseline_commit: '6936f0e3d0879560e997b145caf15a1d0a0dd70d'
 route: 'full'
 route_source: 'auto'
 review: 'thorough'
-review_source: 'auto'
+review_source: 'pinned'
 lenses_ran:
   - 'blind-hunter'
   - 'edge-case-hunter'
@@ -170,9 +170,9 @@ git diff --check
 
 ## Definition of Done
 
-- [ ] AC1–AC6 atendidos com evidências registradas.
+- [x] AC1–AC6 atendidos com evidências registradas.
 - [x] Guardrails positivos e negativos passam sem produção artificial.
-- [ ] CI executa em PR com permissões mínimas e todos os jobs verdes.
+- [x] CI executa em PR com permissões mínimas e todos os jobs verdes.
 - [x] Gates backend, frontend, integração e documentação passam com resultados reais.
 - [x] Nenhuma funcionalidade de negócio ou ADR aceito foi alterado.
 - [x] README, AI_USAGE, File List, Completion Notes e Change Log refletem o realizado.
@@ -187,23 +187,25 @@ git diff --check
 - **Baseline/branch observada:** `feature/e0-s2-architecture-guardrails`, commit `6936f0e3d0879560e997b145caf15a1d0a0dd70d`.
 - **Plano de implementação:** T1/AC1–AC2 ArchUnit; T2/AC3 boundaries; T3/AC4 axe; T4/AC5 workflow; T5/AC5–AC6 documentação; T6/AC1–AC6 gates e revisão.
 - **Decisões locais e justificativas:** regras ArchUnit reutilizadas tanto na base real quanto em fixtures negativas; fixtures de frontend exercitam a configuração ESLint programaticamente; `color-contrast` é desabilitada no helper axe por limitação de canvas do jsdom, sem desabilitar regras estruturais; CI usa somente wrappers, lockfile e actions oficiais, sem segredos.
-- **Completion Notes:** guardrails backend/frontend, cobertura automatizada de acessibilidade e workflow de CI implementados; ambiente integrado saudável; revisão crítica corrigiu os falsos verdes de resolução TypeScript, seleção de módulos backend desconhecidos e escopo da análise axe.
-- **Riscos/dívidas remanescentes:** AC5 aguarda execução real dos jobs no GitHub após push e abertura do PR pela autora; axe não substitui validação manual WCAG.
+- **Completion Notes:** guardrails backend/frontend, cobertura automatizada de acessibilidade e workflow de CI implementados; ambiente integrado saudável; os quatro achados Importantes da revisão final foram corrigidos com classificação explícita do pacote raiz, fixtures isoladas de módulo/camadas/reporting e execução da configuração ESLint real pela API oficial.
+- **Riscos/dívidas remanescentes:** axe não substitui validação manual WCAG. Os checks remotos anteriores estavam verdes; após o commit/push humano das correções, o PR deve executar novamente os três jobs antes do merge.
 
 ### Evidências por critério
 
 | AC | Evidência automatizada/manual | Resultado |
 |---|---|---|
-| AC1 | `mvnw.cmd -q verify`: regras de módulos, camadas, ciclos, APIs/ports e dependências de domínio sobre a base produtiva. | Atendido localmente |
-| AC2 | `ArchitectureRulesTest` aplica as mesmas regras a fixtures inválidas e exige violações específicas; 10 testes backend passaram. | Atendido |
-| AC3 | lint e `eslint-boundaries.test.js`: três imports proibidos rejeitados e dois permitidos aceitos. | Atendido |
+| AC1 | `mvnw.cmd -q verify`: somente `CreditEngineApplication` é permitida no pacote raiz; módulo desconhecido, todas as direções de camada, ciclos, internals, frameworks e exceção de reporting têm provas específicas. | Atendido |
+| AC2 | `ArchitectureRulesTest` usa fixtures isoladas e mensagens específicas; a dependência conhecida → desconhecida não depende da importação da classe `legacy`; 16 testes backend passaram. | Atendido |
+| AC3 | `eslint-boundaries.test.js` usa a API `ESLint` e o `export default` real sobre fixtures temporárias em paths produtivos; prova imports permitidos/proibidos e arquivo não classificado, com cleanup confirmado. | Atendido |
 | AC4 | `App.test.tsx`: axe e consultas semânticas nos estados carregando e resolvido. | Atendido |
-| AC5 | Workflow validado por parser YAML e coerência local; todos os comandos reproduzidos localmente. Execução no GitHub requer push/PR humano. | Parcial — evidência remota pendente |
+| AC5 | PR aberto; execução real do GitHub Actions confirmada pela autora com os jobs `backend`, `frontend` e `repository` verdes. O workflow usa Java 21/Maven Wrapper, Node/npm com `npm ci`, gates frontend, `docker compose config` e gate documental, sem segredos e com `contents: read`. | Atendido — checks remotos aprovados |
 | AC6 | Revisão do diff e buscas por itens vedados; somente guardrails, testes, CI e documentação foram adicionados. | Atendido |
 
 ### File List
 
+- `.gitattributes`
 - `.github/workflows/ci.yml`
+- `backend/mvnw` (modo executável para runner Linux)
 - `backend/pom.xml`
 - `backend/src/test/java/com/srm/creditengine/architecture/ArchitectureRules.java`
 - `backend/src/test/java/com/srm/creditengine/architecture/ArchitectureRulesTest.java`
@@ -219,19 +221,29 @@ git diff --check
 - `backend/src/test/java/com/srm/creditengine/architecturefixtureslayers/pricing/domain/DomainType.java`
 - `backend/src/test/java/com/srm/creditengine/architecturefixturesunknown/legacy/api/LegacyApi.java`
 - `backend/src/test/java/com/srm/creditengine/architecturefixturesunknown/pricing/service/UnknownModuleConsumer.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesapi/pricing/api/InvalidApi.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesapi/pricing/persistence/PersistenceType.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesbootstrap/CreditEngineApplication.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesbootstrap/pricing/persistence/InternalType.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesdomain/pricing/api/ApiType.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesdomain/pricing/domain/InvalidDomain.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesdomain/pricing/persistence/PersistenceType.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesdomain/pricing/service/ServiceType.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturespersistence/pricing/api/ApiType.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturespersistence/pricing/persistence/InvalidPersistence.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturespersistence/pricing/service/ServiceType.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesreporting/reporting/api/ReportingApi.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesreporting/reporting/persistence/ReportingQuery.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesroot/RogueRootClass.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesservice/pricing/api/ApiType.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesservice/pricing/persistence/PersistenceType.java`
+- `backend/src/test/java/com/srm/creditengine/architecturefixturesservice/pricing/service/InvalidService.java`
 - `frontend/package.json`
 - `frontend/package-lock.json`
 - `frontend/eslint.config.js`
 - `frontend/src/app/App.test.tsx`
 - `frontend/src/test/accessibility.ts`
 - `frontend/src/test/architecture/eslint-boundaries.test.js`
-- `frontend/src/test/architecture/fixtures/app/index.ts`
-- `frontend/src/test/architecture/fixtures/app/source.ts`
-- `frontend/src/test/architecture/fixtures/features/pricing/index.ts`
-- `frontend/src/test/architecture/fixtures/features/pricing/source.ts`
-- `frontend/src/test/architecture/fixtures/features/settlements/internal.ts`
-- `frontend/src/test/architecture/fixtures/shared/source.ts`
-- `frontend/src/test/architecture/fixtures/shared/value.ts`
 - `README.md`
 - `AI_USAGE.md`
 - `_bmad-output/implementation-artifacts/e0-s2-impor-limites-arquiteturais-e-ci.md`
@@ -245,19 +257,26 @@ git diff --check
 | 2026-09-23 | Provas negativas ArchUnit e ESLint | Aprovado | fixtures inválidas foram detectadas; imports permitidos permaneceram aceitos |
 | 2026-09-23 | `docker compose config` e `docker compose up --build -d` | Aprovado | imagens reconstruídas e configuração válida |
 | 2026-09-23 | `docker compose ps`, readiness, frontend e `pg_isready` | Aprovado | três serviços healthy; API 200/UP, frontend 200, PostgreSQL aceitando conexões, CORS para a origem da SPA |
-| 2026-09-23 | Parse local de `.github/workflows/ci.yml` e revisão dos jobs | Aprovado localmente | YAML válido; jobs `backend`, `frontend` e `repository`; execução remota pendente |
+| 2026-09-23 | Parse local de `.github/workflows/ci.yml` e revisão dos jobs | Aprovado localmente | YAML válido; jobs `backend`, `frontend` e `repository`; execução remota confirmada posteriormente |
+| 2026-09-23 | GitHub Actions no PR | Aprovado remotamente | confirmação humana: jobs `backend`, `frontend` e `repository` verdes |
+| 2026-09-23 | Revisão final local: `spotless:check`, `verify`, `npm ci`, lint, typecheck, testes, build, Compose, documentação e diff | Aprovado nos comandos | backend verde; frontend 3 arquivos/13 testes, cobertura 100% statements/lines/functions e 87,5% branches; npm audit 0 vulnerabilidades; docs 0 erros/3 avisos de release |
+| 2026-09-23 | Correções da revisão: `spotless:check` e `verify` | Aprovado | 16 testes backend, 0 falhas/erros/ignorados; fixtures específicas de raiz/bootstrap, módulo, camadas e reporting |
+| 2026-09-23 | Correções da revisão: lint, typecheck, testes e build frontend | Aprovado | 3 arquivos/14 testes; configuração ESLint real e overrides de aliases exercitados; cobertura 100% statements/lines/functions e 87,5% branches |
+| 2026-09-23 | Correções da revisão: `docker compose config` | Aprovado | configuração Compose válida; nenhuma fixture temporária permaneceu |
 | 2026-09-23 | `check-docs.sh . story` | Aprovado | 0 erros; 3 avisos esperados para documentos obrigatórios apenas no release |
 | 2026-09-23 | `git diff --check` e busca de itens vedados | Aprovado | sem erros de whitespace; nenhum item fora do escopo encontrado |
 
 ### Review Record
 
-- **Revisor/agente:** Codex, revisão crítica BMAD do diff completo.
-- **Base de comparação:** commit `6936f0e3d0879560e997b145caf15a1d0a0dd70d` e arquivos não rastreados da E0-S2.
-- **Achados Bloqueantes:** nenhum aberto.
-- **Achados Importantes:** corrigidos: resolvedor TypeScript ausente no teste de boundaries; seletor ArchUnit sem rejeição explícita de módulo raiz desconhecido; axe inicialmente limitado a uma região em vez de toda a tela renderizada.
-- **Sugestões:** manter a execução remota da CI como evidência obrigatória antes de concluir a story.
-- **Recomendação:** Review; não promover para Done até CI verde no PR e aprovação humana.
-- **Aprovação humana:** pendente.
+- **Revisor/agente:** Codex, revisão final BMAD com lentes blind, edge-case, verification-gap e intent-alignment.
+- **Base de comparação:** `origin/main...feature/e0-s2-architecture-guardrails`, incluindo os seis commits da branch e todos os arquivos do PR.
+- **Achados Bloqueantes:** nenhum.
+- **Achados Importantes:** todos resolvidos: pacote raiz fechado com allowlist do bootstrap; módulo desconhecido isolado; direções de camada e reporting cobertos; configuração ESLint efetiva exercitada pela API oficial.
+- **Sugestões:** testar dependências permitidas e a exceção de reporting; avaliar pinagem das actions por SHA e `timeout-minutes`; remover ou configurar aliases atualmente usados apenas nas provas de `no-restricted-imports`.
+- **Checks remotos:** confirmação humana de `backend`, `frontend` e `repository` verdes no PR; AC5 encerrado.
+- **Limitações remanescentes:** axe não cobre contraste no jsdom nem substitui teclado/leitor de tela; a CI do PR precisa rodar novamente após o push humano das correções.
+- **Recomendação:** **Aprovar após nova CI verde no PR**; manter em `Review` até a confirmação humana.
+- **Aprovação humana:** PR e checks remotos confirmados pela autora; aprovação final da story ainda pendente após correções.
 
 ## Review Triage Log
 
@@ -282,6 +301,33 @@ git diff --check
 | Intent — Compose em CI valida apenas `config` | false | Coincide exatamente com o comando exigido pelo AC5; smoke completo foi executado localmente. |
 | Intent — axe não cobre estado indisponível/contraste | false | AC4 congela apenas carregando e resolvido; contraste automatizado depende de canvas indisponível no jsdom e está documentado. |
 
+### Triage da revisão final contra `origin/main`
+
+| Lente/achado | Veredito | Evidência e rota |
+|---|---|---|
+| Blind/Edge/Intent — classes no pacote raiz escapam da matriz | medium | Confirmado: `moduleOf` retorna `null` para o pacote raiz e a condição só rejeita subpacotes desconhecidos. Achado Importante; corrigir código antes do merge. |
+| Blind — fixture unknown pode passar sem provar a aresta conhecida → desconhecida | medium | Confirmado: a própria classe sob `legacy` produz a mensagem esperada antes de isolar a dependência. Achado Importante; tornar a prova específica. |
+| Blind — dependências permitidas não possuem fixtures positivas | low | Confirmado; sugestão para evitar regra excessivamente restritiva quando os módulos reais surgirem. |
+| Blind/Verification — exceção `reporting.api → persistence` e direções de camada sem provas específicas | medium | Confirmado no inventário de fixtures. Achado Importante por risco de regressão silenciosa em regra aceita pelo ADR-0001. |
+| Blind — todo tipo público em `module.api` é contrato intermodular | false | O ADR-0001 e a story definem o pacote `api` como superfície pública; distinção adicional exigiria nova convenção não aprovada. |
+| Blind — `app` pode importar internals de feature | false | O ADR-0008 proíbe internals entre features e define `app` como composição; não exige entry point exclusivo para `app`. |
+| Blind — aliases das regras restritas não estão configurados | low | Confirmado, mas boundaries cobre imports relativos reais; sugestão para remover redundância ou configurar aliases quando adotados. |
+| Blind/Verification — teste frontend não executa a configuração flat efetiva | medium | Confirmado: o teste importa peças e monta outro objeto; desconectar regras do `export default` não o faz falhar. Achado Importante para AC3. |
+| Blind — axe usa apenas o container React | false | Carried: AC4 exige os estados da tela renderizada; regras document-level pertencem ao HTML estático e contraste está explicitamente fora do jsdom. |
+| Blind — actions referenciadas por tags mutáveis | low | Sugestão de hardening/reprodutibilidade; não viola permissões mínimas, ausência de segredos ou comandos congelados pelo AC5. |
+| Blind — jobs sem `timeout-minutes` | low | Sugestão operacional; os checks reais concluíram e o AC5 não exige timeout explícito. |
+| Blind — File List omitia `.gitattributes` e `backend/mvnw` | low | Confirmado e corrigido somente na story nesta revisão. |
+| Intent — CI carecia de evidência remota | false | Superado pela confirmação humana de que os três jobs reais do PR passaram. |
+| Intent — Compose remoto valida apenas configuração | false | O AC5 exige `docker compose config`; build, saúde e smoke permanecem evidência local conforme a story. |
+| Intent — fixtures concentram a prova dos limites futuros | false | Estratégia explicitamente exigida para não criar produção vazia; as regras também analisam a base produtiva. |
+
+### Revisão crítica das correções
+
+- **Bloqueantes:** nenhum.
+- **Importantes:** nenhum aberto. A revisão intermediária detectou e corrigiu o acesso do bootstrap a internals, a ausência de provas dos overrides por alias e o risco de sobrescrever arquivos preexistentes nas fixtures temporárias.
+- **Sugestões:** as sugestões anteriores permanecem fora deste patch, conforme escopo solicitado.
+- **Segurança das fixtures:** criação com `flag: 'wx'`, nomes reservados `__architecture_*` e cleanup somente do conjunto efetivamente criado; nenhum arquivo temporário permaneceu após o gate.
+
 ### Change Log
 
 | Data | Alteração | Autor |
@@ -289,7 +335,9 @@ git diff --check
 | 2026-09-23 | Story E0-S2 preparada a partir do planejamento, E0-S1 e ADRs aceitos; nenhuma implementação realizada. | Codex |
 | 2026-09-23 | Story aprovada pela autora e promovida para `ready-for-dev`; nenhuma implementação realizada. | Autora |
 | 2026-09-23 | T1–T6 implementadas e validadas localmente; story movida para `Review`, com AC5 aguardando evidência da CI no PR. | Codex |
+| 2026-09-23 | Revisão final contra `origin/main`; checks remotos `backend`, `frontend` e `repository` confirmados verdes e AC5 encerrado. Achados Importantes de falso verde mantêm a recomendação de correção antes do merge. | Codex + confirmação da autora |
+| 2026-09-23 | Quatro achados Importantes corrigidos exclusivamente nos guardrails e fixtures de teste; gates locais completos aprovados; story mantida em `Review`. | Codex |
 
 ### Handoff / próximo passo exato
 
-A autora deve revisar o diff, executar os commits sugeridos, publicar a branch e abrir/atualizar o PR. Após os três jobs da CI ficarem verdes, registrar essa evidência, realizar a aprovação humana e só então avaliar a promoção para `Done`.
+Executar os commits corretivos e o push manualmente. Confirmar nova execução verde de `backend`, `frontend` e `repository` no PR; manter a story em `Review` até a aprovação humana final.
