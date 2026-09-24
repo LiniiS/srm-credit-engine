@@ -17,6 +17,7 @@
 | 2026-09-23 | Auditoria de acessibilidade | Auditar ADR frontend, arquitetura, PRD, stories, critérios e DoD contra WCAG 2.2 AA | Requisitos de semântica, teclado, foco, anúncios, tabela, contraste, movimento e testes tornados verificáveis e rastreáveis | Nenhum código implementado; ADR-0008 permaneceu Proposto |
 | 2026-09-23 | Consolidação após revisão humana | Propagar a aprovação formal dos nove ADRs e das decisões financeiras, arquiteturais, operacionais, de acessibilidade e Git | ADR-0001 a ADR-0009 promovidos para Aceito; Architecture Spine, PRD, stories e riscos reconciliados | A responsável revisou e aprovou as decisões; o Codex apenas registrou e verificou consistência, sem implementar ou operar Git |
 | 2026-09-23 | Implementação E0-S1 | Implementar integralmente o esqueleto executável com Spring Boot, Flyway/Testcontainers, React/Vite, containers não-root, Compose, testes e documentação | Backend, frontend e PostgreSQL integrados; gates e smoke path executados | Toolchain frontend atualizada após audit; healthcheck IPv4 corrigido; porta PostgreSQL externa alterada apenas no teste por conflito local |
+| 2026-09-23 | Implementação E0-S2 | Implementar guardrails ArchUnit e ESLint, acessibilidade automatizada, CI e evidências da story sem antecipar negócio | Regras arquiteturais com provas negativas, axe nos estados existentes e workflow de PR; gates locais e smoke integrado aprovados | O agente não executou operações Git; a execução real do workflow no GitHub permanece dependente de push e PR humanos |
 
 ## Problemas detectados
 
@@ -58,6 +59,16 @@
 - **Correção aplicada:** documentos compatíveis foram produzidos pelas skills `srm-arquitetura` e `srm-documentacao`, deixando explícita a limitação e a necessidade de aprovação/validação humana.
 - **Commit:** não executado; operações Git são exclusivamente humanas neste repositório.
 - **Lição:** descoberta de capacidades deve preceder o uso declarado de um método.
+
+### Classificação inicial incompleta dos imports TypeScript
+
+- **O que a IA gerou:** testes do `eslint-plugin-boundaries` sem um resolvedor TypeScript explícito.
+- **Como foi detectado:** a prova negativa da configuração classificava a origem, mas não o destino importado.
+- **Risco:** falso verde para imports relativos proibidos.
+- **Correção aplicada:** inclusão de `eslint-import-resolver-typescript` e execução de fixtures permitidas e proibidas exclusivamente de teste.
+- **Teste que evita regressão:** `eslint-boundaries.test.js` valida três violações e dois imports permitidos; o gate frontend completo passou.
+- **Commit:** não executado; o agente apenas preparou o plano para execução manual pela autora.
+- **Lição:** regras de boundary precisam testar a resolução real dos imports, não apenas a sintaxe da configuração.
 
 <!-- Para cada ocorrência real, utilizar:
 
