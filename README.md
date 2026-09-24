@@ -1,6 +1,6 @@
 # SRM Credit Engine
 
-> Plataforma de cessão de crédito multimoedas em construção. A E0-S1 entrega somente a fundação executável entre SPA, API e PostgreSQL.
+> Plataforma de cessão de crédito multimoedas em construção. A fundação executável já inclui guardrails arquiteturais e CI, ainda sem funcionalidades de negócio.
 
 ## Estado atual
 
@@ -9,7 +9,9 @@ O repositório possui um caminho técnico ponta a ponta:
 - PostgreSQL 16 inicializado por Flyway;
 - API Java 21/Spring Boot 3 com readiness do Actuator;
 - SPA React/TypeScript/Vite que consulta a readiness real;
-- execução oficial por Docker Compose, com os três serviços usando healthchecks.
+- execução oficial por Docker Compose, com os três serviços usando healthchecks;
+- ArchUnit e ESLint impondo os limites arquiteturais aceitos;
+- GitHub Actions reproduzindo os gates locais em pull requests.
 
 Ainda não existem endpoints, tabelas, cálculos ou telas de câmbio, precificação, liquidação e extrato.
 
@@ -114,7 +116,7 @@ cd backend
 ./mvnw -q verify
 ```
 
-O `verify` executa os testes de contexto/readiness e a integração Flyway com PostgreSQL 16 via Testcontainers. Docker precisa estar ativo.
+O `verify` executa os testes de contexto/readiness, a integração Flyway com PostgreSQL 16 via Testcontainers e os guardrails ArchUnit. As fixtures negativas ficam somente nos testes e provam que dependências proibidas são detectadas. Docker precisa estar ativo.
 
 No Windows, os comandos equivalentes usam `mvnw.cmd`.
 
@@ -128,6 +130,12 @@ npm run typecheck
 npm run test -- --run
 npm run build
 ```
+
+O lint aplica a matriz `app`/`features`/`shared`; testes da própria configuração comprovam imports permitidos e proibidos. Os testes da tela também executam axe nos estados carregando e resolvido. Axe cobre apenas violações automatizáveis e não substitui revisão manual de acessibilidade.
+
+### Integração contínua
+
+O workflow `.github/workflows/ci.yml` executa jobs independentes de backend, frontend e validações do repositório em pull requests e em pushes para `main`. A execução definitiva no GitHub só pode ser comprovada após push e abertura do PR pela autora.
 
 ### Documentação e Compose
 
@@ -154,6 +162,6 @@ O backend ainda não cria módulos de negócio: eles nascerão junto de comporta
 - apenas `health` e `info` são expostos pelo Actuator;
 - respostas de health não exibem detalhes internos;
 - autenticação e autorização estão fora do MVP atual;
-- observabilidade completa, CI e guardrails arquiteturais pertencem a stories posteriores.
+- observabilidade completa pertence a stories posteriores; os guardrails desta fundação não substituem revisão arquitetural nem testes das funcionalidades futuras.
 
 Consulte também os [ADRs aceitos](docs/adr/README.md), os [critérios de aceite](docs/acceptance-criteria.md) e o registro de [uso de IA](AI_USAGE.md).
