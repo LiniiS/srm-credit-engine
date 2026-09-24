@@ -3,6 +3,7 @@ package com.srm.creditengine.currency.api;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.srm.creditengine.currency.service.CurrencyNotSupportedException;
 import com.srm.creditengine.currency.service.ExchangeRateNotFoundException;
+import com.srm.creditengine.currency.service.InvalidExchangeRateException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URI;
@@ -33,6 +34,13 @@ class ExchangeRateExceptionHandler {
   @ExceptionHandler(IllegalArgumentException.class)
   ResponseEntity<ProblemDetail> invalid(HttpServletRequest request) {
     return validation(request, List.of());
+  }
+
+  @ExceptionHandler(InvalidExchangeRateException.class)
+  ResponseEntity<ProblemDetail> invalidExchangeRate(
+      InvalidExchangeRateException exception, HttpServletRequest request) {
+    return validation(
+        request, List.of(Map.of("field", exception.field(), "message", exception.getMessage())));
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
