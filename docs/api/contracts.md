@@ -10,9 +10,9 @@
 
 | Método | Rota | Sucesso | Erros principais |
 |---|---|---|---|
-| POST | `/exchange-rates` | 201 + `Location` | 400, 422 |
+| POST | `/exchange-rates` | 201 + `Location` | 400 |
 | POST | `/exchange-rates/sync` | 202 | 503 |
-| GET | `/exchange-rates/latest?base&quote&at` | 200 | 400, 404 |
+| GET | `/exchange-rates/latest?base&quote` | 200 | 400, 404 |
 | GET | `/receivable-types` | 200 | — |
 | POST | `/pricing/simulations` | 200 | 400, 422, 503 |
 | POST | `/settlements` | 201 + `Location` | 400, 409, 422, 503 |

@@ -13,7 +13,14 @@ O repositório possui um caminho técnico ponta a ponta:
 - ArchUnit e ESLint impondo os limites arquiteturais aceitos;
 - GitHub Actions reproduzindo os gates locais em pull requests.
 
-Ainda não existem endpoints, tabelas, cálculos ou telas de câmbio, precificação, liquidação e extrato.
+O primeiro corte de câmbio já oferece catálogo USD/BRL, histórico append-only e consulta da taxa vigente. Cálculos de conversão, precificação, liquidação, extrato e telas de negócio permanecem fora desta story.
+
+## API de câmbio
+
+| Método | Rota | Resultado |
+|---|---|---|
+| POST | `/api/v1/exchange-rates` | `201 Created`, `Location` e decimal como string |
+| GET | `/api/v1/exchange-rates/latest?base=USD&quote=BRL` | versão vigente no relógio UTC do servidor |
 
 ## Como rodar
 
