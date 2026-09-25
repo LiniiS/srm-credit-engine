@@ -171,6 +171,60 @@ class HttpExchangeRateProviderTest {
   }
 
   @Test
+  void rejects_redirect_without_following_or_retrying_and_counts_logical_failure()
+      throws Exception {
+    var calls = new AtomicInteger();
+    var redirectedCalls = new AtomicInteger();
+    server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+    serverExecutor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().factory());
+    server.setExecutor(serverExecutor);
+    server.createContext(
+        "/v1/rates",
+        exchange -> {
+          calls.incrementAndGet();
+          exchange.getResponseHeaders().set("Location", "/redirected");
+          respond(exchange, 302, "application/json", validPayload());
+        });
+    server.createContext(
+        "/redirected",
+        exchange -> {
+          redirectedCalls.incrementAndGet();
+          exchange.sendResponseHeaders(200, -1);
+          exchange.close();
+        });
+    server.start();
+    var registry = new SimpleMeterRegistry();
+    var provider = provider(Duration.ofSeconds(1), registry);
+
+    assertThatThrownBy(() -> provider.fetch(currency("USD"), currency("BRL")))
+        .isInstanceOf(ExchangeRateProviderException.class);
+    assertThat(calls).hasValue(1);
+    assertThat(redirectedCalls).hasValue(0);
+    assertThat(registry.counter("srm.fx.provider.retries", "outcome", "retry").count()).isZero();
+    assertThat(provider.circuitBreaker().getMetrics().getNumberOfFailedCalls()).isOne();
+  }
+
+  @Test
+  void rejects_no_content_without_retrying_or_counting_it_as_success() throws Exception {
+    var calls = new AtomicInteger();
+    start(
+        exchange -> {
+          calls.incrementAndGet();
+          exchange.sendResponseHeaders(204, -1);
+          exchange.close();
+        });
+    var registry = new SimpleMeterRegistry();
+    var provider = provider(Duration.ofSeconds(1), registry);
+
+    assertThatThrownBy(() -> provider.fetch(currency("USD"), currency("BRL")))
+        .isInstanceOf(ExchangeRateProviderException.class);
+    assertThat(calls).hasValue(1);
+    assertThat(registry.counter("srm.fx.provider.retries", "outcome", "retry").count()).isZero();
+    assertThat(registry.counter("srm.fx.provider.calls", "outcome", "success").count()).isZero();
+    assertThat(provider.circuitBreaker().getMetrics().getNumberOfFailedCalls()).isOne();
+  }
+
+  @Test
   void retries_io_failures_and_exposes_the_approved_backoff_configuration() throws Exception {
     server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
     var unavailablePort = server.getAddress().getPort();
