@@ -2,13 +2,13 @@
 title: 'E1-S3 — Disponibilizar taxa base por moeda e vigência'
 type: 'feature'
 created: '2026-09-25'
-status: 'ready-for-dev'
+status: 'in-review'
 baseline_commit: '5c04a9ed4c1e1812b8a85358d2aa1110d878ce9e'
 route: 'full'
 route_source: 'auto'
-review: ''
-review_source: ''
-lenses_ran: []
+review: 'thorough'
+review_source: 'pinned'
+lenses_ran: ['blind-hunter', 'edge-case-hunter', 'verification-gap', 'intent-alignment']
 review_loop_iteration: 0
 context:
   - '{project-root}/AGENTS.md'
@@ -21,7 +21,7 @@ context:
 # Story E1-S3 — Disponibilizar taxa base por moeda e vigência
 
 - **Épico:** E1 — Câmbio auditável
-- **Status:** Ready for Dev
+- **Status:** Review
 - **Prioridade:** Must, como pré-condição da precificação
 - **Predecessoras:** E0-S1, E0-S2, E1-S1 e E1-S2 concluídas
 
@@ -160,12 +160,12 @@ Não há contrato REST na E1-S3: nenhum artefato de planejamento define endpoint
 
 ## Tarefas técnicas ordenadas
 
-- [ ] **T1 — Testes de domínio (AC2, AC3, AC5, AC6):** especificar por testes fração mensal, valor, origem, data inclusiva, erros e precisão sem framework.
-- [ ] **T2 — Migration V3 (AC1, AC2, AC4):** criar tabela, constraints de valor/origem, índice e os dois seeds exatos aprovados; preservar V1/V2.
-- [ ] **T3 — Domínio e porta (AC3, AC5, AC6):** criar `BaseRate`, erros e somente `BaseRateQuery` como porta pública no módulo `currency`, retornando id, moeda, valor, vigência e origem, sem anotações de framework.
-- [ ] **T4 — Persistência e serviço de consulta (AC3–AC6):** mapear entidade/adapter JPA e selecionar `effective_from <= calculationDate` em ordem descendente; distinguir catálogo ausente de versão ausente; manter qualquer colaborador de escrita package-private e sem caso de uso produtivo.
-- [ ] **T5 — Provas PostgreSQL/arquitetura (AC1–AC6):** validar schema por catálogo e inserções inválidas, seeds, append-only, bordas temporais, precisão e guardrails em Testcontainers.
-- [ ] **T6 — Documentação e fechamento:** derivar DDL/ER/modelo da V3; atualizar README/AI_USAGE/story apenas com fatos; executar gates e revisar o diff.
+- [x] **T1 — Testes de domínio (AC2, AC3, AC5, AC6):** especificar por testes fração mensal, valor, origem, data inclusiva, erros e precisão sem framework.
+- [x] **T2 — Migration V3 (AC1, AC2, AC4):** criar tabela, constraints de valor/origem, índice e os dois seeds exatos aprovados; preservar V1/V2.
+- [x] **T3 — Domínio e porta (AC3, AC5, AC6):** criar `BaseRate`, erros e somente `BaseRateQuery` como porta pública no módulo `currency`, retornando id, moeda, valor, vigência e origem, sem anotações de framework.
+- [x] **T4 — Persistência e serviço de consulta (AC3–AC6):** mapear entidade/adapter JPA e selecionar `effective_from <= calculationDate` em ordem descendente; distinguir catálogo ausente de versão ausente; manter qualquer colaborador de escrita package-private e sem caso de uso produtivo.
+- [x] **T5 — Provas PostgreSQL/arquitetura (AC1–AC6):** validar schema por catálogo e inserções inválidas, seeds, append-only, bordas temporais, precisão e guardrails em Testcontainers.
+- [x] **T6 — Documentação e fechamento:** derivar DDL/ER/modelo da V3; atualizar README/AI_USAGE/story apenas com fatos; executar gates e revisar o diff.
 
 ## Code Map e arquivos previstos
 
@@ -223,60 +223,92 @@ docker compose down
 
 ## Definition of Done
 
-- [ ] AC1–AC6 atendidos com evidências automatizadas e reais.
-- [ ] V3 é a fonte do schema, preserva V1/V2 e passa em PostgreSQL 16/Testcontainers sem H2.
-- [ ] Seeds BRL/USD coincidem exatamente com os valores, UUIDs, vigência e origem aprovados e são inequivocamente fictícios/reproduzíveis.
-- [ ] Consulta vigente, fronteiras, falhas e append-only estão cobertos sem cálculo ou snapshot antecipado.
-- [ ] `BaseRateQuery` é a única porta pública e retorna id, moeda, taxa mensal, vigência e origem; nenhuma escrita produtiva pública existe.
-- [ ] Origem obrigatória/não vazia/de até 64 caracteres é protegida no domínio e no PostgreSQL.
-- [ ] Nenhum `double`/`float`/arredondamento silencioso; domínio permanece livre de Spring/JPA/Jackson.
-- [ ] `spotless:check`, `verify`, ArchUnit, JaCoCo, regressão frontend e Compose passam.
-- [ ] DDL, ER, modelo, README, AI_USAGE, File List e evidências refletem a implementação real.
-- [ ] Gate documental e `git diff --check` passam; revisão não deixa Bloqueante/Importante aberto.
-- [ ] Story permanece em Review até aprovação humana final; Git mutável reservado à autora.
+- [x] AC1–AC6 atendidos com evidências automatizadas e reais.
+- [x] V3 é a fonte do schema, preserva V1/V2 e passa em PostgreSQL 16/Testcontainers sem H2.
+- [x] Seeds BRL/USD coincidem exatamente com os valores, UUIDs, vigência e origem aprovados e são inequivocamente fictícios/reproduzíveis.
+- [x] Consulta vigente, fronteiras, falhas e append-only estão cobertos sem cálculo ou snapshot antecipado.
+- [x] `BaseRateQuery` é a única porta pública e retorna id, moeda, taxa mensal, vigência e origem; nenhuma escrita produtiva pública existe.
+- [x] Origem obrigatória/não vazia/de até 64 caracteres é protegida no domínio e no PostgreSQL.
+- [x] Nenhum `double`/`float`/arredondamento silencioso; domínio permanece livre de Spring/JPA/Jackson.
+- [x] `spotless:check`, `verify`, ArchUnit, JaCoCo, regressão frontend e Compose passam.
+- [x] DDL, ER, modelo, README, AI_USAGE, File List e evidências refletem a implementação real.
+- [x] Gate documental e `git diff --check` passam; revisão não deixa Bloqueante/Importante aberto.
+- [x] Story permanece em Review até aprovação humana final; Git mutável reservado à autora.
 
 ## Campos BMAD para implementação, revisão e evidências
 
 ### Dev Agent Record
 
-- **Agente/modelo:**
-- **Branch/baseline observada:** `main` / `5c04a9ed4c1e1812b8a85358d2aa1110d878ce9e`
+- **Agente/modelo:** Codex (GPT-5), com revisão crítica BMAD.
+- **Branch/baseline observada:** `feature/e1-s3-base-rates` / `50aa818` (story aprovada); baseline declarada preservada em `5c04a9ed4c1e1812b8a85358d2aa1110d878ce9e`.
 - **Plano de implementação:** T1 → T6
-- **Decisões locais/desvios:**
-- **Completion Notes:**
-- **Riscos/dívidas remanescentes:** nenhum bloqueio conhecido para iniciar a implementação; manter seeds claramente demonstrativos.
+- **Decisões locais/desvios:** o adapter JPA package-private implementa diretamente `BaseRateQuery`; a proposta intermediária de uma segunda porta pública de repositório foi removida para cumprir literalmente a superfície aprovada. A porta recebe o `CurrencyCode` canônico e traduz falhas de persistência em `BASE_RATE_QUERY_FAILED`. Não foi criado serviço pass-through, endpoint ou escrita produtiva.
+- **Completion Notes:** V3, domínio puro, única porta de consulta, persistência JPA, provas PostgreSQL/ArchUnit, documentos e ambiente integrado concluídos. A imagem final aplicou V3 e expôs somente os endpoints anteriores. O agente não executou commits; posteriormente, a autora registrou a implementação nos commits `d635e5f`, `9501b0c`, `643832b` e `151228d`, validados pelo histórico e conteúdo.
+- **Riscos/dívidas remanescentes:** aprovação humana final e execução da CI remota após push permanecem externas a esta sessão; os seeds são deliberadamente demonstrativos.
 
 ### Evidências por critério
 
 | AC | Status | Teste/comando/evidência |
 |---|---|---|
-| AC1 | Pendente | |
-| AC2 | Pendente | |
-| AC3 | Pendente | |
-| AC4 | Pendente | |
-| AC5 | Pendente | |
-| AC6 | Pendente | |
+| AC1 | Atendido | `BaseRateIntegrationTest` introspecta colunas, tipos, FK, checks, unique e índice na V3 real em PostgreSQL 16.6; `FlywayIntegrationTest` confirma a versão 3. Migration registrada pela autora em `d635e5f`. |
+| AC2 | Atendido | Teste e smoke Compose confirmam os UUIDs, moedas, valores `NUMERIC(18,12)`, data e `DEMO_SEED` exatos para BRL/USD; schema/seeds em `d635e5f` e provas em `643832b`. |
+| AC3 | Atendido | Testes cobrem fronteira inclusiva, data entre versões, versão mais recente e versão futura; o resultado preserva id, moeda, valor, vigência e origem. |
+| AC4 | Atendido | Não existe porta/caso de uso de escrita; fixtures SQL provam histórico coexistente e unique impede sobrescrita lógica da mesma moeda/vigência. |
+| AC5 | Atendido | `CurrencyCode` e `LocalDate` validam a entrada; a integração distingue `CURRENCY_NOT_SUPPORTED` de `BASE_RATE_NOT_FOUND`, e falhas de persistência são traduzidas para `BASE_RATE_QUERY_FAILED`. Implementação em `9501b0c` e provas em `643832b`. |
+| AC6 | Atendido | Domínio usa `BigDecimal`, escala máxima 12 e nenhuma dependência de framework; ArchUnit e a prova de única porta pública passaram. |
 
 ### File List
 
 | Operação | Arquivo | Motivo |
 |---|---|---|
-| Criado | `_bmad-output/implementation-artifacts/e1-s3-disponibilizar-taxa-base-por-moeda-e-vigencia.md` | Preparação, decisão humana e promoção da story para Ready for Dev. |
+| Alterado | `_bmad-output/implementation-artifacts/e1-s3-disponibilizar-taxa-base-por-moeda-e-vigencia.md` | Execução, evidências e promoção para Review. |
+| Criado | `backend/src/main/resources/db/migration/V3__create_base_rates.sql` | Schema versionado e seeds fictícios exatos. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/domain/port/BaseRate.java` | Resultado de domínio preciso e rastreável. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/domain/port/BaseRateQuery.java` | Única porta pública da capacidade. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/domain/port/BaseRateQueryException.java` | Tradução estável de falhas de persistência. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/domain/port/BaseRateCurrencyNotSupportedException.java` | Erro estável para catálogo ausente. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/domain/port/BaseRateNotFoundException.java` | Erro estável para ausência de versão aplicável. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/persistence/BaseRateEntity.java` | Mapeamento JPA package-private. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/persistence/JpaBaseRateRepository.java` | Consulta de vigência package-private. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/persistence/JpaBaseRateAdapter.java` | Adapter de consulta e distinção catálogo/versão. |
+| Criado | `backend/src/test/java/com/srm/creditengine/currency/domain/port/BaseRateTest.java` | Bordas de domínio e precisão. |
+| Criado | `backend/src/test/java/com/srm/creditengine/currency/BaseRateIntegrationTest.java` | Provas reais de schema, seeds, vigência, erros e append-only. |
+| Criado | `backend/src/test/java/com/srm/creditengine/currency/persistence/JpaBaseRateAdapterTest.java` | Prova de que exceções Spring/JPA não atravessam a porta. |
+| Alterado | `backend/src/test/java/com/srm/creditengine/FlywayIntegrationTest.java` | Evidência de aplicação da V3. |
+| Alterado | `backend/src/test/java/com/srm/creditengine/architecture/ArchitectureTest.java` | Guardrail da única porta pública. |
+| Alterado | `backend/src/test/java/com/srm/creditengine/CreditEngineApplicationTest.java` | Isolamento do contexto HTTP sem persistência. |
+| Alterado | `docs/database/ddl.sql`, `docs/database/er.md`, `docs/database/data-model.md` | Documentação derivada da V3. |
+| Alterado | `README.md`, `AI_USAGE.md` | Uso interno, caráter fictício dos seeds e contribuição material de IA. |
+
+**Commits executados posteriormente pela autora:**
+
+- `d635e5f feat(db): add versioned base-rate configuration` — migration V3 e documentação do modelo de dados.
+- `9501b0c feat(currency): add effective base-rate query` — domínio, porta e persistência da consulta.
+- `643832b test(currency): prove base-rate persistence and contracts` — testes de domínio, integração, migration e arquitetura.
+- `151228d docs(currency): document base-rate configuration` — atualização operacional do README.
 
 ### Testes e gates executados
 
 | Data | Comando | Resultado | Evidência |
 |---|---|---|---|
+| 2026-09-25 | `mvnw.cmd -q spotless:check` | PASS | Formatação backend íntegra. |
+| 2026-09-25 | `mvnw.cmd -q verify` | PASS | 76 testes em 14 suites; 0 falhas, erros ou skips; ArchUnit e PostgreSQL 16.6/Testcontainers verdes. |
+| 2026-09-25 | JaCoCo no `verify` | PASS | 373/379 linhas (98,42%) e 79/90 branches (87,78%); classes novas de taxa base com 100% de linhas. |
+| 2026-09-25 | `npm ci`, `lint`, `typecheck`, `test -- --run`, `build` | PASS | Instalação limpa em diretório temporário; 3 arquivos/14 testes; cobertura frontend 100% linhas e 87,5% branches; build Vite concluído. |
+| 2026-09-25 | `docker compose config`, `up --build -d`, `ps` | PASS | PostgreSQL, WireMock, backend e frontend `healthy`; readiness/API, frontend e WireMock HTTP 200. |
+| 2026-09-25 | Consulta SQL no PostgreSQL do Compose | PASS | Duas linhas exatas BRL/USD da V3; volume normal preservado. |
+| 2026-09-25 | `/v3/api-docs` | PASS | Nenhum caminho de taxa base exposto. |
+| 2026-09-25 | `check-docs.sh . story`, `git diff --check` | PASS | Gate documental e whitespace sem achados. |
 
 ### Review Record
 
-- **Revisor/agente:**
-- **Base da revisão:**
-- **Achados Bloqueantes:**
-- **Achados Importantes:**
-- **Sugestões:**
-- **Limitações remanescentes:**
-- **Recomendação:** Ready for Dev; iniciar somente após branch adequada e releitura integral da story.
+- **Revisor/agente:** Codex (auto-revisão BMAD).
+- **Base da revisão:** diff integral da branch e resultados reais de backend, frontend, PostgreSQL 16, Compose e documentação.
+- **Achados Bloqueantes:** nenhum aberto.
+- **Achados Importantes:** resolvidos — segunda porta pública intermediária; potencial vazamento de exceção de persistência; normalização indevida de `source`; assinatura sem o `CurrencyCode` canônico; guardrail limitado por prefixo de nome.
+- **Sugestões:** automatizar a ausência de endpoint no OpenAPI e considerar proteção append-only também no usuário do banco quando uma futura story introduzir escrita administrativa.
+- **Limitações remanescentes:** CI remota depende de commit/push/PR humanos; não há endpoint intencionalmente, então o comportamento da consulta interna é comprovado por integração PostgreSQL e não por smoke HTTP. As lentes de bordas e lacunas de verificação não conseguiram ler seus prompts renderizados por ACL local; caça cega e alinhamento de intenção foram concluídos, e os resultados foram verificados manualmente.
+- **Recomendação:** Review; implementação atende AC1–AC6 e está pronta para revisão/aprovação humana.
 - **Aprovação humana:** concedida pela autora em 2026-09-25, incluindo schema, seeds, semântica fracionária, origem rastreável e superfície pública somente de consulta.
 
 ### Change Log
@@ -285,13 +317,28 @@ docker compose down
 |---|---|---|
 | 2026-09-25 | Story E1-S3 criada em Draft a partir dos artefatos de planejamento, ADRs aceitos e baseline concluída; nenhuma implementação realizada. | Codex |
 | 2026-09-25 | Schema, seeds fictícios, semântica fracionária, origem e contrato exclusivamente de consulta aprovados humanamente; DoR concluída e story promovida para Ready for Dev. | Autora + Codex |
+| 2026-09-25 | T1–T6 implementadas; gates locais, PostgreSQL 16 e Compose aprovados; segunda porta pública intermediária removida; story promovida para Review. | Codex |
+| 2026-09-25 | Auto-revisão corrigiu tradução de persistência, fidelidade de `source`, contrato tipado e guardrail de portas; backend e Compose foram revalidados. | Codex |
+| 2026-09-25 | A autora executou posteriormente os commits `d635e5f`, `9501b0c`, `643832b` e `151228d`; o agente apenas validou o histórico e registrou as evidências, sem executar Git mutável. | Autora + Codex |
 
 ### Handoff / próximo passo exato
 
-Implementar T1–T6 em sessão posterior, preservando o bloco congelado e sem criar superfície produtiva de escrita.
+Revisar humanamente a story e manter o status Review até aprovação explícita; os quatro commits de implementação já foram executados pela autora.
 
 ## Implementation Notes
 
 ## Spec Change Log
 
 ## Review Triage Log
+
+| # | Veredito | Rota | Evidência |
+|---|---|---|---|
+| 1 | medium | patch — resolvido | Falhas do `EntityManager`/repository podiam atravessar a porta; `BaseRateQueryException` e teste focado agora traduzem `PersistenceException`/`DataAccessException`. |
+| 2 | false | rejeitado | Escala acima de 12 é rejeitada no único caminho produtivo de construção; não existe escrita produtiva e SQL direto é exclusivamente fixture de teste. |
+| 3 | medium | patch — resolvido | `trim()` alterava a origem persistida; o domínio agora valida `isBlank()` sem normalizar e o teste exige igualdade exata. |
+| 4 | low | patch — resolvido junto | `String.length()` divergia de `VARCHAR` para caracteres suplementares; a validação agora usa code points. |
+| 5 | medium | patch — resolvido | A porta duplicava moeda como `String`; agora recebe o `CurrencyCode` canônico e `LocalDate`, como o contrato aprovado. |
+| 6 | medium | patch — resolvido | O guardrail filtrava nomes `BaseRate*`; agora compara o conjunto completo de interfaces públicas permitidas no pacote de portas. |
+| 7 | false | rejeitado | O bloco congelado define append-only pela ausência de escrita produtiva pública e permite fixtures/package-private; não exige trigger ou usuário SQL imutável. |
+| 8 | low | sugestão | A ausência de endpoint foi comprovada no OpenAPI da imagem final, mas não possui teste automatizado dedicado; não afeta o comportamento entregue. |
+| 9 | low | patch — resolvido | Status textual ainda estava `In Progress`; foi sincronizado para `Review`. |
