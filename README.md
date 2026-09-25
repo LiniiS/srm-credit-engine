@@ -9,17 +9,23 @@ O repositório possui um caminho técnico ponta a ponta:
 - PostgreSQL 16 inicializado por Flyway;
 - API Java 21/Spring Boot 3 com readiness do Actuator;
 - SPA React/TypeScript/Vite que consulta a readiness real;
-- execução oficial por Docker Compose, com os três serviços usando healthchecks;
+- execução oficial por Docker Compose, com os quatro serviços usando healthchecks;
 - ArchUnit e ESLint impondo os limites arquiteturais aceitos;
 - GitHub Actions reproduzindo os gates locais em pull requests.
 
 O primeiro corte de câmbio já oferece catálogo USD/BRL, histórico append-only e consulta da taxa vigente. Cálculos de conversão, precificação, liquidação, extrato e telas de negócio permanecem fora desta story.
+
+A sincronização usa um provider WireMock local determinístico. Timeout, retry seletivo e Circuit Breaker ficam restritos ao adapter HTTP; a resposta é validada antes de uma única transação curta append-only.
+
+A integração publica métricas Micrometer de resultado e duração da chamada, retries e estado/transições do circuit breaker, sempre com tags técnicas de baixa cardinalidade. Os eventos equivalentes são registrados sem URL, payload ou identificadores de negócio.
+Os nomes e séries podem ser consultados em `GET /actuator/metrics` no ambiente local.
 
 ## API de câmbio
 
 | Método | Rota | Resultado |
 |---|---|---|
 | POST | `/api/v1/exchange-rates` | `201 Created`, `Location` e decimal como string |
+| POST | `/api/v1/exchange-rates/sync` | `202 Accepted`, `Location` e taxa persistida do provider |
 | GET | `/api/v1/exchange-rates/latest?base=USD&quote=BRL` | versão vigente no relógio UTC do servidor |
 
 ## Como rodar
@@ -56,6 +62,7 @@ docker compose up --build -d
 |---|---|---|
 | Frontend | <http://localhost:5173> | página apresenta `API disponível` |
 | Backend | <http://localhost:8080/actuator/health/readiness> | `{"status":"UP"}` |
+| FX mock | <http://localhost:8090/__admin> | API administrativa do WireMock |
 | PostgreSQL | `localhost:5432` | healthcheck com `pg_isready` |
 
 Para conferir diretamente:
@@ -64,7 +71,14 @@ Para conferir diretamente:
 curl http://localhost:8080/actuator/health/readiness
 curl http://localhost:5173
 docker compose exec postgres pg_isready -U srm -d srm_credit_engine
+curl -i -X POST http://localhost:8080/api/v1/exchange-rates/sync -H "Content-Type: application/json" -d '{"baseCurrency":"USD","quoteCurrency":"BRL"}'
+curl -i "http://localhost:8080/api/v1/exchange-rates/latest?base=USD&quote=BRL"
 ```
+
+O WireMock inicia sempre com a resposta de sucesso em `infra/fx-mock/mappings`.
+Para reproduzir uma falha, publique **uma** fixture de `infra/fx-mock/scenarios`
+por vez em `POST /__admin/mappings`; restaure o estado inicial com
+`POST /__admin/mappings/reset`. O backend nunca envia controles de cenário.
 
 ### Encerrar
 
@@ -92,6 +106,12 @@ cp .env.example .env
 | `FRONTEND_PORT` | `5173` | porta publicada da SPA |
 | `VITE_API_URL` | `http://localhost:8080` | URL pública compilada no frontend |
 | `FRONTEND_ORIGIN` | `http://localhost:5173` | origem permitida no health da API |
+| `FX_MOCK_PORT` | `8090` | porta publicada do provider mock |
+| `FX_PROVIDER_URL` | `http://localhost:8090` | URL do provider fora do Compose |
+| `FX_PROVIDER_TIMEOUT` | `1s` | timeout de cada tentativa HTTP |
+| `FX_PROVIDER_MAX_ATTEMPTS` | `3` | tentativas totais para falhas transitórias |
+| `FX_PROVIDER_INITIAL_BACKOFF` | `100ms` | primeiro backoff; o seguinte é exponencial |
+| `FX_PROVIDER_CB_*` | ver `.env.example` | janela, mínimo, limiar, open e half-open do breaker |
 
 Variáveis `VITE_*` são públicas no bundle e nunca devem conter segredos.
 

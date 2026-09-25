@@ -20,4 +20,4 @@ C4Container
   Rel(obs, api, "Coleta", "/actuator/prometheus")
 ```
 
-Na fundação E0-S1, o `compose.yaml` implementa `frontend` (`5173`), `backend` (`8080`) e `postgres` (`5432`), todos com healthchecks. A SPA consulta a readiness técnica do backend em `/actuator/health/readiness`; funcionalidades de negócio, provedor de câmbio e observabilidade permanecem propostas para stories posteriores.
+O `compose.yaml` implementa `frontend` (`5173`), `backend` (`8080`), `postgres` (`5432`) e o provider FX WireMock (`8090`), todos com healthchecks. A SPA consulta a readiness técnica do backend em `/actuator/health/readiness`; observabilidade global permanece proposta para stories posteriores.
