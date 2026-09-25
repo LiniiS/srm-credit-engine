@@ -2,6 +2,7 @@ package com.srm.creditengine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.srm.creditengine.currency.domain.port.BaseRateQuery;
 import com.srm.creditengine.currency.domain.port.ExchangeRateRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import org.springframework.http.HttpStatus;
 class CreditEngineApplicationTest {
 
   @MockBean ExchangeRateRepository exchangeRateRepository;
+  @MockBean BaseRateQuery baseRateQuery;
 
   @Autowired TestRestTemplate restTemplate;
 
