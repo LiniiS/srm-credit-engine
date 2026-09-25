@@ -1,0 +1,12 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "urlPath": "/v1/rates",
+    "queryParameters": {
+      "base": { "equalTo": "USD" },
+      "quote": { "equalTo": "BRL" }
+    }
+  },
+  "response": { "status": 503 }
+}

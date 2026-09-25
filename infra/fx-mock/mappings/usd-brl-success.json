@@ -1,0 +1,22 @@
+{
+  "priority": 10,
+  "request": {
+    "method": "GET",
+    "urlPath": "/v1/rates",
+    "queryParameters": {
+      "base": { "equalTo": "USD" },
+      "quote": { "equalTo": "BRL" }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": {
+      "baseCurrency": "USD",
+      "quoteCurrency": "BRL",
+      "rate": "5.12345678",
+      "effectiveAt": "2026-09-24T12:00:00Z",
+      "source": "LOCAL_FX_MOCK"
+    }
+  }
+}
