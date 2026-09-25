@@ -1,13 +1,15 @@
-# Modelo de dados inicial — planejamento aprovado
+# Modelo de dados — estado implementado e evolução planejada
 
-O modelo privilegia auditabilidade, integridade e consultas por período. Flyway será a fonte normativa quando a implementação começar; até lá, este documento e o ER registram o modelo inicial aprovado, ainda sem implementação física.
+O modelo privilegia auditabilidade, integridade e consultas por período. Flyway é a
+fonte normativa do schema já implementado; tabelas de stories posteriores permanecem
+identificadas como planejamento.
 
 | Tabela | Finalidade | Restrições principais |
 |---|---|---|
 | `currency` | Catálogo ISO das moedas | `code CHAR(3)` PK; `minor_units >= 0`. |
 | `exchange_rate` | Histórico append-only de câmbio | par distinto; `rate > 0`; índice por par+vigência. |
 | `receivable_type` | Tipo, spread e chave da Strategy | `code` único; spread não negativo; versionamento. |
-| `base_rate` | Histórico versionado da taxa base mensal por moeda | `(currency_code, effective_from)` único; taxa não negativa; carga inicial por seeds fictícios. |
+| `base_rate` | Histórico versionado da taxa base mensal por moeda | Implementado na V3: `(currency_code, effective_from)` único; `NUMERIC(18,12)` não negativo; origem obrigatória até 64 caracteres. |
 | `assignor` | Cedente | documento único; nome obrigatório. |
 | `receivable` | Identidade e estado do ativo | `(assignor_id, external_id)` único; `version` para concorrência. |
 | `settlement_batch` | Cabeçalho da liquidação | `idempotency_key` única; payload hash; status e totais. |
@@ -20,6 +22,15 @@ O modelo privilegia auditabilidade, integridade e consultas por período. Flyway
 - Câmbio: `NUMERIC(18,8)`.
 - Instantes: `TIMESTAMPTZ`; datas de negócio: `DATE`.
 - IDs: UUID/UUIDv7 gerado pela aplicação ou banco — decisão de detalhe antes da primeira migration.
+
+## Taxas base implementadas
+
+`rate_monthly` é uma fração decimal: `0.010000000000` representa 1% ao mês. A
+versão aplicável possui o maior `effective_from` menor ou igual à data de cálculo.
+Os seeds BRL e USD vigentes desde `2026-01-01` usam `source=DEMO_SEED` e UUIDs
+reservados; são dados fictícios reproduzíveis, não taxas oficiais ou de mercado.
+`BaseRateQuery` é a única porta pública desta capacidade e devolve id, moeda, valor,
+vigência e origem. Não existe escrita produtiva pública.
 
 ## Snapshots em `settlement_item`
 
