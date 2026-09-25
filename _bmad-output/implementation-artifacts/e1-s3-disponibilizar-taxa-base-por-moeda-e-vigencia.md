@@ -7,7 +7,7 @@ baseline_commit: '5c04a9ed4c1e1812b8a85358d2aa1110d878ce9e'
 route: 'full'
 route_source: 'auto'
 review: 'thorough'
-review_source: 'pinned'
+review_source: 'auto'
 lenses_ran: ['blind-hunter', 'edge-case-hunter', 'verification-gap', 'intent-alignment']
 review_loop_iteration: 0
 context:
@@ -243,8 +243,8 @@ docker compose down
 - **Branch/baseline observada:** `feature/e1-s3-base-rates` / `50aa818` (story aprovada); baseline declarada preservada em `5c04a9ed4c1e1812b8a85358d2aa1110d878ce9e`.
 - **Plano de implementação:** T1 → T6
 - **Decisões locais/desvios:** o adapter JPA package-private implementa diretamente `BaseRateQuery`; a proposta intermediária de uma segunda porta pública de repositório foi removida para cumprir literalmente a superfície aprovada. A porta recebe o `CurrencyCode` canônico e traduz falhas de persistência em `BASE_RATE_QUERY_FAILED`. Não foi criado serviço pass-through, endpoint ou escrita produtiva.
-- **Completion Notes:** V3, domínio puro, única porta de consulta, persistência JPA, provas PostgreSQL/ArchUnit, documentos e ambiente integrado concluídos. A imagem final aplicou V3 e expôs somente os endpoints anteriores. O agente não executou commits; posteriormente, a autora registrou a implementação nos commits `d635e5f`, `9501b0c`, `643832b` e `151228d`, validados pelo histórico e conteúdo.
-- **Riscos/dívidas remanescentes:** aprovação humana final e execução da CI remota após push permanecem externas a esta sessão; os seeds são deliberadamente demonstrativos.
+- **Completion Notes:** V3, domínio puro, única porta de consulta, persistência JPA, provas PostgreSQL/ArchUnit, documentos e ambiente integrado concluídos. A imagem final aplicou V3 e expôs somente os endpoints anteriores. O agente não executou commits; posteriormente, a autora registrou a implementação nos commits `d635e5f`, `9501b0c`, `643832b` e `151228d`, validados pelo histórico e conteúdo. A correção final substituiu o proxy declarativo por `TransactionTemplate`: argumentos são validados antes da transação e falhas de abertura, execução e finalização são traduzidas para `BASE_RATE_QUERY_FAILED`. O agente também não executou os commits corretivos; eles foram realizados posteriormente pela autora em `852141a` e `b56a511`.
+- **Riscos/dívidas remanescentes:** nenhuma dívida Bloqueante ou Importante conhecida na correção; os seeds são deliberadamente demonstrativos e as sugestões opcionais da revisão permanecem fora desta alteração.
 
 ### Evidências por critério
 
@@ -254,7 +254,7 @@ docker compose down
 | AC2 | Atendido | Teste e smoke Compose confirmam os UUIDs, moedas, valores `NUMERIC(18,12)`, data e `DEMO_SEED` exatos para BRL/USD; schema/seeds em `d635e5f` e provas em `643832b`. |
 | AC3 | Atendido | Testes cobrem fronteira inclusiva, data entre versões, versão mais recente e versão futura; o resultado preserva id, moeda, valor, vigência e origem. |
 | AC4 | Atendido | Não existe porta/caso de uso de escrita; fixtures SQL provam histórico coexistente e unique impede sobrescrita lógica da mesma moeda/vigência. |
-| AC5 | Atendido | `CurrencyCode` e `LocalDate` validam a entrada; a integração distingue `CURRENCY_NOT_SUPPORTED` de `BASE_RATE_NOT_FOUND`, e falhas de persistência são traduzidas para `BASE_RATE_QUERY_FAILED`. Implementação em `9501b0c` e provas em `643832b`. |
+| AC5 | Atendido | `CurrencyCode` e `LocalDate` são validados antes do `TransactionTemplate`; testes com a implementação real do template provam tradução de falhas de abertura, execução e commit para `BASE_RATE_QUERY_FAILED`, sem exceção Spring/JPA atravessar a porta. A integração preserva `CURRENCY_NOT_SUPPORTED` e `BASE_RATE_NOT_FOUND`. Correção registrada pela autora em `852141a` e provas em `b56a511`. |
 | AC6 | Atendido | Domínio usa `BigDecimal`, escala máxima 12 e nenhuma dependência de framework; ArchUnit e a prova de única porta pública passaram. |
 
 ### File List
@@ -270,10 +270,10 @@ docker compose down
 | Criado | `backend/src/main/java/com/srm/creditengine/currency/domain/port/BaseRateNotFoundException.java` | Erro estável para ausência de versão aplicável. |
 | Criado | `backend/src/main/java/com/srm/creditengine/currency/persistence/BaseRateEntity.java` | Mapeamento JPA package-private. |
 | Criado | `backend/src/main/java/com/srm/creditengine/currency/persistence/JpaBaseRateRepository.java` | Consulta de vigência package-private. |
-| Criado | `backend/src/main/java/com/srm/creditengine/currency/persistence/JpaBaseRateAdapter.java` | Adapter de consulta e distinção catálogo/versão. |
+| Criado/alterado | `backend/src/main/java/com/srm/creditengine/currency/persistence/JpaBaseRateAdapter.java` | Adapter de consulta com validação pré-transação, `TransactionTemplate` read-only e tradução integral de falhas de infraestrutura. |
 | Criado | `backend/src/test/java/com/srm/creditengine/currency/domain/port/BaseRateTest.java` | Bordas de domínio e precisão. |
 | Criado | `backend/src/test/java/com/srm/creditengine/currency/BaseRateIntegrationTest.java` | Provas reais de schema, seeds, vigência, erros e append-only. |
-| Criado | `backend/src/test/java/com/srm/creditengine/currency/persistence/JpaBaseRateAdapterTest.java` | Prova de que exceções Spring/JPA não atravessam a porta. |
+| Criado/alterado | `backend/src/test/java/com/srm/creditengine/currency/persistence/JpaBaseRateAdapterTest.java` | Provas de validação antes da transação e tradução de falhas de abertura, execução e finalização. |
 | Alterado | `backend/src/test/java/com/srm/creditengine/FlywayIntegrationTest.java` | Evidência de aplicação da V3. |
 | Alterado | `backend/src/test/java/com/srm/creditengine/architecture/ArchitectureTest.java` | Guardrail da única porta pública. |
 | Alterado | `backend/src/test/java/com/srm/creditengine/CreditEngineApplicationTest.java` | Isolamento do contexto HTTP sem persistência. |
@@ -286,6 +286,8 @@ docker compose down
 - `9501b0c feat(currency): add effective base-rate query` — domínio, porta e persistência da consulta.
 - `643832b test(currency): prove base-rate persistence and contracts` — testes de domínio, integração, migration e arquitetura.
 - `151228d docs(currency): document base-rate configuration` — atualização operacional do README.
+- `852141a fix(currency): contain base-rate transaction failures` — fronteira programática e tradução integral do ciclo transacional.
+- `b56a511 test(currency): prove transaction failure containment` — provas de validação pré-transação e falhas de abertura, execução e finalização.
 
 ### Testes e gates executados
 
@@ -299,16 +301,20 @@ docker compose down
 | 2026-09-25 | Consulta SQL no PostgreSQL do Compose | PASS | Duas linhas exatas BRL/USD da V3; volume normal preservado. |
 | 2026-09-25 | `/v3/api-docs` | PASS | Nenhum caminho de taxa base exposto. |
 | 2026-09-25 | `check-docs.sh . story`, `git diff --check` | PASS | Gate documental e whitespace sem achados. |
+| 2026-09-25 | Correção transacional: `spotless:check`, `verify` | PASS | 79 testes em 14 suites; 0 falhas, erros ou skips; ArchUnit e Testcontainers verdes; JaCoCo 98,44% linhas e 87,78% branches. |
+| 2026-09-25 | Correção transacional: regressão frontend completa | PASS | `npm ci`, lint, typecheck, 14 testes e build passaram em cópia temporária isolada; 0 vulnerabilidades. |
 
 ### Review Record
 
 - **Revisor/agente:** Codex (auto-revisão BMAD).
-- **Base da revisão:** diff integral da branch e resultados reais de backend, frontend, PostgreSQL 16, Compose e documentação.
+- **Base da revisão:** diff completo `origin/main...HEAD`, seis commits da E1-S3, código, testes, migration V3, documentação, ADRs 0001–0004 e checks remotos informados pela autora.
 - **Achados Bloqueantes:** nenhum aberto.
-- **Achados Importantes:** resolvidos — segunda porta pública intermediária; potencial vazamento de exceção de persistência; normalização indevida de `source`; assinatura sem o `CurrencyCode` canônico; guardrail limitado por prefixo de nome.
-- **Sugestões:** automatizar a ausência de endpoint no OpenAPI e considerar proteção append-only também no usuário do banco quando uma futura story introduzir escrita administrativa.
-- **Limitações remanescentes:** CI remota depende de commit/push/PR humanos; não há endpoint intencionalmente, então o comportamento da consulta interna é comprovado por integração PostgreSQL e não por smoke HTTP. As lentes de bordas e lacunas de verificação não conseguiram ler seus prompts renderizados por ACL local; caça cega e alinhamento de intenção foram concluídos, e os resultados foram verificados manualmente.
-- **Recomendação:** Review; implementação atende AC1–AC6 e está pronta para revisão/aprovação humana.
+- **Achados Importantes:** nenhum aberto — o achado transacional foi resolvido com validação anterior ao `TransactionTemplate` e tradução ao redor de todo o ciclo transacional; testes cobrem abertura, execução, rollback e commit.
+- **Sugestões:** automatizar a ausência de endpoint no OpenAPI; considerar proteção append-only no usuário do banco somente quando futura story introduzir escrita administrativa. Nenhuma sugestão foi implementada nesta revisão.
+- **Gates da correção:** Spotless, `verify` com 79 testes, ArchUnit, Testcontainers/PostgreSQL 16, regressão frontend e gate documental passaram.
+- **Checks remotos:** backend, frontend e repository estavam aprovados no PR antes da correção, conforme confirmação da autora; os commits corretivos foram executados posteriormente pela autora, não pelo agente.
+- **Limitações remanescentes:** a revisão não consultou diretamente o provedor do PR; não há endpoint intencionalmente, então a consulta interna é comprovada por integração PostgreSQL.
+- **Recomendação:** correção local aprovada; manter em Review até os checks remotos da correção e a aprovação humana final.
 - **Aprovação humana:** concedida pela autora em 2026-09-25, incluindo schema, seeds, semântica fracionária, origem rastreável e superfície pública somente de consulta.
 
 ### Change Log
@@ -320,10 +326,13 @@ docker compose down
 | 2026-09-25 | T1–T6 implementadas; gates locais, PostgreSQL 16 e Compose aprovados; segunda porta pública intermediária removida; story promovida para Review. | Codex |
 | 2026-09-25 | Auto-revisão corrigiu tradução de persistência, fidelidade de `source`, contrato tipado e guardrail de portas; backend e Compose foram revalidados. | Codex |
 | 2026-09-25 | A autora executou posteriormente os commits `d635e5f`, `9501b0c`, `643832b` e `151228d`; o agente apenas validou o histórico e registrou as evidências, sem executar Git mutável. | Autora + Codex |
+| 2026-09-25 | Revisão final contra `origin/main` registrou checks remotos verdes e um achado Importante pendente na fronteira transacional/tradução de falhas de `BaseRateQuery`; story mantida em Review. | Codex |
+| 2026-09-25 | Achado transacional corrigido com `TransactionTemplate`, validação prévia e testes de abertura/execução/finalização; gates locais completos aprovados e story mantida em Review. | Codex |
+| 2026-09-25 | A autora executou posteriormente `852141a fix(currency): contain base-rate transaction failures` e `b56a511 test(currency): prove transaction failure containment`; nenhum commit foi executado pelo agente, e não restam achados Bloqueantes ou Importantes. | Autora + Codex |
 
 ### Handoff / próximo passo exato
 
-Revisar humanamente a story e manter o status Review até aprovação explícita; os quatro commits de implementação já foram executados pela autora.
+Os commits corretivos já foram executados pela autora; confirmar os checks remotos da correção e realizar a aprovação humana final, mantendo a story em Review até confirmação explícita.
 
 ## Implementation Notes
 
@@ -342,3 +351,4 @@ Revisar humanamente a story e manter o status Review até aprovação explícita
 | 7 | false | rejeitado | O bloco congelado define append-only pela ausência de escrita produtiva pública e permite fixtures/package-private; não exige trigger ou usuário SQL imutável. |
 | 8 | low | sugestão | A ausência de endpoint foi comprovada no OpenAPI da imagem final, mas não possui teste automatizado dedicado; não afeta o comportamento entregue. |
 | 9 | low | patch — resolvido | Status textual ainda estava `In Progress`; foi sincronizado para `Review`. |
+| 10 | medium | patch — resolvido | `@Transactional` foi removido do adapter; validação ocorre antes do `TransactionTemplate`, cujo ciclo completo fica dentro da tradução. Testes provam null sem interação transacional e falhas de abertura, execução/rollback e commit convertidas em `BASE_RATE_QUERY_FAILED`. |
