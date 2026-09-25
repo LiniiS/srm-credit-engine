@@ -28,7 +28,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
       cors:
         allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
         allowed-methods: GET
@@ -38,3 +38,15 @@ server:
   error:
     include-message: never
     include-stacktrace: never
+
+srm:
+  fx-provider:
+    base-url: ${FX_PROVIDER_URL:http://localhost:8090}
+    timeout: ${FX_PROVIDER_TIMEOUT:1s}
+    max-attempts: ${FX_PROVIDER_MAX_ATTEMPTS:3}
+    initial-backoff: ${FX_PROVIDER_INITIAL_BACKOFF:100ms}
+    circuit-breaker-window-size: ${FX_PROVIDER_CB_WINDOW_SIZE:4}
+    circuit-breaker-minimum-calls: ${FX_PROVIDER_CB_MINIMUM_CALLS:4}
+    circuit-breaker-failure-rate-threshold: ${FX_PROVIDER_CB_FAILURE_RATE:50}
+    circuit-breaker-open-duration: ${FX_PROVIDER_CB_OPEN_DURATION:5s}
+    circuit-breaker-half-open-calls: ${FX_PROVIDER_CB_HALF_OPEN_CALLS:2}

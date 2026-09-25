@@ -58,6 +58,37 @@ public class ExchangeRateController {
         .body(ExchangeRateResponse.from(result));
   }
 
+  @PostMapping("/sync")
+  @Operation(summary = "Synchronize an exchange-rate version from the configured FX provider")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "202",
+        description = "Exchange-rate version synchronized",
+        headers = @Header(name = "Location", description = "Created resource URI"),
+        content = @Content(schema = @Schema(implementation = ExchangeRateResponse.class))),
+    @ApiResponse(
+        responseCode = "400",
+        description = "Validation error or unsupported currency",
+        content =
+            @Content(
+                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ExchangeRateProblemDetail.class))),
+    @ApiResponse(
+        responseCode = "503",
+        description = "FX provider unavailable",
+        content =
+            @Content(
+                mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE,
+                schema = @Schema(implementation = ExchangeRateProblemDetail.class)))
+  })
+  ResponseEntity<ExchangeRateResponse> synchronize(
+      @Valid @RequestBody ExchangeRateSyncRequest request) {
+    var result = service.synchronize(request.baseCurrency(), request.quoteCurrency());
+    return ResponseEntity.accepted()
+        .location(URI.create("/api/v1/exchange-rates/" + result.id()))
+        .body(ExchangeRateResponse.from(result));
+  }
+
   @GetMapping("/latest")
   @Operation(summary = "Get the exchange rate effective at the server clock instant")
   @ApiResponses({
