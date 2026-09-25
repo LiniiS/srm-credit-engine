@@ -2,7 +2,7 @@
 title: 'E1-S2 — Sincronizar câmbio com resiliência'
 type: 'feature'
 created: '2026-09-24'
-status: 'review'
+status: 'done'
 baseline_commit: '14184f47e1176cf3233be8b5046ee96a24897c22'
 route: 'full'
 route_source: 'auto'
@@ -21,7 +21,7 @@ context:
 # Story E1-S2 — Sincronizar câmbio com resiliência
 
 - **Épico:** E1 — Câmbio auditável
-- **Status:** Review
+- **Status:** Done
 - **Prioridade:** Should
 - **Predecessoras:** E0-S1, E0-S2 e E1-S1 concluídas
 
@@ -249,7 +249,7 @@ docker compose down
 - [x] Provider mock/Compose funcionam sem credencial e todos os serviços ficam healthy.
 - [x] `spotless:check`, `verify`, ArchUnit, JaCoCo e regressão frontend passam.
 - [x] OpenAPI/ProblemDetail, README, contratos, AI_USAGE e story refletem fatos reais.
-- [ ] Revisão não deixa achado Bloqueante/Importante aberto; aprovação humana final registrada.
+- [x] Revisão não deixa achado Bloqueante/Importante aberto; aprovação humana final registrada.
 - [x] Plano de commits preparado; Git mutável reservado à autora.
 
 ## Campos BMAD para implementação, revisão e evidências
@@ -261,7 +261,7 @@ docker compose down
 - **Plano de implementação:** T1 → T7
 - **Decisões locais / desvios:** `RestClient` com cliente JDK; decorators Resilience4j programáticos para tornar explícita a ordem; corpo do provider limitado a 16 KiB; fixtures de falha instaladas uma por vez pela API administrativa do WireMock; métricas Micrometer expostas no Actuator local, sem Prometheus/tracing.
 - **Completion Notes:** T1–T7 concluídas. O adapter valida contrato completo, limita payload, aplica timeout/retry/breaker configuráveis, persiste fora da fronteira resiliente e publica contrato seguro. Auto-revisão corrigiu propagação das variáveis no Compose, observabilidade consultável, validação de propriedades, limite de corpo e lacunas de teste. Smoke final isolado no projeto `srm_e1s2_smoke`, com PostgreSQL vazio, comprovou igualdade exata entre POST sync e GET latest. A correção final configurou `Redirect.NEVER`, restringiu sucesso do provider a HTTP `200` e comprovou que `302`/`204` não sofrem retry, não persistem e contam como falha lógica.
-- **Riscos e dívidas remanescentes:** nenhum achado Bloqueante ou Importante permanece aberto localmente. Os checks remotos anteriormente aprovados precisam ser executados novamente após commit/push humano desta correção. As sugestões da revisão permanecem deliberadamente não implementadas.
+- **Riscos e dívidas remanescentes:** nenhum achado Bloqueante ou Importante permanece aberto. Os checks remotos foram executados novamente e aprovados após a correção; as sugestões da revisão permanecem deliberadamente não implementadas.
 
 ### Evidências por critério
 
@@ -324,13 +324,13 @@ docker compose down
 
 - **Revisor/agente:** Codex (GPT-5) com lentes BMAD `blind-hunter`, `edge-case-hunter` e `verification-gap`; lente de intent omitida por ausência de seção `## Intent` na story.
 - **Base da revisão final:** branch `feature/e1-s2-resilient-fx-sync`, HEAD `3b82c76`, comparada com `origin/main` em `5af67da0a2311795840baf487b6e186862c26374`; cinco commits e 33 arquivos alterados, sem mudanças locais pendentes no início da revisão.
-- **Checks remotos:** PR aberto; jobs reais `backend`, `frontend` e `repository` aprovados novamente no GitHub Actions, conforme confirmação humana da autora. Gates locais e smoke isolado também confirmados como aprovados.
+- **Checks remotos:** PR aberto; após a correção de respostas `3xx`, os jobs reais `backend`, `frontend` e `repository` passaram novamente no GitHub Actions, conforme confirmação humana da autora. Gates locais e smoke isolado também aprovados.
 - **Achados Bloqueantes:** nenhum.
 - **Achados Importantes:** nenhum aberto. O aceite indevido de `3xx` foi resolvido com `HttpClient.Redirect.NEVER`, sucesso exclusivo para HTTP `200` e provas de `302`/`204`, zero retry, zero escrita, erro seguro e falha lógica no breaker.
 - **Sugestões:** automatizar no CI o smoke Compose atualmente manual; tornar determinísticas e mais completas as provas de timeout, transição half-open e limiar de 50%; afirmar métricas de falha/duração e binding de todas as propriedades inválidas; validar `initialBackoff >= 1 ms`; documentar uma semântica estável para o gauge de estado e alinhar o C4 futuro de Prometheus com o runtime atual. Nenhuma dessas sugestões substitui o smoke e os gates já aprovados.
 - **Limitações remanescentes:** o fluxo Compose real foi comprovado por smoke isolado, mas ainda não integra a verificação automatizada do CI; as transições temporais do Resilience4j são verificadas principalmente por configuração e comportamento da biblioteca, não por relógio virtual do projeto. São sugestões, não achados Importantes.
-- **Recomendação:** correção local **Aprovada**; reexecutar os checks remotos após commit/push humano e manter a story em `Review` até a aprovação final da autora.
-- **Aprovação humana:** aprovação final pendente; somente as decisões de contrato/resiliência e a promoção anterior para desenvolvimento foram humanas.
+- **Recomendação:** **Aprovada**.
+- **Aprovação humana:** aprovação final registrada pela autora em 2026-09-24; nenhum achado Bloqueante ou Importante permanece aberto e os checks remotos passaram novamente.
 
 ### Change Log
 
@@ -341,6 +341,7 @@ docker compose down
 | 2026-09-24 | E1-S2 implementada, validada localmente e movida para Review; auto-revisão corrigiu os achados materiais sem alterar o bloco congelado. | Codex |
 | 2026-09-24 | Evidência final AC6 executada em Compose isolado com PostgreSQL vazio; POST sync e GET latest idênticos e uma única linha persistida. | Codex |
 | 2026-09-24 | Achado Importante final corrigido: redirects desabilitados, somente HTTP 200 aceito e `302`/`204` comprovados como falhas sem retry ou escrita; gates locais e smokes finais aprovados. | Codex |
+| 2026-09-24 | Aprovação humana final registrada após nova execução bem-sucedida dos jobs `backend`, `frontend` e `repository`; story promovida de Review para Done. | Autora + Codex |
 
 ### Handoff / próximo passo exato
 
