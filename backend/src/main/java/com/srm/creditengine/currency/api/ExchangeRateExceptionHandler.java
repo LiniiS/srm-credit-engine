@@ -3,6 +3,7 @@ package com.srm.creditengine.currency.api;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.srm.creditengine.currency.service.CurrencyNotSupportedException;
 import com.srm.creditengine.currency.service.ExchangeRateNotFoundException;
+import com.srm.creditengine.currency.service.FxProviderUnavailableException;
 import com.srm.creditengine.currency.service.InvalidExchangeRateException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -19,6 +20,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 class ExchangeRateExceptionHandler {
+  @ExceptionHandler(FxProviderUnavailableException.class)
+  ResponseEntity<ProblemDetail> providerUnavailable(HttpServletRequest request) {
+    return problem(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        "FX_PROVIDER_UNAVAILABLE",
+        "FX provider unavailable",
+        request);
+  }
+
   @ExceptionHandler(CurrencyNotSupportedException.class)
   ResponseEntity<ProblemDetail> unsupported(HttpServletRequest request) {
     return problem(

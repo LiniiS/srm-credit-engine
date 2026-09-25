@@ -2,6 +2,8 @@ package com.srm.creditengine.currency.service;
 
 import com.srm.creditengine.currency.domain.CurrencyCode;
 import com.srm.creditengine.currency.domain.ExchangeRate;
+import com.srm.creditengine.currency.domain.port.ExchangeRateProvider;
+import com.srm.creditengine.currency.domain.port.ExchangeRateProviderException;
 import com.srm.creditengine.currency.domain.port.ExchangeRateRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -15,10 +17,42 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExchangeRateService {
   private final ExchangeRateRepository repository;
   private final Clock clock;
+  private final ExchangeRateProvider provider;
+  private final ExchangeRateWriter writer;
 
-  public ExchangeRateService(ExchangeRateRepository repository, Clock clock) {
+  public ExchangeRateService(
+      ExchangeRateRepository repository,
+      Clock clock,
+      ExchangeRateProvider provider,
+      ExchangeRateWriter writer) {
     this.repository = repository;
     this.clock = clock;
+    this.provider = provider;
+    this.writer = writer;
+  }
+
+  public ExchangeRateResult synchronize(String base, String quote) {
+    var baseCode = new CurrencyCode(base);
+    var quoteCode = new CurrencyCode(quote);
+    requireSupported(baseCode);
+    requireSupported(quoteCode);
+    requireDistinct(baseCode, quoteCode);
+
+    try {
+      var provided = provider.fetch(baseCode, quoteCode);
+      var exchangeRate =
+          new ExchangeRate(
+              UUID.randomUUID(),
+              provided.baseCurrency(),
+              provided.quoteCurrency(),
+              provided.rate(),
+              provided.source(),
+              provided.effectiveAt().truncatedTo(ChronoUnit.MICROS),
+              clock.instant().truncatedTo(ChronoUnit.MICROS));
+      return ExchangeRateResult.from(writer.append(exchangeRate));
+    } catch (ExchangeRateProviderException exception) {
+      throw new FxProviderUnavailableException(exception);
+    }
   }
 
   @Transactional
