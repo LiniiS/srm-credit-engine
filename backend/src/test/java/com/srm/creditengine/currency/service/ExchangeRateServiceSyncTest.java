@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.srm.creditengine.currency.domain.CurrencyCode;
 import com.srm.creditengine.currency.domain.ExchangeRate;
 import com.srm.creditengine.currency.domain.port.ExchangeRateProvider;
+import com.srm.creditengine.currency.domain.port.ExchangeRateProviderException;
 import com.srm.creditengine.currency.domain.port.ExchangeRateRepository;
 import com.srm.creditengine.currency.domain.port.ProvidedExchangeRate;
 import java.math.BigDecimal;
@@ -92,6 +93,26 @@ class ExchangeRateServiceSyncTest {
         .isInstanceOf(IllegalStateException.class);
     assertThat(providerCalls).hasValue(1);
     assertThat(repository.appendCount).isOne();
+    assertThat(repository.persistedCount).isZero();
+  }
+
+  @Test
+  void provider_failure_never_reaches_the_append_only_writer() {
+    var repository = new RecordingRepository();
+    ExchangeRateProvider provider =
+        (base, quote) -> {
+          throw new ExchangeRateProviderException("invalid provider response");
+        };
+    var service =
+        new ExchangeRateService(
+            repository,
+            Clock.fixed(Instant.parse("2026-09-24T13:00:00Z"), ZoneOffset.UTC),
+            provider,
+            new ExchangeRateWriter(repository));
+
+    assertThatThrownBy(() -> service.synchronize("USD", "BRL"))
+        .isInstanceOf(FxProviderUnavailableException.class);
+    assertThat(repository.appendCount).isZero();
     assertThat(repository.persistedCount).isZero();
   }
 
