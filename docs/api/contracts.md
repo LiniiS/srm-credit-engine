@@ -11,7 +11,7 @@
 | Método | Rota | Sucesso | Erros principais |
 |---|---|---|---|
 | POST | `/exchange-rates` | 201 + `Location` | 400 |
-| POST | `/exchange-rates/sync` | 202 | 503 |
+| POST | `/exchange-rates/sync` | 202 + `Location` | 400, 503 |
 | GET | `/exchange-rates/latest?base&quote` | 200 | 400, 404 |
 | GET | `/receivable-types` | 200 | — |
 | POST | `/pricing/simulations` | 200 | 400, 422, 503 |
@@ -30,6 +30,19 @@
   "source": "MANUAL"
 }
 ```
+
+## Sincronizar taxa
+
+```http
+POST /api/v1/exchange-rates/sync
+Content-Type: application/json
+
+{"baseCurrency":"USD","quoteCurrency":"BRL"}
+```
+
+O sucesso retorna `202 Accepted`, `Location` e o mesmo DTO decimal do cadastro manual. Entrada inválida ou moeda fora do catálogo retorna `400`; timeout, circuito aberto, falha HTTP ou payload externo inválido retorna `503 application/problem+json` com `code=FX_PROVIDER_UNAVAILABLE`. A resposta pública nunca inclui URL, classe, stack trace ou payload do provider.
+
+O provider local recebe somente `base` e `quote`; cenários de teste são selecionados pela API administrativa do WireMock, nunca por parâmetros ou headers enviados pelo backend.
 
 ## Simular precificação
 

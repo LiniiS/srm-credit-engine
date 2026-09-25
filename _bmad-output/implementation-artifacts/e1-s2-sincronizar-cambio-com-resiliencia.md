@@ -2,12 +2,13 @@
 title: 'E1-S2 — Sincronizar câmbio com resiliência'
 type: 'feature'
 created: '2026-09-24'
-status: 'ready-for-dev'
+status: 'review'
+baseline_commit: '14184f47e1176cf3233be8b5046ee96a24897c22'
 route: 'full'
 route_source: 'auto'
 review: 'thorough'
-review_source: 'pinned'
-lenses_ran: []
+review_source: 'auto'
+lenses_ran: ['blind-hunter', 'edge-case-hunter', 'verification-gap']
 review_loop_iteration: 0
 context:
   - '{project-root}/AGENTS.md'
@@ -20,7 +21,7 @@ context:
 # Story E1-S2 — Sincronizar câmbio com resiliência
 
 - **Épico:** E1 — Câmbio auditável
-- **Status:** Ready for Dev
+- **Status:** Review
 - **Prioridade:** Should
 - **Predecessoras:** E0-S1, E0-S2 e E1-S1 concluídas
 
@@ -165,13 +166,13 @@ O circuit breaker ignora `4xx`; payload inválido conta como falha lógica sem r
 
 ## Tarefas técnicas ordenadas
 
-- [ ] **T1 — Contratos e configuração (AC1–AC6):** definir request/result, porta `ExchangeRateProvider`, resposta tipada e propriedades validadas; preservar tipos decimais/temporais e configuração por ambiente.
-- [ ] **T2 — Mock local (AC3–AC6):** adicionar `wiremock/wiremock:3.13.1` ao Compose, saudável e inicialmente em sucesso; versionar fixtures/estado administrativo para 503→sucesso, timeout, 4xx, 5xx persistente e payload inválido; garantir que o backend não envie controles de teste.
-- [ ] **T3 — Adapter resiliente (AC2–AC5):** implementar cliente HTTP no `currency.persistence`/adapter de saída com ordem `circuit breaker → retry → timeout por tentativa`; configurar 1 s, 3 tentativas, backoff 100/200 ms e allowlist 500/502/503/504, timeout/I/O; excluir 4xx, demais 5xx e payload inválido do retry.
-- [ ] **T4 — Caso de uso e transação (AC1–AC5):** validar entrada/catálogo antes do provider, validar payload após HTTP e persistir uma única vez em fronteira transacional curta fora do breaker/retry; contabilizar uma operação lógica, ignorar 4xx no breaker, contar payload inválido e excluir persistência.
-- [ ] **T5 — API e erro (AC1, AC5):** expor POST sync, `202`/`Location`, OpenAPI e `FX_PROVIDER_UNAVAILABLE` no advice existente, sem internals.
-- [ ] **T6 — Observabilidade seletiva (AC3–AC5):** registrar eventos técnicos seguros e métricas de chamada/retry/circuit breaker sem alta cardinalidade; não antecipar tracing/stack global de E6.
-- [ ] **T7 — Provas e documentação (AC1–AC6):** testar provider, resiliência, ausência de transação externa, zero escrita nas falhas, uma escrita após retry, Compose/smoke e regressões; atualizar README, contratos e AI_USAGE somente com fatos reais.
+- [x] **T1 — Contratos e configuração (AC1–AC6):** definir request/result, porta `ExchangeRateProvider`, resposta tipada e propriedades validadas; preservar tipos decimais/temporais e configuração por ambiente.
+- [x] **T2 — Mock local (AC3–AC6):** adicionar `wiremock/wiremock:3.13.1` ao Compose, saudável e inicialmente em sucesso; versionar fixtures/estado administrativo para 503→sucesso, timeout, 4xx, 5xx persistente e payload inválido; garantir que o backend não envie controles de teste.
+- [x] **T3 — Adapter resiliente (AC2–AC5):** implementar cliente HTTP no `currency.persistence`/adapter de saída com ordem `circuit breaker → retry → timeout por tentativa`; configurar 1 s, 3 tentativas, backoff 100/200 ms e allowlist 500/502/503/504, timeout/I/O; excluir 4xx, demais 5xx e payload inválido do retry.
+- [x] **T4 — Caso de uso e transação (AC1–AC5):** validar entrada/catálogo antes do provider, validar payload após HTTP e persistir uma única vez em fronteira transacional curta fora do breaker/retry; contabilizar uma operação lógica, ignorar 4xx no breaker, contar payload inválido e excluir persistência.
+- [x] **T5 — API e erro (AC1, AC5):** expor POST sync, `202`/`Location`, OpenAPI e `FX_PROVIDER_UNAVAILABLE` no advice existente, sem internals.
+- [x] **T6 — Observabilidade seletiva (AC3–AC5):** registrar eventos técnicos seguros e métricas de chamada/retry/circuit breaker sem alta cardinalidade; não antecipar tracing/stack global de E6.
+- [x] **T7 — Provas e documentação (AC1–AC6):** testar provider, resiliência, ausência de transação externa, zero escrita nas falhas, uma escrita após retry, Compose/smoke e regressões; atualizar README, contratos e AI_USAGE somente com fatos reais.
 
 ## Code Map e arquivos previstos
 
@@ -241,57 +242,91 @@ docker compose down
 
 ## Definition of Done
 
-- [ ] AC1–AC6 atendidos com evidências automatizadas e smoke real.
-- [ ] Timeout, retry e circuit breaker ficam somente no adapter FX e são comprovados sem testes instáveis.
-- [ ] Ordem `breaker → retry → timeout`, uma operação lógica, 4xx ignorado, payload inválido contabilizado e persistência fora da resiliência são comprovados.
-- [ ] Nenhuma chamada externa ocorre em transação aberta; falhas geram zero escrita e retry recuperado gera uma escrita.
-- [ ] Provider mock/Compose funcionam sem credencial e todos os serviços ficam healthy.
-- [ ] `spotless:check`, `verify`, ArchUnit, JaCoCo e regressão frontend passam.
-- [ ] OpenAPI/ProblemDetail, README, contratos, AI_USAGE e story refletem fatos reais.
+- [x] AC1–AC6 atendidos com evidências automatizadas e smoke real.
+- [x] Timeout, retry e circuit breaker ficam somente no adapter FX e são comprovados sem testes instáveis.
+- [x] Ordem `breaker → retry → timeout`, uma operação lógica, 4xx ignorado, payload inválido contabilizado e persistência fora da resiliência são comprovados.
+- [x] Nenhuma chamada externa ocorre em transação aberta; falhas geram zero escrita e retry recuperado gera uma escrita.
+- [x] Provider mock/Compose funcionam sem credencial e todos os serviços ficam healthy.
+- [x] `spotless:check`, `verify`, ArchUnit, JaCoCo e regressão frontend passam.
+- [x] OpenAPI/ProblemDetail, README, contratos, AI_USAGE e story refletem fatos reais.
 - [ ] Revisão não deixa achado Bloqueante/Importante aberto; aprovação humana final registrada.
-- [ ] Plano de commits preparado; Git mutável reservado à autora.
+- [x] Plano de commits preparado; Git mutável reservado à autora.
 
 ## Campos BMAD para implementação, revisão e evidências
 
 ### Dev Agent Record
 
-- **Agente/modelo:**
-- **Branch/baseline observada:**
+- **Agente/modelo:** Codex (GPT-5), com implementação inicial delegada pelo workflow BMAD e conclusão/revisão pelo agente principal.
+- **Branch/baseline observada:** `feature/e1-s2-resilient-fx-sync` / `14184f47e1176cf3233be8b5046ee96a24897c22`.
 - **Plano de implementação:** T1 → T7
-- **Decisões locais / desvios:**
-- **Completion Notes:**
-- **Riscos e dívidas remanescentes:**
+- **Decisões locais / desvios:** `RestClient` com cliente JDK; decorators Resilience4j programáticos para tornar explícita a ordem; corpo do provider limitado a 16 KiB; fixtures de falha instaladas uma por vez pela API administrativa do WireMock; métricas Micrometer expostas no Actuator local, sem Prometheus/tracing.
+- **Completion Notes:** T1–T7 concluídas. O adapter valida contrato completo, limita payload, aplica timeout/retry/breaker configuráveis, persiste fora da fronteira resiliente e publica contrato seguro. Auto-revisão corrigiu propagação das variáveis no Compose, observabilidade consultável, validação de propriedades, limite de corpo e lacunas de teste. Smoke final isolado no projeto `srm_e1s2_smoke`, com PostgreSQL vazio, comprovou igualdade exata entre POST sync e GET latest.
+- **Riscos e dívidas remanescentes:** aprovação humana e checks remotos dependem de commit/push/PR da autora. Nenhuma limitação local de evidência permanece aberta para AC6.
 
 ### Evidências por critério
 
 | AC | Status | Teste/comando/evidência |
 |---|---|---|
-| AC1 | Pending | |
-| AC2 | Pending | |
-| AC3 | Pending | |
-| AC4 | Pending | |
-| AC5 | Pending | |
-| AC6 | Pending | |
+| AC1 | Atendido | HTTP/Testcontainers: sync `202`, `Location`, DTO decimal e exatamente uma linha; integração valida append-only. |
+| AC2 | Atendido | `ExchangeRateTransactionBoundaryTest`: provider sem transação e append em transação Spring ativa. |
+| AC3 | Atendido | Testes 500/502/503/504, I/O, 4xx, outro 5xx e payload; smoke WireMock 503→sucesso mostrou 2 chamadas e delta de 1 linha. |
+| AC4 | Atendido | Testes de timeout por tentativa, janela 4/4/50%, open 5 s, duas permissões half-open e rejeição fail-fast sem HTTP. |
+| AC5 | Atendido | Teste HTTP do `503 FX_PROVIDER_UNAVAILABLE`; validação integral sem retry, breaker lógico, logs seguros e métricas de resultado/duração/retry/estado. |
+| AC6 | Atendido | Projeto isolado `srm_e1s2_smoke`: quatro serviços `healthy`; banco iniciou com 0 linhas; POST `202` e GET `200` retornaram exatamente id `8a2ff7e2-393d-49ca-bf9e-0821ada8381e`, rate `5.12345678`, source `LOCAL_FX_MOCK` e effectiveAt `2026-09-24T12:00:00Z`; banco terminou com exatamente 1 linha. |
 
 ### File List
 
 | Operação | Arquivo | Motivo |
 |---|---|---|
+| Modificado | `.env.example`, `compose.yaml` | Configuração local e quarto serviço WireMock. |
+| Modificado | `backend/pom.xml`, `backend/src/main/resources/application.yml` | Resilience4j e propriedades/Actuator. |
+| Modificado | `backend/src/main/java/com/srm/creditengine/CreditEngineApplication.java` | Scan das propriedades tipadas. |
+| Modificado | `backend/src/main/java/com/srm/creditengine/currency/api/ExchangeRateController.java` | Endpoint público de sincronização. |
+| Modificado | `backend/src/main/java/com/srm/creditengine/currency/api/ExchangeRateExceptionHandler.java` | Erro estável `FX_PROVIDER_UNAVAILABLE`. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/api/ExchangeRateSyncRequest.java` | Request validado do sync. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/domain/port/ExchangeRateProvider.java` | Porta de saída do provider. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/domain/port/ExchangeRateProviderException.java` | Falha neutra da porta. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/domain/port/ProvidedExchangeRate.java` | Resposta tipada neutra. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/persistence/FxProviderProperties.java` | Configuração validada por ambiente. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/persistence/HttpExchangeRateProvider.java` | Adapter HTTP, validação, resiliência e métricas. |
+| Modificado | `backend/src/main/java/com/srm/creditengine/currency/service/ExchangeRateService.java` | Orquestração sem transação externa. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/service/ExchangeRateWriter.java` | Fronteira transacional curta. |
+| Criado | `backend/src/main/java/com/srm/creditengine/currency/service/FxProviderUnavailableException.java` | Erro do caso de uso. |
+| Modificado | `backend/src/test/java/com/srm/creditengine/currency/ExchangeRateIntegrationTest.java` | Sync, validação e OpenAPI com PostgreSQL. |
+| Criado | `backend/src/test/java/com/srm/creditengine/currency/api/ExchangeRateSyncApiTest.java` | ProblemDetail 503 seguro. |
+| Criado | `backend/src/test/java/com/srm/creditengine/currency/persistence/FxProviderPropertiesTest.java` | Propriedades inválidas. |
+| Criado | `backend/src/test/java/com/srm/creditengine/currency/persistence/HttpExchangeRateProviderTest.java` | Contrato, matriz de retry, payload, timeout, breaker e métricas. |
+| Criado | `backend/src/test/java/com/srm/creditengine/currency/service/ExchangeRateServiceSyncTest.java` | Ordem, uma escrita e falha de persistência. |
+| Criado | `backend/src/test/java/com/srm/creditengine/currency/service/ExchangeRateTransactionBoundaryTest.java` | Prova Spring da fronteira transacional. |
+| Criado | `infra/fx-mock/mappings/usd-brl-success.json` | Sucesso determinístico inicial. |
+| Criado | `infra/fx-mock/scenarios/*.json` | Fixtures administrativas de 503→sucesso, timeout, 4xx, 503 persistente e payload inválido. |
+| Modificado | `README.md`, `docs/api/contracts.md`, `docs/architecture/c4-container.md`, `AI_USAGE.md` | Operação, contrato, arquitetura e uso material de IA. |
+| Modificado | `_bmad-output/implementation-artifacts/e1-s2-sincronizar-cambio-com-resiliencia.md` | Estado, evidências e revisão da story. |
 
 ### Testes e gates executados
 
 | Data | Comando | Resultado | Evidência |
 |---|---|---|---|
+| 2026-09-24 | `mvn ... spotless:check` | Passou | Java formatado; nenhum desvio. |
+| 2026-09-24 | `mvn ... verify` | Passou | 54 testes, 0 falhas/erros/skips; ArchUnit e PostgreSQL 16/Testcontainers verdes; JaCoCo linhas 97,02% (326/336). |
+| 2026-09-24 | `npm ci`, lint, typecheck, test, build | Passou | Cópia temporária limpa: 14 testes; 100% statements/lines, 87,5% branches; build Vite verde. |
+| 2026-09-24 | `docker compose config` | Passou | Compose coerente com quatro serviços e variáveis de resiliência. |
+| 2026-09-24 | `docker compose up --build -d`, `ps` | Passou | PostgreSQL, backend, frontend e WireMock `healthy`. |
+| 2026-09-24 | Smoke POST/GET/OpenAPI/Swagger/métricas | Passou | Sync `202`; readiness/frontend/OpenAPI/Swagger `200`; responses 202/400/503; métricas FX consultáveis. |
+| 2026-09-24 | Smoke administrativo 503→sucesso | Passou | 2 chamadas ao provider e delta de exatamente 1 linha. |
+| 2026-09-24 | Payload inválido | Passou | `503`, zero escrita; teste HTTP confirma corpo `FX_PROVIDER_UNAVAILABLE` sem internals. |
+| 2026-09-24 | `docker compose down` | Passou | Ambiente encerrado sem `-v`; volumes preservados. |
+| 2026-09-24 | Smoke isolado `docker compose -p srm_e1s2_smoke` | Passou | Volume exclusivo `srm_e1s2_smoke_postgres_data`; 4 serviços healthy; 0→1 linha; POST/GET id, rate, source e effectiveAt idênticos; projeto e volume temporários removidos. `srm_postgres_data` permaneceu existente com `CreatedAt=2026-09-23T16:17:37Z` e o mesmo mountpoint. |
 
 ### Review Record
 
-- **Revisor/agente:** Codex (GPT-5), revisão documental pré-implementação.
-- **Checks remotos:** não aplicável nesta etapa documental.
-- **Achados Bloqueantes:** nenhum; decisões antes pendentes foram resolvidas pela autora.
-- **Achados Importantes:** nenhum aberto no artefato aprovado.
-- **Sugestões:** nenhuma registrada nesta aprovação.
-- **Recomendação:** aprovada para desenvolvimento, mantendo implementação e evidências pendentes.
-- **Aprovação humana:** contrato do mock, política de resiliência e ordem de execução aprovados pela autora em 2026-09-24; story pronta para desenvolvimento.
+- **Revisor/agente:** Codex (GPT-5) com lentes BMAD `blind-hunter`, `edge-case-hunter` e `verification-gap`; lente de intent omitida por ausência de seção `## Intent` na story.
+- **Checks remotos:** pendentes de commit/push/PR humanos.
+- **Achados Bloqueantes:** nenhum.
+- **Achados Importantes:** propagação das variáveis de resiliência no Compose, limite do corpo externo, validação de propriedades, métricas consultáveis e provas de payload/transação; todos corrigidos e revalidados.
+- **Sugestões:** automatizar no CI o smoke Compose hoje executado manualmente; não necessária para os ACs desta story.
+- **Recomendação:** pronta para revisão humana; manter em `Review` até checks remotos e aprovação da autora.
+- **Aprovação humana:** aprovação final pendente; somente as decisões de contrato/resiliência e a promoção anterior para desenvolvimento foram humanas.
 
 ### Change Log
 
@@ -299,13 +334,37 @@ docker compose down
 |---|---|---|
 | 2026-09-24 | Story E1-S2 criada em Draft a partir do planejamento, ADRs aceitos e baseline E1-S1; nenhuma implementação realizada. | Codex |
 | 2026-09-24 | WireMock, contrato, cenários, política de resiliência e ordem de execução aprovados humanamente; DoR concluída e story promovida para Ready for Dev. | Autora + Codex |
+| 2026-09-24 | E1-S2 implementada, validada localmente e movida para Review; auto-revisão corrigiu os achados materiais sem alterar o bloco congelado. | Codex |
+| 2026-09-24 | Evidência final AC6 executada em Compose isolado com PostgreSQL vazio; POST sync e GET latest idênticos e uma única linha persistida. | Codex |
 
 ### Handoff / próximo passo exato
 
-Iniciar implementação em branch curta da E1-S2, respeitando T1–T7 e o bloco congelado. Nenhuma implementação foi realizada nesta etapa.
+Revisar o diff, executar os checks no PR e registrar aprovação humana antes de mover a story para Done.
 
 ## Implementation Notes
 
 ## Spec Change Log
 
 ## Review Triage Log
+
+| ID | Veredito/rota | Evidência |
+|---|---|---|
+| BH-01 | `false` / rejeitado | `scenarios/` é deliberadamente um catálogo administrativo; o smoke publicou a fixture via `POST /__admin/mappings` e obteve 503→sucesso. |
+| BH-02 | `low` / corrigido em documentação | Fixtures são instaladas uma por vez; README passou a explicitar seleção única e reset, eliminando competição. |
+| BH-03 | `medium` / patch resolvido | Compose agora propaga timeout, retry, backoff e todos os parâmetros do breaker. |
+| BH-04 | `medium` / patch resolvido | Endpoint local `/actuator/metrics` foi exposto e smoke confirmou `srm.fx.provider.calls`. |
+| BH-05 | `medium` / patch resolvido | Leitura externa limitada a 16 KiB e teste prova rejeição sem retry. |
+| BH-06 | `medium` / patch resolvido | Durações positivas e relação mínimo≤janela são validadas; teste dedicado cobre falhas. |
+| BH-07 | `medium` / patch resolvido | Matriz parametrizada comprova que payload inválido gera uma falha lógica e zero retry. |
+| BH-08 | `false` / rejeitado | O teste verifica configuração de 5 s e duas permissões half-open; transição temporal automática pertence ao Resilience4j, não ao código do projeto. |
+| BH-09 | `low` / rejeitado | A persistência PostgreSQL e a resiliência são provadas separadamente; smoke real 503→sucesso comprovou integração com delta de uma linha. |
+| BH-10 | `false` / rejeitado | As fixtures foram exercitadas manualmente no Compose final; a exigência da story não fixa sua automação no CI. |
+| BH-11 | `low` / patch resolvido | Tabela de contratos agora registra `202 + Location` e erros 400/503. |
+| BH-12 | `false` / rejeitado | Era estado transitório esperado antes do fechamento; tasks, ACs, evidências e status foram atualizados ao final. |
+| EC-01 | `medium` / patch resolvido | Mesmo achado BH-05; limite de 16 KiB aplicado antes do parse. |
+| EC-02 | `medium` / patch resolvido | Mesmo achado BH-06; configuração inválida falha cedo com mensagem estável. |
+| EC-03 | `false` / rejeitado | Seleção administrativa foi comprovada no WireMock real e documentada no README. |
+| VG-01 | `low` / rejeitado | Smoke Compose real cobriu wiring backend→WireMock→PostgreSQL; script CI seria melhoria fora do gate aprovado. |
+| VG-02 | `medium` / patch resolvido | Testes parametrizados cobrem Content-Type, par, sinal, escala, precisão, instante, fonte e tamanho. |
+| VG-03 | `medium` / patch resolvido | Teste HTTP de sync cobre moeda malformada, não catalogada e par igual, com zero escrita; unidade prova provider não chamado. |
+| VG-04 | `medium` / patch resolvido | Teste Spring gerenciado prova provider fora de transação e append dentro da transação curta. |
