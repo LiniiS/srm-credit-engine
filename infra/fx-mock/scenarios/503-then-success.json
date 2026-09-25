@@ -1,0 +1,15 @@
+{
+  "priority": 1,
+  "scenarioName": "transient-503",
+  "requiredScenarioState": "Started",
+  "newScenarioState": "recovered",
+  "request": {
+    "method": "GET",
+    "urlPath": "/v1/rates",
+    "queryParameters": {
+      "base": { "equalTo": "USD" },
+      "quote": { "equalTo": "BRL" }
+    }
+  },
+  "response": { "status": 503 }
+}

@@ -1,4 +1,18 @@
 services:
+  fx-mock:
+    image: wiremock/wiremock:3.13.1
+    command: ["--global-response-templating", "--disable-gzip"]
+    ports:
+      - "${FX_MOCK_PORT:-8090}:8080"
+    volumes:
+      - ./infra/fx-mock:/home/wiremock:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/__admin/health >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   postgres:
     image: postgres:16.6-alpine
     environment:
@@ -24,10 +38,21 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-srm}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-srm_local_password}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
+      FX_PROVIDER_URL: http://fx-mock:8080
+      FX_PROVIDER_TIMEOUT: ${FX_PROVIDER_TIMEOUT:-1s}
+      FX_PROVIDER_MAX_ATTEMPTS: ${FX_PROVIDER_MAX_ATTEMPTS:-3}
+      FX_PROVIDER_INITIAL_BACKOFF: ${FX_PROVIDER_INITIAL_BACKOFF:-100ms}
+      FX_PROVIDER_CB_WINDOW_SIZE: ${FX_PROVIDER_CB_WINDOW_SIZE:-4}
+      FX_PROVIDER_CB_MINIMUM_CALLS: ${FX_PROVIDER_CB_MINIMUM_CALLS:-4}
+      FX_PROVIDER_CB_FAILURE_RATE: ${FX_PROVIDER_CB_FAILURE_RATE:-50}
+      FX_PROVIDER_CB_OPEN_DURATION: ${FX_PROVIDER_CB_OPEN_DURATION:-5s}
+      FX_PROVIDER_CB_HALF_OPEN_CALLS: ${FX_PROVIDER_CB_HALF_OPEN_CALLS:-2}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      fx-mock:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness || exit 1"]
