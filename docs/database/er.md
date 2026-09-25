@@ -1,8 +1,9 @@
 # Diagrama entidade-relacionamento
 
-## Estado implementado até E1-S1
+## Estado implementado até E1-S3
 
-A fundação mantém metadados técnicos e agora inclui o catálogo USD/BRL e o histórico append-only de taxas.
+A fundação mantém metadados técnicos, o catálogo USD/BRL, o histórico append-only de
+câmbio e as taxas base mensais versionadas por moeda e vigência.
 
 ```mermaid
 erDiagram
@@ -12,6 +13,7 @@ erDiagram
   }
   CURRENCY ||--o{ EXCHANGE_RATE : "base"
   CURRENCY ||--o{ EXCHANGE_RATE : "quote"
+  CURRENCY ||--o{ BASE_RATE : "taxa mensal"
   CURRENCY {
     char code PK
     varchar name
@@ -26,10 +28,18 @@ erDiagram
     timestamptz effective_at
     timestamptz created_at
   }
+  BASE_RATE {
+    uuid id PK
+    char currency_code FK
+    numeric rate_monthly
+    date effective_from
+    varchar source
+  }
 ```
 
 O DDL vigente está em `docs/database/ddl.sql` e deriva da migration Flyway
-`V1__initialize_platform.sql` e `V2__create_exchange_rates.sql`.
+`V1__initialize_platform.sql`, `V2__create_exchange_rates.sql` e
+`V3__create_base_rates.sql`.
 
 ## Modelo de negócio aprovado para stories posteriores
 
