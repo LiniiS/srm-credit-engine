@@ -2,7 +2,7 @@
 title: 'E1-S3 — Disponibilizar taxa base por moeda e vigência'
 type: 'feature'
 created: '2026-09-25'
-status: 'in-review'
+status: 'done'
 baseline_commit: '5c04a9ed4c1e1812b8a85358d2aa1110d878ce9e'
 route: 'full'
 route_source: 'auto'
@@ -21,7 +21,7 @@ context:
 # Story E1-S3 — Disponibilizar taxa base por moeda e vigência
 
 - **Épico:** E1 — Câmbio auditável
-- **Status:** Review
+- **Status:** Done
 - **Prioridade:** Must, como pré-condição da precificação
 - **Predecessoras:** E0-S1, E0-S2, E1-S1 e E1-S2 concluídas
 
@@ -233,28 +233,28 @@ docker compose down
 - [x] `spotless:check`, `verify`, ArchUnit, JaCoCo, regressão frontend e Compose passam.
 - [x] DDL, ER, modelo, README, AI_USAGE, File List e evidências refletem a implementação real.
 - [x] Gate documental e `git diff --check` passam; revisão não deixa Bloqueante/Importante aberto.
-- [x] Story permanece em Review até aprovação humana final; Git mutável reservado à autora.
+- [x] Story promovida de Review para Done após aprovação humana, checks remotos verdes e integração à `main`; Git mutável permaneceu reservado à autora.
 
 ## Campos BMAD para implementação, revisão e evidências
 
 ### Dev Agent Record
 
 - **Agente/modelo:** Codex (GPT-5), com revisão crítica BMAD.
-- **Branch/baseline observada:** `feature/e1-s3-base-rates` / `50aa818` (story aprovada); baseline declarada preservada em `5c04a9ed4c1e1812b8a85358d2aa1110d878ce9e`.
+- **Branch/baseline observada:** implementação originada em `feature/e1-s3-base-rates`, integrada à `main` até `ab1519c`; baseline declarada preservada em `5c04a9ed4c1e1812b8a85358d2aa1110d878ce9e`.
 - **Plano de implementação:** T1 → T6
 - **Decisões locais/desvios:** o adapter JPA package-private implementa diretamente `BaseRateQuery`; a proposta intermediária de uma segunda porta pública de repositório foi removida para cumprir literalmente a superfície aprovada. A porta recebe o `CurrencyCode` canônico e traduz falhas de persistência em `BASE_RATE_QUERY_FAILED`. Não foi criado serviço pass-through, endpoint ou escrita produtiva.
-- **Completion Notes:** V3, domínio puro, única porta de consulta, persistência JPA, provas PostgreSQL/ArchUnit, documentos e ambiente integrado concluídos. A imagem final aplicou V3 e expôs somente os endpoints anteriores. O agente não executou commits; posteriormente, a autora registrou a implementação nos commits `d635e5f`, `9501b0c`, `643832b` e `151228d`, validados pelo histórico e conteúdo. A correção final substituiu o proxy declarativo por `TransactionTemplate`: argumentos são validados antes da transação e falhas de abertura, execução e finalização são traduzidas para `BASE_RATE_QUERY_FAILED`. O agente também não executou os commits corretivos; eles foram realizados posteriormente pela autora em `852141a` e `b56a511`.
+- **Completion Notes:** V3, domínio puro, única porta de consulta, persistência JPA, provas PostgreSQL/ArchUnit, documentos e ambiente integrado concluídos. A correção final substituiu o proxy declarativo por `TransactionTemplate`: argumentos são validados antes da transação e falhas de abertura, execução e finalização são traduzidas para `BASE_RATE_QUERY_FAILED`. Backend, frontend e repository passaram novamente no GitHub Actions após a correção. A autora executou os oito commits definitivos e integrou o PR à `main` por Rebase and merge; o agente não executou commits nem merge.
 - **Riscos/dívidas remanescentes:** nenhuma dívida Bloqueante ou Importante conhecida na correção; os seeds são deliberadamente demonstrativos e as sugestões opcionais da revisão permanecem fora desta alteração.
 
 ### Evidências por critério
 
 | AC | Status | Teste/comando/evidência |
 |---|---|---|
-| AC1 | Atendido | `BaseRateIntegrationTest` introspecta colunas, tipos, FK, checks, unique e índice na V3 real em PostgreSQL 16.6; `FlywayIntegrationTest` confirma a versão 3. Migration registrada pela autora em `d635e5f`. |
-| AC2 | Atendido | Teste e smoke Compose confirmam os UUIDs, moedas, valores `NUMERIC(18,12)`, data e `DEMO_SEED` exatos para BRL/USD; schema/seeds em `d635e5f` e provas em `643832b`. |
+| AC1 | Atendido | `BaseRateIntegrationTest` introspecta colunas, tipos, FK, checks, unique e índice na V3 real em PostgreSQL 16.6; `FlywayIntegrationTest` confirma a versão 3. Migration definitiva em `7b097c9`. |
+| AC2 | Atendido | Teste e smoke Compose confirmam os UUIDs, moedas, valores `NUMERIC(18,12)`, data e `DEMO_SEED` exatos para BRL/USD; schema/seeds em `7b097c9` e provas em `bc9f3ee`. |
 | AC3 | Atendido | Testes cobrem fronteira inclusiva, data entre versões, versão mais recente e versão futura; o resultado preserva id, moeda, valor, vigência e origem. |
 | AC4 | Atendido | Não existe porta/caso de uso de escrita; fixtures SQL provam histórico coexistente e unique impede sobrescrita lógica da mesma moeda/vigência. |
-| AC5 | Atendido | `CurrencyCode` e `LocalDate` são validados antes do `TransactionTemplate`; testes com a implementação real do template provam tradução de falhas de abertura, execução e commit para `BASE_RATE_QUERY_FAILED`, sem exceção Spring/JPA atravessar a porta. A integração preserva `CURRENCY_NOT_SUPPORTED` e `BASE_RATE_NOT_FOUND`. Correção registrada pela autora em `852141a` e provas em `b56a511`. |
+| AC5 | Atendido | `CurrencyCode` e `LocalDate` são validados antes do `TransactionTemplate`; testes com a implementação real do template provam tradução de falhas de abertura, execução e commit para `BASE_RATE_QUERY_FAILED`, sem exceção Spring/JPA atravessar a porta. A integração preserva `CURRENCY_NOT_SUPPORTED` e `BASE_RATE_NOT_FOUND`. Correção definitiva em `cf9ac9d` e provas em `431d50a`. |
 | AC6 | Atendido | Domínio usa `BigDecimal`, escala máxima 12 e nenhuma dependência de framework; ArchUnit e a prova de única porta pública passaram. |
 
 ### File List
@@ -280,14 +280,16 @@ docker compose down
 | Alterado | `docs/database/ddl.sql`, `docs/database/er.md`, `docs/database/data-model.md` | Documentação derivada da V3. |
 | Alterado | `README.md`, `AI_USAGE.md` | Uso interno, caráter fictício dos seeds e contribuição material de IA. |
 
-**Commits executados posteriormente pela autora:**
+**Commits definitivos executados pela autora e integrados à `main`:**
 
-- `d635e5f feat(db): add versioned base-rate configuration` — migration V3 e documentação do modelo de dados.
-- `9501b0c feat(currency): add effective base-rate query` — domínio, porta e persistência da consulta.
-- `643832b test(currency): prove base-rate persistence and contracts` — testes de domínio, integração, migration e arquitetura.
-- `151228d docs(currency): document base-rate configuration` — atualização operacional do README.
-- `852141a fix(currency): contain base-rate transaction failures` — fronteira programática e tradução integral do ciclo transacional.
-- `b56a511 test(currency): prove transaction failure containment` — provas de validação pré-transação e falhas de abertura, execução e finalização.
+- `7b097c9 feat(db): add versioned base-rate configuration` — migration V3 e documentação do modelo de dados.
+- `9154e0b feat(currency): add effective base-rate query` — domínio, porta e persistência da consulta.
+- `bc9f3ee test(currency): prove base-rate persistence and contracts` — testes de domínio, integração, migration e arquitetura.
+- `cc2ff9d docs(currency): document base-rate configuration` — atualização operacional do README.
+- `3e691f7 docs(story): record E1-S3 implementation evidence` — evidências iniciais da implementação.
+- `cf9ac9d fix(currency): contain base-rate transaction failures` — fronteira programática e tradução integral do ciclo transacional.
+- `431d50a test(currency): prove transaction failure containment` — provas de validação pré-transação e falhas de abertura, execução e finalização.
+- `ab1519c docs(story): record E1-S3 review correction` — resolução documental do achado final.
 
 ### Testes e gates executados
 
@@ -307,15 +309,15 @@ docker compose down
 ### Review Record
 
 - **Revisor/agente:** Codex (auto-revisão BMAD).
-- **Base da revisão:** diff completo `origin/main...HEAD`, seis commits da E1-S3, código, testes, migration V3, documentação, ADRs 0001–0004 e checks remotos informados pela autora.
+- **Base da revisão:** diff completo da E1-S3, oito commits definitivos na `main`, código, testes, migration V3, documentação, ADRs 0001–0004 e checks remotos informados pela autora.
 - **Achados Bloqueantes:** nenhum aberto.
 - **Achados Importantes:** nenhum aberto — o achado transacional foi resolvido com validação anterior ao `TransactionTemplate` e tradução ao redor de todo o ciclo transacional; testes cobrem abertura, execução, rollback e commit.
 - **Sugestões:** automatizar a ausência de endpoint no OpenAPI; considerar proteção append-only no usuário do banco somente quando futura story introduzir escrita administrativa. Nenhuma sugestão foi implementada nesta revisão.
 - **Gates da correção:** Spotless, `verify` com 79 testes, ArchUnit, Testcontainers/PostgreSQL 16, regressão frontend e gate documental passaram.
-- **Checks remotos:** backend, frontend e repository estavam aprovados no PR antes da correção, conforme confirmação da autora; os commits corretivos foram executados posteriormente pela autora, não pelo agente.
-- **Limitações remanescentes:** a revisão não consultou diretamente o provedor do PR; não há endpoint intencionalmente, então a consulta interna é comprovada por integração PostgreSQL.
-- **Recomendação:** correção local aprovada; manter em Review até os checks remotos da correção e a aprovação humana final.
-- **Aprovação humana:** concedida pela autora em 2026-09-25, incluindo schema, seeds, semântica fracionária, origem rastreável e superfície pública somente de consulta.
+- **Checks remotos:** backend, frontend e repository aprovados após a correção, conforme confirmação da autora.
+- **Limitações remanescentes:** sugestões opcionais preservadas como melhoria futura; não há endpoint intencionalmente, então a consulta interna é comprovada por integração PostgreSQL.
+- **Recomendação:** Aprovada; nenhum achado Bloqueante ou Importante permanece.
+- **Aprovação humana:** conclusão aprovada pela autora em 2026-09-25; commits e Rebase and merge foram executados humanamente, nunca pelo agente.
 
 ### Change Log
 
@@ -325,14 +327,15 @@ docker compose down
 | 2026-09-25 | Schema, seeds fictícios, semântica fracionária, origem e contrato exclusivamente de consulta aprovados humanamente; DoR concluída e story promovida para Ready for Dev. | Autora + Codex |
 | 2026-09-25 | T1–T6 implementadas; gates locais, PostgreSQL 16 e Compose aprovados; segunda porta pública intermediária removida; story promovida para Review. | Codex |
 | 2026-09-25 | Auto-revisão corrigiu tradução de persistência, fidelidade de `source`, contrato tipado e guardrail de portas; backend e Compose foram revalidados. | Codex |
-| 2026-09-25 | A autora executou posteriormente os commits `d635e5f`, `9501b0c`, `643832b` e `151228d`; o agente apenas validou o histórico e registrou as evidências, sem executar Git mutável. | Autora + Codex |
+| 2026-09-25 | A autora executou posteriormente os commits definitivos `7b097c9`, `9154e0b`, `bc9f3ee` e `cc2ff9d`; o agente apenas validou o histórico e registrou as evidências, sem executar Git mutável. | Autora + Codex |
 | 2026-09-25 | Revisão final contra `origin/main` registrou checks remotos verdes e um achado Importante pendente na fronteira transacional/tradução de falhas de `BaseRateQuery`; story mantida em Review. | Codex |
 | 2026-09-25 | Achado transacional corrigido com `TransactionTemplate`, validação prévia e testes de abertura/execução/finalização; gates locais completos aprovados e story mantida em Review. | Codex |
-| 2026-09-25 | A autora executou posteriormente `852141a fix(currency): contain base-rate transaction failures` e `b56a511 test(currency): prove transaction failure containment`; nenhum commit foi executado pelo agente, e não restam achados Bloqueantes ou Importantes. | Autora + Codex |
+| 2026-09-25 | A autora executou posteriormente `cf9ac9d fix(currency): contain base-rate transaction failures` e `431d50a test(currency): prove transaction failure containment`; nenhum commit foi executado pelo agente, e não restam achados Bloqueantes ou Importantes. | Autora + Codex |
+| 2026-09-25 | Jobs backend, frontend e repository aprovados após a correção; PR integrado à `main` por Rebase and merge com evidências documentais em `3e691f7` e `ab1519c`; aprovação e operações Git exclusivamente humanas; story promovida para Done. | Autora + Codex |
 
 ### Handoff / próximo passo exato
 
-Os commits corretivos já foram executados pela autora; confirmar os checks remotos da correção e realizar a aprovação humana final, mantendo a story em Review até confirmação explícita.
+Story concluída e integrada à `main`; sugestões opcionais permanecem registradas como melhoria futura, sem ação pendente para a E1-S3.
 
 ## Implementation Notes
 
