@@ -15,6 +15,12 @@ O repositório possui um caminho técnico ponta a ponta:
 
 O primeiro corte de câmbio já oferece catálogo USD/BRL, histórico append-only e consulta da taxa vigente. Cálculos de conversão, precificação, liquidação, extrato e telas de negócio permanecem fora desta story.
 
+A taxa base mensal também é versionada por moeda e data de vigência. A consulta é
+interna, pela porta `BaseRateQuery`; não há endpoint ou escrita produtiva pública.
+Os seeds locais BRL `0.010000000000` e USD `0.005000000000`, vigentes desde
+`2026-01-01`, usam origem `DEMO_SEED` e são exclusivamente demonstrativos — não
+representam taxas oficiais ou de mercado.
+
 A sincronização usa um provider WireMock local determinístico. Timeout, retry seletivo e Circuit Breaker ficam restritos ao adapter HTTP; a resposta é validada antes de uma única transação curta append-only.
 
 A integração publica métricas Micrometer de resultado e duração da chamada, retries e estado/transições do circuit breaker, sempre com tags técnicas de baixa cardinalidade. Os eventos equivalentes são registrados sem URL, payload ou identificadores de negócio.
