@@ -38,7 +38,11 @@ class HttpExchangeRateProvider implements ExchangeRateProvider {
 
   HttpExchangeRateProvider(
       FxProviderProperties properties, ObjectMapper objectMapper, MeterRegistry meterRegistry) {
-    var httpClient = HttpClient.newBuilder().connectTimeout(properties.timeout()).build();
+    var httpClient =
+        HttpClient.newBuilder()
+            .connectTimeout(properties.timeout())
+            .followRedirects(HttpClient.Redirect.NEVER)
+            .build();
     var requestFactory = new JdkClientHttpRequestFactory(httpClient);
     requestFactory.setReadTimeout(properties.timeout());
     this.client =
@@ -147,7 +151,7 @@ class HttpExchangeRateProvider implements ExchangeRateProvider {
                     if (status == 500 || status == 502 || status == 503 || status == 504) {
                       throw new RetryableProviderException();
                     }
-                    if (status >= 500) {
+                    if (status != 200) {
                       throw new ProviderFailureException();
                     }
                     return new RawResponse(
