@@ -260,8 +260,8 @@ docker compose down
 - **Branch/baseline observada:** `feature/e1-s2-resilient-fx-sync` / `14184f47e1176cf3233be8b5046ee96a24897c22`.
 - **Plano de implementação:** T1 → T7
 - **Decisões locais / desvios:** `RestClient` com cliente JDK; decorators Resilience4j programáticos para tornar explícita a ordem; corpo do provider limitado a 16 KiB; fixtures de falha instaladas uma por vez pela API administrativa do WireMock; métricas Micrometer expostas no Actuator local, sem Prometheus/tracing.
-- **Completion Notes:** T1–T7 concluídas. O adapter valida contrato completo, limita payload, aplica timeout/retry/breaker configuráveis, persiste fora da fronteira resiliente e publica contrato seguro. Auto-revisão corrigiu propagação das variáveis no Compose, observabilidade consultável, validação de propriedades, limite de corpo e lacunas de teste. Smoke final isolado no projeto `srm_e1s2_smoke`, com PostgreSQL vazio, comprovou igualdade exata entre POST sync e GET latest.
-- **Riscos e dívidas remanescentes:** aprovação humana e checks remotos dependem de commit/push/PR da autora. Nenhuma limitação local de evidência permanece aberta para AC6.
+- **Completion Notes:** T1–T7 concluídas. O adapter valida contrato completo, limita payload, aplica timeout/retry/breaker configuráveis, persiste fora da fronteira resiliente e publica contrato seguro. Auto-revisão corrigiu propagação das variáveis no Compose, observabilidade consultável, validação de propriedades, limite de corpo e lacunas de teste. Smoke final isolado no projeto `srm_e1s2_smoke`, com PostgreSQL vazio, comprovou igualdade exata entre POST sync e GET latest. A correção final configurou `Redirect.NEVER`, restringiu sucesso do provider a HTTP `200` e comprovou que `302`/`204` não sofrem retry, não persistem e contam como falha lógica.
+- **Riscos e dívidas remanescentes:** nenhum achado Bloqueante ou Importante permanece aberto localmente. Os checks remotos anteriormente aprovados precisam ser executados novamente após commit/push humano desta correção. As sugestões da revisão permanecem deliberadamente não implementadas.
 
 ### Evidências por critério
 
@@ -269,9 +269,9 @@ docker compose down
 |---|---|---|
 | AC1 | Atendido | HTTP/Testcontainers: sync `202`, `Location`, DTO decimal e exatamente uma linha; integração valida append-only. |
 | AC2 | Atendido | `ExchangeRateTransactionBoundaryTest`: provider sem transação e append em transação Spring ativa. |
-| AC3 | Atendido | Testes 500/502/503/504, I/O, 4xx, outro 5xx e payload; smoke WireMock 503→sucesso mostrou 2 chamadas e delta de 1 linha. |
-| AC4 | Atendido | Testes de timeout por tentativa, janela 4/4/50%, open 5 s, duas permissões half-open e rejeição fail-fast sem HTTP. |
-| AC5 | Atendido | Teste HTTP do `503 FX_PROVIDER_UNAVAILABLE`; validação integral sem retry, breaker lógico, logs seguros e métricas de resultado/duração/retry/estado. |
+| AC3 | Atendido | Testes 500/502/503/504, I/O, 4xx, outro 5xx, `302`, `204` e payload; smoke WireMock 503→sucesso mostrou 2 chamadas e delta de 1 linha. |
+| AC4 | Atendido | Testes de timeout por tentativa, janela 4/4/50%, open 5 s, duas permissões half-open, rejeição fail-fast e contabilização lógica de `302` sem seguir o redirect. |
+| AC5 | Atendido | Teste HTTP e smoke do `503 FX_PROVIDER_UNAVAILABLE`; `302` faz exatamente uma chamada, não alcança o destino, não escreve e conta falha no breaker; `204` também é inválido sem retry. |
 | AC6 | Atendido | Projeto isolado `srm_e1s2_smoke`: quatro serviços `healthy`; banco iniciou com 0 linhas; POST `202` e GET `200` retornaram exatamente id `8a2ff7e2-393d-49ca-bf9e-0821ada8381e`, rate `5.12345678`, source `LOCAL_FX_MOCK` e effectiveAt `2026-09-24T12:00:00Z`; banco terminou com exatamente 1 linha. |
 
 ### File List
@@ -308,7 +308,7 @@ docker compose down
 | Data | Comando | Resultado | Evidência |
 |---|---|---|---|
 | 2026-09-24 | `mvn ... spotless:check` | Passou | Java formatado; nenhum desvio. |
-| 2026-09-24 | `mvn ... verify` | Passou | 54 testes, 0 falhas/erros/skips; ArchUnit e PostgreSQL 16/Testcontainers verdes; JaCoCo linhas 97,02% (326/336). |
+| 2026-09-24 | `mvn ... verify` | Passou | 57 testes, 0 falhas/erros/skips; ArchUnit 13 testes e PostgreSQL 16/Testcontainers verdes; JaCoCo linhas 98,23% (333/339). |
 | 2026-09-24 | `npm ci`, lint, typecheck, test, build | Passou | Cópia temporária limpa: 14 testes; 100% statements/lines, 87,5% branches; build Vite verde. |
 | 2026-09-24 | `docker compose config` | Passou | Compose coerente com quatro serviços e variáveis de resiliência. |
 | 2026-09-24 | `docker compose up --build -d`, `ps` | Passou | PostgreSQL, backend, frontend e WireMock `healthy`. |
@@ -317,15 +317,19 @@ docker compose down
 | 2026-09-24 | Payload inválido | Passou | `503`, zero escrita; teste HTTP confirma corpo `FX_PROVIDER_UNAVAILABLE` sem internals. |
 | 2026-09-24 | `docker compose down` | Passou | Ambiente encerrado sem `-v`; volumes preservados. |
 | 2026-09-24 | Smoke isolado `docker compose -p srm_e1s2_smoke` | Passou | Volume exclusivo `srm_e1s2_smoke_postgres_data`; 4 serviços healthy; 0→1 linha; POST/GET id, rate, source e effectiveAt idênticos; projeto e volume temporários removidos. `srm_postgres_data` permaneceu existente com `CreatedAt=2026-09-23T16:17:37Z` e o mesmo mountpoint. |
+| 2026-09-24 | Regressão frontend em cópia temporária limpa | Passou | `npm ci`, lint, typecheck, 14 testes e build; 100% statements/lines/functions e 87,5% branches. O workspace tinha um binário nativo travado pelo editor, sem impacto nos arquivos versionados. |
+| 2026-09-24 | Smoke final `302` e sucesso após rebuild | Passou | `302` retornou `503 FX_PROVIDER_UNAVAILABLE`; delta de 1 chamada em `/v1/rates`, 0 no destino e 0 no banco. Após remover somente os mappings temporários, sucesso retornou `202` e delta de 1 linha. OpenAPI `202/400/503` e Swagger `200`. |
 
 ### Review Record
 
 - **Revisor/agente:** Codex (GPT-5) com lentes BMAD `blind-hunter`, `edge-case-hunter` e `verification-gap`; lente de intent omitida por ausência de seção `## Intent` na story.
-- **Checks remotos:** pendentes de commit/push/PR humanos.
+- **Base da revisão final:** branch `feature/e1-s2-resilient-fx-sync`, HEAD `3b82c76`, comparada com `origin/main` em `5af67da0a2311795840baf487b6e186862c26374`; cinco commits e 33 arquivos alterados, sem mudanças locais pendentes no início da revisão.
+- **Checks remotos:** PR aberto; jobs reais `backend`, `frontend` e `repository` aprovados novamente no GitHub Actions, conforme confirmação humana da autora. Gates locais e smoke isolado também confirmados como aprovados.
 - **Achados Bloqueantes:** nenhum.
-- **Achados Importantes:** propagação das variáveis de resiliência no Compose, limite do corpo externo, validação de propriedades, métricas consultáveis e provas de payload/transação; todos corrigidos e revalidados.
-- **Sugestões:** automatizar no CI o smoke Compose hoje executado manualmente; não necessária para os ACs desta story.
-- **Recomendação:** pronta para revisão humana; manter em `Review` até checks remotos e aprovação da autora.
+- **Achados Importantes:** nenhum aberto. O aceite indevido de `3xx` foi resolvido com `HttpClient.Redirect.NEVER`, sucesso exclusivo para HTTP `200` e provas de `302`/`204`, zero retry, zero escrita, erro seguro e falha lógica no breaker.
+- **Sugestões:** automatizar no CI o smoke Compose atualmente manual; tornar determinísticas e mais completas as provas de timeout, transição half-open e limiar de 50%; afirmar métricas de falha/duração e binding de todas as propriedades inválidas; validar `initialBackoff >= 1 ms`; documentar uma semântica estável para o gauge de estado e alinhar o C4 futuro de Prometheus com o runtime atual. Nenhuma dessas sugestões substitui o smoke e os gates já aprovados.
+- **Limitações remanescentes:** o fluxo Compose real foi comprovado por smoke isolado, mas ainda não integra a verificação automatizada do CI; as transições temporais do Resilience4j são verificadas principalmente por configuração e comportamento da biblioteca, não por relógio virtual do projeto. São sugestões, não achados Importantes.
+- **Recomendação:** correção local **Aprovada**; reexecutar os checks remotos após commit/push humano e manter a story em `Review` até a aprovação final da autora.
 - **Aprovação humana:** aprovação final pendente; somente as decisões de contrato/resiliência e a promoção anterior para desenvolvimento foram humanas.
 
 ### Change Log
@@ -336,6 +340,7 @@ docker compose down
 | 2026-09-24 | WireMock, contrato, cenários, política de resiliência e ordem de execução aprovados humanamente; DoR concluída e story promovida para Ready for Dev. | Autora + Codex |
 | 2026-09-24 | E1-S2 implementada, validada localmente e movida para Review; auto-revisão corrigiu os achados materiais sem alterar o bloco congelado. | Codex |
 | 2026-09-24 | Evidência final AC6 executada em Compose isolado com PostgreSQL vazio; POST sync e GET latest idênticos e uma única linha persistida. | Codex |
+| 2026-09-24 | Achado Importante final corrigido: redirects desabilitados, somente HTTP 200 aceito e `302`/`204` comprovados como falhas sem retry ou escrita; gates locais e smokes finais aprovados. | Codex |
 
 ### Handoff / próximo passo exato
 
@@ -368,3 +373,23 @@ Revisar o diff, executar os checks no PR e registrar aprovação humana antes de
 | VG-02 | `medium` / patch resolvido | Testes parametrizados cobrem Content-Type, par, sinal, escala, precisão, instante, fonte e tamanho. |
 | VG-03 | `medium` / patch resolvido | Teste HTTP de sync cobre moeda malformada, não catalogada e par igual, com zero escrita; unidade prova provider não chamado. |
 | VG-04 | `medium` / patch resolvido | Teste Spring gerenciado prova provider fora de transação e append dentro da transação curta. |
+| FR-BH-01 | `false` / rejeitado | A URL interna do Compose é deliberadamente `http://fx-mock:8080`; README e `.env.example` qualificam `FX_PROVIDER_URL` como configuração para execução fora do Compose. |
+| FR-BH-02 | `low` / sugestão | A métrica confirma dois retries de timeout, mas o teste aceita entre uma e três chegadas ao servidor; uma prova determinística das três tentativas reduziria falso verde. |
+| FR-BH-03 | `low` / sugestão | O teste de timeout usa espera limitada real; hoje passa, mas relógio/cliente controlado seria menos sujeito a variação de CI. |
+| FR-BH-04 | `low` / sugestão | A configuração e as duas permissões half-open são provadas, mas a transição temporal automática é delegada à biblioteca. |
+| FR-BH-05 | `false` / rejeitado | O limiar de 50% é afirmado diretamente na configuração construída; testar novamente o algoritmo interno do Resilience4j não é requisito do adapter. |
+| FR-BH-06 | `low` / sugestão | O caminho de I/O por conexão recusada é coberto; uma falha durante leitura do body fortaleceria a prova de encapsulamento do `RestClient`. |
+| FR-BH-07 | `false` / rejeitado | A persistência ocorre somente depois que a chamada decorada termina; portanto sua exceção está estruturalmente fora do retry e do breaker. |
+| FR-BH-08 | `low` / sugestão | HTTP real, PostgreSQL real e retry→escrita foram comprovados entre testes e smoke; reuni-los em um teste Testcontainers automatizado melhoraria a proteção contra regressão. |
+| FR-BH-09 | `low` / sugestão | As fixtures foram exercitadas no smoke, mas ainda não são validadas por gate automatizado. |
+| FR-BH-10 | `low` / sugestão | O README descreve a API administrativa, mas um exemplo completo de `curl` para publicar fixture reduziria erro operacional. |
+| FR-BH-11 | `low` / sugestão | A validação existe, mas o teste dedicado não percorre todas as anotações nem a duração de open. |
+| FR-BH-12 | `low` / rejeitado | Limites superiores não foram definidos pela decisão aprovada; inventá-los nesta story mudaria a política configurável sem base normativa. |
+| FR-BH-13 | `low` / sugestão | O gauge por ordinal é de baixa cardinalidade, mas sua semântica numérica depende da enum da biblioteca e merece contrato estável/documentado. |
+| FR-BH-14 | `false` / rejeitado | A exposição de `metrics` é intencional para a evidência local da story; autenticação e hardening de deployment estão explicitamente fora do escopo. |
+| FR-BH-15 | `low` / sugestão | O C4 ainda mostra o alvo futuro `/actuator/prometheus`, enquanto a nota textual diz que a observação global foi adiada; convém distinguir estado atual e alvo. |
+| FR-EC-01 | `medium` / patch resolvido | `HttpClient.Redirect.NEVER` impede seguir redirects e o adapter aceita somente HTTP `200`; testes e smoke provam `302` com uma chamada, destino não alcançado, zero retry/escrita, `503` seguro e uma falha lógica. `204` também é rejeitado. |
+| FR-EC-02 | `low` / sugestão | `initialBackoff` positivo, mas inferior a 1 ms, vira `0` em `toMillis()` e é rejeitado pelo Resilience4j; a validação pode antecipar esse erro. |
+| FR-VG-01 | `low` / sugestão | O smoke real está evidenciado e aprovado, mas não faz parte do workflow repetível do CI. |
+| FR-VG-02 | `low` / sugestão | Os ramos de falha executam as métricas, porém faltam asserts específicos para cada counter/timer de resultado. |
+| FR-VG-03 | `low` / sugestão | Um teste de binding do contexto para todas as combinações inválidas protegeria melhor as constraints de configuração. |
