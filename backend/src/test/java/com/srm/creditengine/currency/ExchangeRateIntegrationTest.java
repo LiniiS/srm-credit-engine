@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.srm.creditengine.currency.domain.port.ExchangeRateProvider;
+import com.srm.creditengine.currency.domain.port.ProvidedExchangeRate;
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -117,6 +120,64 @@ class ExchangeRateIntegrationTest {
   }
 
   @Test
+  void synchronizes_provider_rate_with_accepted_location_and_single_append() {
+    var headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    var response =
+        http.exchange(
+            "/api/v1/exchange-rates/sync",
+            HttpMethod.POST,
+            new HttpEntity<>(Map.of("baseCurrency", "USD", "quoteCurrency", "BRL"), headers),
+            String.class);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+    assertThat(response.getHeaders().getLocation()).isNotNull();
+    assertThat(response.getBody())
+        .contains("\"rate\":\"5.12345678\"")
+        .contains("\"source\":\"LOCAL_FX_MOCK\"")
+        .contains("\"effectiveAt\":\"2026-09-23T11:00:00Z\"")
+        .contains("\"createdAt\":\"2026-09-23T12:00:00.123456Z\"");
+    assertThat(jdbc.queryForObject("SELECT count(*) FROM exchange_rate", Integer.class)).isOne();
+
+    var latest =
+        http.getForEntity("/api/v1/exchange-rates/latest?base=USD&quote=BRL", String.class);
+    assertThat(latest.getBody()).contains("\"rate\":\"5.12345678\"");
+  }
+
+  @Test
+  void rejects_invalid_sync_requests_without_writing() {
+    var headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    var malformed =
+        http.exchange(
+            "/api/v1/exchange-rates/sync",
+            HttpMethod.POST,
+            new HttpEntity<>(Map.of("baseCurrency", "usd", "quoteCurrency", "BRL"), headers),
+            String.class);
+    assertProblem(malformed, HttpStatus.BAD_REQUEST, "VALIDATION_ERROR");
+    assertThat(malformed.getBody()).contains("\"field\":\"baseCurrency\"");
+
+    var unsupported =
+        http.exchange(
+            "/api/v1/exchange-rates/sync",
+            HttpMethod.POST,
+            new HttpEntity<>(Map.of("baseCurrency", "EUR", "quoteCurrency", "BRL"), headers),
+            String.class);
+    assertProblem(unsupported, HttpStatus.BAD_REQUEST, "CURRENCY_NOT_SUPPORTED");
+
+    var equal =
+        http.exchange(
+            "/api/v1/exchange-rates/sync",
+            HttpMethod.POST,
+            new HttpEntity<>(Map.of("baseCurrency", "USD", "quoteCurrency", "USD"), headers),
+            String.class);
+    assertProblem(equal, HttpStatus.BAD_REQUEST, "VALIDATION_ERROR");
+    assertThat(equal.getBody()).contains("\"field\":\"quoteCurrency\"");
+    assertThat(jdbc.queryForObject("SELECT count(*) FROM exchange_rate", Integer.class)).isZero();
+  }
+
+  @Test
   void resolves_total_order_by_created_at_then_id() {
     insertRate(
         "00000000-0000-0000-0000-000000000001",
@@ -217,10 +278,13 @@ class ExchangeRateIntegrationTest {
     assertThat(specification.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(specification.getBody())
         .contains("\"/api/v1/exchange-rates\"")
+        .contains("\"/api/v1/exchange-rates/sync\"")
         .contains("\"201\"")
+        .contains("\"202\"")
         .contains("\"400\"")
         .contains("\"/api/v1/exchange-rates/latest\"")
         .contains("\"404\"")
+        .contains("\"503\"")
         .contains("\"name\":\"base\"")
         .contains("\"name\":\"quote\"")
         .doesNotContain("\"name\":\"at\"");
@@ -390,6 +454,18 @@ class ExchangeRateIntegrationTest {
     @Primary
     Clock fixedClock() {
       return Clock.fixed(NOW, ZoneOffset.UTC);
+    }
+
+    @Bean
+    @Primary
+    ExchangeRateProvider fixedProvider() {
+      return (base, quote) ->
+          new ProvidedExchangeRate(
+              base,
+              quote,
+              new BigDecimal("5.12345678"),
+              Instant.parse("2026-09-23T11:00:00Z"),
+              "LOCAL_FX_MOCK");
     }
   }
 }
