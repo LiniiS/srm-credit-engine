@@ -73,12 +73,30 @@ class FlywayIntegrationTest {
         .containsEntry("minor_units", 2);
     assertThat(jdbcTemplate.queryForMap("SELECT minor_units FROM currency WHERE code='USD'"))
         .containsEntry("minor_units", 2);
-    assertThatThrownBy(
-            () -> jdbcTemplate.update("UPDATE currency SET minor_units = 7 WHERE code = 'BRL'"))
-        .isInstanceOf(DataIntegrityViolationException.class);
+    jdbcTemplate.update("UPDATE currency SET minor_units = 0 WHERE code = 'BRL'");
     assertThat(
             jdbcTemplate.queryForObject(
                 "SELECT minor_units FROM currency WHERE code = 'BRL'", Integer.class))
+        .isZero();
+    jdbcTemplate.update("UPDATE currency SET minor_units = 6 WHERE code = 'USD'");
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT minor_units FROM currency WHERE code = 'USD'", Integer.class))
+        .isEqualTo(6);
+    assertThatThrownBy(
+            () -> jdbcTemplate.update("UPDATE currency SET minor_units = -1 WHERE code = 'BRL'"))
+        .isInstanceOf(DataIntegrityViolationException.class);
+    assertThatThrownBy(
+            () -> jdbcTemplate.update("UPDATE currency SET minor_units = 7 WHERE code = 'USD'"))
+        .isInstanceOf(DataIntegrityViolationException.class);
+    jdbcTemplate.update("UPDATE currency SET minor_units = 2 WHERE code IN ('BRL', 'USD')");
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT minor_units FROM currency WHERE code = 'BRL'", Integer.class))
+        .isEqualTo(2);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT minor_units FROM currency WHERE code = 'USD'", Integer.class))
         .isEqualTo(2);
     assertThat(restTemplate.getForEntity("/actuator/health/readiness", String.class).getBody())
         .isEqualTo("{\"status\":\"UP\"}");
