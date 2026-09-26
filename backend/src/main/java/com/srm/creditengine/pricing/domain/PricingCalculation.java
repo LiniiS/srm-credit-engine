@@ -34,8 +34,8 @@ public final class PricingCalculation {
     var factor = decimalPower.pow(BigDecimal.ONE.add(monthlyRate, MC), termMonths);
     var rawPresentValue = faceValue.divide(factor, MC);
     var presentValue = rawPresentValue.setScale(minorUnits, RoundingMode.HALF_EVEN);
-    var discount =
-        faceValue.subtract(rawPresentValue, MC).setScale(minorUnits, RoundingMode.HALF_EVEN);
+    var monetaryFaceValue = faceValue.setScale(minorUnits, RoundingMode.UNNECESSARY);
+    var discount = monetaryFaceValue.subtract(presentValue);
     return new Values(termMonths, monthlyRate, presentValue, discount);
   }
 
