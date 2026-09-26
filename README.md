@@ -21,6 +21,12 @@ Os seeds locais BRL `0.010000000000` e USD `0.005000000000`, vigentes desde
 `2026-01-01`, usam origem `DEMO_SEED` e são exclusivamente demonstrativos — não
 representam taxas oficiais ou de mercado.
 
+O catálogo interno de tipos de recebível contém Duplicata Mercantil e Cheque
+Pré-datado e guarda apenas a `strategy_key` estável. O spread mensal pertence às
+implementações Strategy (`0.015` e `0.025`, respectivamente) e usa `BigDecimal`.
+A resolução ocorre por registry extensível, sem seleção por `if`/`switch`; nesta
+story não há endpoint de catálogo nem cálculo de valor presente.
+
 A sincronização usa um provider WireMock local determinístico. Timeout, retry seletivo e Circuit Breaker ficam restritos ao adapter HTTP; a resposta é validada antes de uma única transação curta append-only.
 
 A integração publica métricas Micrometer de resultado e duração da chamada, retries e estado/transições do circuit breaker, sempre com tags técnicas de baixa cardinalidade. Os eventos equivalentes são registrados sem URL, payload ou identificadores de negócio.

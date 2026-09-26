@@ -13,11 +13,13 @@
 | POST | `/exchange-rates` | 201 + `Location` | 400 |
 | POST | `/exchange-rates/sync` | 202 + `Location` | 400, 503 |
 | GET | `/exchange-rates/latest?base&quote` | 200 | 400, 404 |
-| GET | `/receivable-types` | 200 | — |
 | POST | `/pricing/simulations` | 200 | 400, 422, 503 |
 | POST | `/settlements` | 201 + `Location` | 400, 409, 422, 503 |
 | GET | `/settlements/{id}` | 200 | 404 |
 | GET | `/reports/settlements?from&to&assignorId&currency&page&size&sort` | 200 | 400 |
+
+O catálogo de tipos de recebível é interno nesta etapa. O endpoint
+`GET /receivable-types` foi deliberadamente adiado e não faz parte do OpenAPI da E2-S1.
 
 ## Cadastrar taxa
 
