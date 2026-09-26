@@ -2,8 +2,8 @@
 title: 'E2-S1 — Aplicar Strategy por tipo'
 type: 'feature'
 created: '2026-09-25'
-status: 'in-review'
-baseline_commit: 'aaea0b65178dc8499c781f38cd07ad88c1c3129b'
+status: 'done'
+baseline_commit: '796687c'
 route: 'full'
 route_source: 'auto'
 review: 'thorough'
@@ -28,7 +28,7 @@ context:
 # Story E2-S1 — Aplicar Strategy por tipo
 
 - **Épico:** E2 — Precificação determinística
-- **Status:** Review
+- **Status:** Done
 - **Prioridade:** Must
 - **Predecessoras:** E0-S1, E0-S2, E1-S1, E1-S2 e E1-S3 concluídas
 
@@ -211,8 +211,8 @@ Flyway continua fonte normativa; DDL, ER e modelo de dados serão derivados da V
 ### Dev Agent Record
 
 - **Agente/modelo:** Codex (implementação assistida por IA; nenhum commit executado pelo agente).
-- **Branch/baseline:** `feature/e2-s1-pricing-strategies` sobre `aaea0b65178dc8499c781f38cd07ad88c1c3129b`.
-- **Completion Notes:** V4, catálogo interno, duas Strategies, registry extensível, resolução transacional segura, observabilidade e documentação concluídos. A revisão fortaleceu a prova explícita de códigos inválidos e da estrutura real do schema. O agente não executou commits; posteriormente, a autora registrou a implementação nos commits `f9d426a`, `7275d6a`, `5e82330` e `297939f`. A story permanece em Review para aprovação humana e CI remota.
+- **Branch/baseline:** E2-S1 preparada em `796687c docs(story): prepare E2-S1 pricing strategies` e integrada à `main` após revisão.
+- **Completion Notes:** V4, catálogo interno, duas Strategies, registry extensível, resolução transacional segura, observabilidade e documentação concluídos. AC1–AC6 foram atendidos; jobs `backend`, `frontend` e `repository` passaram; nenhum achado Bloqueante ou Importante permaneceu. A autora realizou os commits e integrou o PR à `main` por Rebase and merge. O agente não executou commits nem merge. As sugestões opcionais permanecem registradas como melhorias futuras.
 
 ### File List
 
@@ -249,7 +249,7 @@ Flyway continua fonte normativa; DDL, ER e modelo de dados serão derivados da V
 - `AI_USAGE.md`
 - `_bmad-output/implementation-artifacts/e2-s1-aplicar-strategy-por-tipo.md`
 
-A File List acima corresponde ao conteúdo confirmado dos commits humanos da E2-S1. `AI_USAGE.md` e esta story foram registradas posteriormente em `5c4eb0f docs(story): record E2-S1 implementation evidence`.
+A File List acima corresponde ao conteúdo integrado à `main`; `AI_USAGE.md` e as evidências da story foram registradas em `45d2dd3 docs(story): record E2-S1 implementation evidence`, e a revisão final em `1af402e docs(story): record E2-S1 final review`.
 
 ### Evidências
 
@@ -264,19 +264,19 @@ A File List acima corresponde ao conteúdo confirmado dos commits humanos da E2-
 
 **Gates executados:** `spotless:check` passou; `verify` passou com 18 suites/102 testes, zero falhas/erros/skips, incluindo ArchUnit e Testcontainers; JaCoCo registrou 98,13% de linhas e 86,36% de branches; frontend limpo passou `npm ci`, lint, typecheck, 14 testes e build; `docker compose config` e `up --build -d` passaram; quatro serviços ficaram healthy; readiness retornou `{"status":"UP"}`; frontend retornou HTTP 200; seeds exatos foram consultados no PostgreSQL; o endpoint adiado retornou 404 e não aparece no OpenAPI. O `npm ci` direto no workspace encontrou um binário nativo bloqueado pelo editor, portanto a regressão limpa foi executada numa cópia temporária das mesmas fontes e lockfile; o build da imagem também executou `npm ci` no contexto do projeto sem erro.
 
-**Rastreabilidade dos commits humanos:** `f9d426a` contém catálogo/migration e documentação derivada do schema; `7275d6a` contém domínio, portas, persistência, Strategies e registry; `5e82330` contém as provas unitárias, PostgreSQL/Testcontainers e arquitetura; `297939f` contém README e contrato documental; `5c4eb0f` registra as evidências de implementação na story e em `AI_USAGE.md`. Todos foram executados posteriormente pela autora, nunca pelo agente.
+**Rastreabilidade definitiva na `main`:** `796687c` prepara a story; `b828536` contém catálogo/migration e documentação derivada do schema; `9374fd0` contém domínio, portas, persistência, Strategies e registry; `ccf1ebb` contém as provas unitárias, PostgreSQL/Testcontainers e arquitetura; `4a2e289` contém README e contrato documental; `45d2dd3` registra as evidências de implementação; `1af402e` registra a revisão final. Todos os commits e o Rebase and merge foram executados pela autora, nunca pelo agente.
 
 ### Review Record
 
-- **Status:** implementação concluída e revisão final realizada contra `origin/main...HEAD`; aguardando decisão humana de merge.
+- **Status:** concluída e integrada à `main` por Rebase and merge.
 - **Bloqueantes:** nenhum.
 - **Importantes:** nenhum aberto. A revisão final confirmou AC1–AC6, schema/seeds/versionamento, Strategy/registry, precisão decimal, erros, observabilidade, transação, ausência de endpoint/escopo antecipado, ArchUnit, Testcontainers, cobertura, documentação e aderência aos ADRs.
 - **Sugestões:** estabilizar futuramente o teste legado `HttpExchangeRateProviderTest.retries_only_allowlisted_server_errors`, que falhou uma vez de forma transitória e passou isoladamente e no `verify` integral subsequente; considerar, fora desta story, validação mais restrita da chave implantada, hardening contra log forging de dados administrativos corrompidos e um cenário PostgreSQL adicional para Strategy ausente. Nenhuma sugestão é necessária para AC1–AC6.
-- **Checks remotos:** jobs `backend`, `frontend` e `repository` aprovados no PR, conforme confirmação humana; a execução remota encerra a pendência de CI.
+- **Checks remotos:** jobs `backend`, `frontend` e `repository` aprovados no PR antes da integração, conforme confirmação humana.
 - **Limitações remanescentes:** as lentes BMAD `edge-case-hunter` e `verification-gap` continuaram impedidas de ler seus prompts renderizados por restrição de acesso do ambiente; `blind-hunter`, `intent-alignment`, revisão manual do diff completo e checks remotos foram concluídos. Sugestões opcionais permanecem não implementadas.
-- **Recomendação final:** **Aprovar para merge**; não há achado Bloqueante ou Importante aberto. Manter a story em Review até a aprovação humana pós-revisão.
+- **Recomendação final:** **Aprovada e concluída**; não há achado Bloqueante ou Importante aberto.
 - **Aprovação humana:** D1–D4 e promoção para Ready for Dev aprovadas pela autora em 2026-09-25.
-- **Commits humanos confirmados:** `f9d426a`, `7275d6a`, `5e82330`, `297939f` e `5c4eb0f`, executados posteriormente pela autora; o agente não realizou operações Git mutáveis.
+- **Conclusão humana:** a autora aprovou a story, realizou os commits definitivos `796687c`, `b828536`, `9374fd0`, `ccf1ebb`, `4a2e289`, `45d2dd3` e `1af402e` e integrou o PR à `main` por Rebase and merge; o agente não realizou operações Git mutáveis.
 
 ### Change Log
 
@@ -286,8 +286,9 @@ A File List acima corresponde ao conteúdo confirmado dos commits humanos da E2-
 | 2026-09-25 | D1–D4 aprovadas: catálogo/seeds, spreads nas Strategies, erros, observabilidade e adiamento do REST sincronizados; DoR concluída e story promovida para Ready for Dev. | Autora + Codex |
 | 2026-09-25 | E2-S1 implementada e verificada localmente; autorrevisão sem achados Bloqueantes ou Importantes abertos; status movido para Review. | Codex |
 | 2026-09-25 | Revisão aprofundada corrigiu guardrails do registry/telemetria/schema/controller e repetiu `verify` com 102 testes verdes; nenhum achado Bloqueante ou Importante permaneceu. | Codex |
-| 2026-09-25 | Commits humanos `f9d426a`, `7275d6a`, `5e82330` e `297939f` confirmados no histórico e vinculados às respectivas mudanças; commits executados posteriormente pela autora, não pelo agente. | Autora + Codex |
+| 2026-09-25 | Commits humanos definitivos `b828536`, `9374fd0`, `ccf1ebb` e `4a2e289` vinculados às respectivas mudanças; `796687c`, `45d2dd3` e `1af402e` preservam preparação, evidências e revisão final. | Autora + Codex |
 | 2026-09-25 | Revisão final contra `origin/main...HEAD`: jobs remotos backend/frontend/repository confirmados verdes, nenhum achado Bloqueante ou Importante aberto e recomendação “Aprovar para merge”; story mantida em Review. | Autora + Codex |
+| 2026-09-26 | Aprovação humana concluída; PR integrado à `main` por Rebase and merge, hashes definitivos registrados e status alterado de Review para Done. | Autora + Codex |
 
 ## Implementation Notes
 
@@ -320,7 +321,7 @@ A File List acima corresponde ao conteúdo confirmado dos commits humanos da E2-
 | 21 | blind-hunter final — todas as combinações de constraints | false | A introspecção confirma tipos, nulabilidade e conjunto exato de constraints; inserções inválidas exercitam checks, unicidade e nulo representativo sem necessidade de duplicar cada metadado. |
 | 22 | blind-hunter final — DoD versus checks remotos | false | Os checks remotos backend/frontend/repository foram agora confirmados pela autora; a story permanece em Review apenas para a decisão humana de merge. |
 | 23 | blind-hunter final — frontend em cópia temporária | false | A mesma árvore/lockfile passou em cópia limpa, o Docker build executou `npm ci` no contexto do repositório e os jobs remotos do frontend foram aprovados. |
-| 24 | blind-hunter final — File List e arquivos não commitados | medium | A nota estava desatualizada: `5c4eb0f` já contém `AI_USAGE.md` e a story. Corrigido documentalmente nesta revisão, sem alteração de código. |
+| 24 | blind-hunter final — File List e arquivos não commitados | medium | A nota estava desatualizada: o commit definitivo `45d2dd3` contém `AI_USAGE.md` e as evidências da story. Corrigido documentalmente na revisão, sem alteração de código. |
 | 25 | intent-alignment final — superfície interna | false | A story aprovada exige explicitamente consulta interna e adia endpoint e cálculo para stories posteriores; porta Java, registry e teste PostgreSQL correspondem à intenção congelada. |
 
 As lentes `edge-case-hunter` e `verification-gap` foram lançadas, mas não conseguiram ler seus prompts renderizados por restrição de acesso do ambiente e encerraram sem achados. A revisão manual e as demais lentes cobriram o diff; essa limitação operacional permanece registrada sem alterar o resultado técnico.
