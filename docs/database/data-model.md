@@ -6,7 +6,7 @@ identificadas como planejamento.
 
 | Tabela | Finalidade | Restrições principais |
 |---|---|---|
-| `currency` | Catálogo ISO das moedas | `code CHAR(3)` PK; `minor_units >= 0`. |
+| `currency` | Catálogo ISO das moedas | `code CHAR(3)` PK; V5 restringe `minor_units` a 0–6; BRL/USD permanecem com 2. |
 | `exchange_rate` | Histórico append-only de câmbio | par distinto; `rate > 0`; índice por par+vigência. |
 | `receivable_type` | Catálogo interno e chave estável da Strategy | Implementado na V4: `code` único; nome/chave obrigatórios; estado ativo e versionamento não negativo; sem spread ou nome de classe Java. |
 | `base_rate` | Histórico versionado da taxa base mensal por moeda | Implementado na V3: `(currency_code, effective_from)` único; `NUMERIC(18,12)` não negativo; origem obrigatória até 64 caracteres. |
@@ -40,6 +40,12 @@ spread nem nome de classe Java. O registry resolve a chave para
 `DuplicataMercantilPricingStrategy` (`0.015` a.m.) ou
 `ChequePreDatadoPricingStrategy` (`0.025` a.m.); os valores são frações decimais
 construídas com `BigDecimal`. Não existe endpoint ou escrita produtiva do catálogo.
+
+## Metadata de moeda e simulação
+
+`CurrencyMetadataQuery` expõe internamente somente `CurrencyCode` e `minorUnits` ao
+módulo de precificação. A simulação não cria tabelas nem linhas: consulta moeda,
+tipo e taxa base, executa o cálculo e devolve o resultado sem persistência.
 
 ## Snapshots em `settlement_item`
 
