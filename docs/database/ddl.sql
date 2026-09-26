@@ -1,6 +1,8 @@
--- Estado implementado até E2-S1.
+-- Estado implementado até E2-S2.
 -- Fonte: migrations Flyway V1__initialize_platform.sql, V2__create_exchange_rates.sql
--- V3__create_base_rates.sql e V4__create_receivable_types.sql, nesta ordem.
+-- V3__create_base_rates.sql, V4__create_receivable_types.sql e
+-- V5__restrict_currency_minor_units.sql, nesta ordem.
+-- Derivação conferida após a validação final da E2-S2 em 2026-09-26.
 
 CREATE TABLE application_metadata (
     metadata_key VARCHAR(100) PRIMARY KEY,
@@ -68,3 +70,7 @@ CREATE TABLE receivable_type (
 INSERT INTO receivable_type (id, code, name, strategy_key, active, version) VALUES
     ('33333333-3333-4333-8333-333333333333', 'DUPLICATA_MERCANTIL', 'Duplicata Mercantil', 'DUPLICATA_MERCANTIL', TRUE, 0),
     ('44444444-4444-4444-8444-444444444444', 'CHEQUE_PRE_DATADO', 'Cheque Pré-datado', 'CHEQUE_PRE_DATADO', TRUE, 0);
+
+ALTER TABLE currency DROP CONSTRAINT currency_minor_units_check;
+ALTER TABLE currency
+    ADD CONSTRAINT ck_currency_minor_units CHECK (minor_units BETWEEN 0 AND 6);
