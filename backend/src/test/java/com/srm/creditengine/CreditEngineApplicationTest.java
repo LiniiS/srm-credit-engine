@@ -3,6 +3,7 @@ package com.srm.creditengine;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.srm.creditengine.currency.domain.port.BaseRateQuery;
+import com.srm.creditengine.currency.domain.port.CurrencyMetadataQuery;
 import com.srm.creditengine.currency.domain.port.ExchangeRateRepository;
 import com.srm.creditengine.pricing.domain.port.ReceivableTypeCatalog;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,7 @@ class CreditEngineApplicationTest {
 
   @MockBean ExchangeRateRepository exchangeRateRepository;
   @MockBean BaseRateQuery baseRateQuery;
+  @MockBean CurrencyMetadataQuery currencyMetadataQuery;
   @MockBean ReceivableTypeCatalog receivableTypeCatalog;
 
   @Autowired TestRestTemplate restTemplate;

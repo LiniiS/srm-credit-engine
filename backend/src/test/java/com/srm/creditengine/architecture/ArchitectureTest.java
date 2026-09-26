@@ -3,6 +3,7 @@ package com.srm.creditengine.architecture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.srm.creditengine.currency.domain.port.BaseRateQuery;
+import com.srm.creditengine.currency.domain.port.CurrencyMetadataQuery;
 import com.srm.creditengine.currency.domain.port.ExchangeRateProvider;
 import com.srm.creditengine.currency.domain.port.ExchangeRateRepository;
 import com.srm.creditengine.pricing.domain.port.ReceivableTypeCatalog;
@@ -43,12 +44,13 @@ class ArchitectureTest {
     assertThat(publicPortInterfaces)
         .containsExactlyInAnyOrder(
             BaseRateQuery.class.getName(),
+            CurrencyMetadataQuery.class.getName(),
             ExchangeRateProvider.class.getName(),
             ExchangeRateRepository.class.getName());
   }
 
   @Test
-  void pricing_exposes_only_its_approved_internal_ports_and_has_no_controller() {
+  void pricing_exposes_only_its_approved_internal_ports() {
     var productionClasses =
         new ClassFileImporter()
             .withImportOption(new ImportOption.DoNotIncludeTests())
@@ -64,11 +66,15 @@ class ArchitectureTest {
     assertThat(publicPortInterfaces)
         .containsExactlyInAnyOrder(
             ReceivableTypeCatalog.class.getName(), ReceivableTypePricingResolver.class.getName());
-    assertThat(productionClasses).noneMatch(type -> type.getSimpleName().endsWith("Controller"));
-    assertThat(productionClasses)
-        .noneMatch(
-            type ->
-                type.isAnnotatedWith(Controller.class)
-                    || type.isAnnotatedWith(RestController.class));
+    var httpAdapters =
+        productionClasses.stream()
+            .filter(
+                type ->
+                    type.isAnnotatedWith(RestController.class)
+                        || type.isAnnotatedWith(Controller.class))
+            .toList();
+    assertThat(httpAdapters)
+        .isNotEmpty()
+        .allMatch(type -> type.getPackageName().equals("com.srm.creditengine.pricing.api"));
   }
 }
