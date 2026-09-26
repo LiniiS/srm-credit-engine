@@ -7,7 +7,7 @@ baseline_commit: 'aaea0b65178dc8499c781f38cd07ad88c1c3129b'
 route: 'full'
 route_source: 'auto'
 review: 'thorough'
-review_source: 'pinned'
+review_source: 'auto'
 lenses_ran:
   - 'blind-hunter'
   - 'edge-case-hunter'
@@ -249,7 +249,7 @@ Flyway continua fonte normativa; DDL, ER e modelo de dados serão derivados da V
 - `AI_USAGE.md`
 - `_bmad-output/implementation-artifacts/e2-s1-aplicar-strategy-por-tipo.md`
 
-A File List acima corresponde ao conteúdo confirmado dos quatro commits humanos da E2-S1; `AI_USAGE.md` e esta story permanecem como atualização documental ainda não commitada.
+A File List acima corresponde ao conteúdo confirmado dos commits humanos da E2-S1. `AI_USAGE.md` e esta story foram registradas posteriormente em `5c4eb0f docs(story): record E2-S1 implementation evidence`.
 
 ### Evidências
 
@@ -264,17 +264,19 @@ A File List acima corresponde ao conteúdo confirmado dos quatro commits humanos
 
 **Gates executados:** `spotless:check` passou; `verify` passou com 18 suites/102 testes, zero falhas/erros/skips, incluindo ArchUnit e Testcontainers; JaCoCo registrou 98,13% de linhas e 86,36% de branches; frontend limpo passou `npm ci`, lint, typecheck, 14 testes e build; `docker compose config` e `up --build -d` passaram; quatro serviços ficaram healthy; readiness retornou `{"status":"UP"}`; frontend retornou HTTP 200; seeds exatos foram consultados no PostgreSQL; o endpoint adiado retornou 404 e não aparece no OpenAPI. O `npm ci` direto no workspace encontrou um binário nativo bloqueado pelo editor, portanto a regressão limpa foi executada numa cópia temporária das mesmas fontes e lockfile; o build da imagem também executou `npm ci` no contexto do projeto sem erro.
 
-**Rastreabilidade dos commits humanos:** `f9d426a` contém catálogo/migration e documentação derivada do schema; `7275d6a` contém domínio, portas, persistência, Strategies e registry; `5e82330` contém as provas unitárias, PostgreSQL/Testcontainers e arquitetura; `297939f` contém README e contrato documental. Todos foram executados posteriormente pela autora, nunca pelo agente.
+**Rastreabilidade dos commits humanos:** `f9d426a` contém catálogo/migration e documentação derivada do schema; `7275d6a` contém domínio, portas, persistência, Strategies e registry; `5e82330` contém as provas unitárias, PostgreSQL/Testcontainers e arquitetura; `297939f` contém README e contrato documental; `5c4eb0f` registra as evidências de implementação na story e em `AI_USAGE.md`. Todos foram executados posteriormente pela autora, nunca pelo agente.
 
 ### Review Record
 
-- **Status:** implementação concluída e revisada; aguardando aprovação humana e checks remotos.
+- **Status:** implementação concluída e revisão final realizada contra `origin/main...HEAD`; aguardando decisão humana de merge.
 - **Bloqueantes:** nenhum.
-- **Importantes:** nenhum aberto. Durante a revisão, foram corrigidos validação fail-fast de chaves do registry, isolamento de falha da métrica, introspecção exata das constraints e detecção arquitetural de controllers por anotação; as provas de formatos inválidos, tipo inativo e metadados estruturais da V4 também foram ampliadas.
-- **Sugestões:** estabilizar futuramente o teste legado `HttpExchangeRateProviderTest.retries_only_allowlisted_server_errors`, que falhou uma vez de forma transitória e passou isoladamente e no `verify` integral subsequente; não pertence ao diff funcional de E2-S1.
-- **Recomendação:** pronta para revisão humana/CI; não marcar Done antes dessas aprovações.
+- **Importantes:** nenhum aberto. A revisão final confirmou AC1–AC6, schema/seeds/versionamento, Strategy/registry, precisão decimal, erros, observabilidade, transação, ausência de endpoint/escopo antecipado, ArchUnit, Testcontainers, cobertura, documentação e aderência aos ADRs.
+- **Sugestões:** estabilizar futuramente o teste legado `HttpExchangeRateProviderTest.retries_only_allowlisted_server_errors`, que falhou uma vez de forma transitória e passou isoladamente e no `verify` integral subsequente; considerar, fora desta story, validação mais restrita da chave implantada, hardening contra log forging de dados administrativos corrompidos e um cenário PostgreSQL adicional para Strategy ausente. Nenhuma sugestão é necessária para AC1–AC6.
+- **Checks remotos:** jobs `backend`, `frontend` e `repository` aprovados no PR, conforme confirmação humana; a execução remota encerra a pendência de CI.
+- **Limitações remanescentes:** as lentes BMAD `edge-case-hunter` e `verification-gap` continuaram impedidas de ler seus prompts renderizados por restrição de acesso do ambiente; `blind-hunter`, `intent-alignment`, revisão manual do diff completo e checks remotos foram concluídos. Sugestões opcionais permanecem não implementadas.
+- **Recomendação final:** **Aprovar para merge**; não há achado Bloqueante ou Importante aberto. Manter a story em Review até a aprovação humana pós-revisão.
 - **Aprovação humana:** D1–D4 e promoção para Ready for Dev aprovadas pela autora em 2026-09-25.
-- **Commits humanos confirmados:** `f9d426a`, `7275d6a`, `5e82330` e `297939f`, executados posteriormente pela autora; o agente não realizou operações Git mutáveis.
+- **Commits humanos confirmados:** `f9d426a`, `7275d6a`, `5e82330`, `297939f` e `5c4eb0f`, executados posteriormente pela autora; o agente não realizou operações Git mutáveis.
 
 ### Change Log
 
@@ -285,6 +287,7 @@ A File List acima corresponde ao conteúdo confirmado dos quatro commits humanos
 | 2026-09-25 | E2-S1 implementada e verificada localmente; autorrevisão sem achados Bloqueantes ou Importantes abertos; status movido para Review. | Codex |
 | 2026-09-25 | Revisão aprofundada corrigiu guardrails do registry/telemetria/schema/controller e repetiu `verify` com 102 testes verdes; nenhum achado Bloqueante ou Importante permaneceu. | Codex |
 | 2026-09-25 | Commits humanos `f9d426a`, `7275d6a`, `5e82330` e `297939f` confirmados no histórico e vinculados às respectivas mudanças; commits executados posteriormente pela autora, não pelo agente. | Autora + Codex |
+| 2026-09-25 | Revisão final contra `origin/main...HEAD`: jobs remotos backend/frontend/repository confirmados verdes, nenhum achado Bloqueante ou Importante aberto e recomendação “Aprovar para merge”; story mantida em Review. | Autora + Codex |
 
 ## Implementation Notes
 
@@ -305,5 +308,19 @@ A File List acima corresponde ao conteúdo confirmado dos quatro commits humanos
 | 9 | blind-hunter — inativo sem prova de não execução | low | A ordem do serviço já impedia a execução; adicionada prova direta com Strategy sentinela para eliminar inferência. |
 | 10 | blind-hunter — `npm ci` fora do workspace | false | As mesmas fontes/lockfile passaram em cópia limpa e o Dockerfile executou `npm ci` no contexto do workspace durante o build; o bloqueio local é do binário carregado pelo editor, não do repositório. |
 | 11 | intent-alignment — integração a fluxo funcional | false | O bloco congelado define resolução interna e exclui cálculo/endpoint até E2-S2; o diff implementa exatamente essa leitura aprovada. |
+| 12 | blind-hunter final — regras de pureza/limites ausentes | false | `ArchitectureRules.checkAll` já verifica domínio sem Spring/JPA/Jackson, matriz entre módulos, contratos públicos, ciclos e direções de camada para todo `com.srm.creditengine`. |
+| 13 | blind-hunter final — filtro relaxa portas de currency | false | O importer desse teste já restringe o universo a `currency.domain.port`; o filtro adicional não exclui interface pública que estivesse dentro da superfície inspecionada. |
+| 14 | blind-hunter final — endpoint fora de `pricing` | low | A ausência externa foi comprovada por OpenAPI/HTTP 404 e a arquitetura limita dependências entre módulos; uma proibição global adicional de controllers consumidores seria hardening opcional, sem violação atual. |
+| 15 | blind-hunter final — versão inválida no resultado | false | O caminho produtivo constrói o resultado exclusivamente a partir de `ReceivableType`, que rejeita versão negativa; não há construção externa exercitável pelo caso de uso. |
+| 16 | blind-hunter final — formato da chave implantada | low | Chaves produtivas são constantes aprovadas e o registry rejeita nula, vazia e duplicada; restringir formato/tamanho de beans futuros é hardening opcional, sem falha no catálogo atual. |
+| 17 | blind-hunter final — retorno nulo do `TransactionTemplate` | false | A callback retorna o `Optional` não nulo do Spring Data; abertura, consulta e finalização falhas já são traduzidas dentro do bloco protegido. |
+| 18 | blind-hunter final — Strategy ausente sem PostgreSQL real | low | O caminho de composição e observabilidade é coberto unitariamente e o mapeamento JPA é coberto em PostgreSQL real; um cenário combinado adicional melhoraria redundância, não corrige comportamento faltante. |
+| 19 | blind-hunter final — log forging administrativo | low | `receivableTypeCode` é validado e as chaves atuais são constantes seguras; sanitização adicional para catálogo corrompido exigiria escrita administrativa privilegiada e fica como hardening opcional. |
+| 20 | blind-hunter final — log de falha da métrica | low | O teste prova que a telemetria não mascara o código estável; verificar texto/contagem do warning é melhoria observacional opcional. |
+| 21 | blind-hunter final — todas as combinações de constraints | false | A introspecção confirma tipos, nulabilidade e conjunto exato de constraints; inserções inválidas exercitam checks, unicidade e nulo representativo sem necessidade de duplicar cada metadado. |
+| 22 | blind-hunter final — DoD versus checks remotos | false | Os checks remotos backend/frontend/repository foram agora confirmados pela autora; a story permanece em Review apenas para a decisão humana de merge. |
+| 23 | blind-hunter final — frontend em cópia temporária | false | A mesma árvore/lockfile passou em cópia limpa, o Docker build executou `npm ci` no contexto do repositório e os jobs remotos do frontend foram aprovados. |
+| 24 | blind-hunter final — File List e arquivos não commitados | medium | A nota estava desatualizada: `5c4eb0f` já contém `AI_USAGE.md` e a story. Corrigido documentalmente nesta revisão, sem alteração de código. |
+| 25 | intent-alignment final — superfície interna | false | A story aprovada exige explicitamente consulta interna e adia endpoint e cálculo para stories posteriores; porta Java, registry e teste PostgreSQL correspondem à intenção congelada. |
 
 As lentes `edge-case-hunter` e `verification-gap` foram lançadas, mas não conseguiram ler seus prompts renderizados por restrição de acesso do ambiente e encerraram sem achados. A revisão manual e as demais lentes cobriram o diff; essa limitação operacional permanece registrada sem alterar o resultado técnico.
