@@ -27,6 +27,7 @@ class PricingCalculationTest {
             new BigDecimal("31").divide(new BigDecimal("30"), java.math.MathContext.DECIMAL128));
     assertThat(result.presentValue()).isEqualByComparingTo("974.81");
     assertThat(result.discount()).isEqualByComparingTo("25.19");
+    assertThat(result.presentValue().add(result.discount())).isEqualByComparingTo("1000.00");
   }
 
   @Test
@@ -41,6 +42,7 @@ class PricingCalculationTest {
 
     assertThat(result.presentValue()).isEqualByComparingTo("2391.58");
     assertThat(result.discount()).isEqualByComparingTo("108.42");
+    assertThat(result.presentValue().add(result.discount())).isEqualByComparingTo("2500.00");
   }
 
   @Test
@@ -52,6 +54,26 @@ class PricingCalculationTest {
     assertThat(power.pow(new BigDecimal("1.025"), BigDecimal.ZERO)).isSameAs(BigDecimal.ONE);
     assertThat(result.presentValue()).isEqualByComparingTo("1000.00");
     assertThat(result.discount()).isEqualByComparingTo("0.00");
+    assertThat(result.presentValue().add(result.discount())).isEqualByComparingTo("1000.00");
+  }
+
+  @Test
+  void derives_discount_from_once_rounded_present_value_at_half_even_boundary() {
+    var faceValue = new BigDecimal("2.00");
+    var expectedRawPresentValue = new BigDecimal("1.005");
+    var boundaryPower =
+        (com.srm.creditengine.pricing.domain.DecimalPower)
+            (base, exponent) ->
+                faceValue.divide(expectedRawPresentValue, java.math.MathContext.DECIMAL128);
+    var boundaryCalculation = new PricingCalculation(boundaryPower);
+
+    var result =
+        boundaryCalculation.calculate(
+            faceValue, 30, new BigDecimal("0.01"), new BigDecimal("0.015"), 2);
+
+    assertThat(result.presentValue()).isEqualByComparingTo("1.00");
+    assertThat(result.discount()).isEqualByComparingTo("1.00");
+    assertThat(result.presentValue().add(result.discount())).isEqualByComparingTo(faceValue);
   }
 
   @Test
