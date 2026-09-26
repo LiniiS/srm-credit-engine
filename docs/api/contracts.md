@@ -13,7 +13,7 @@
 | POST | `/exchange-rates` | 201 + `Location` | 400 |
 | POST | `/exchange-rates/sync` | 202 + `Location` | 400, 503 |
 | GET | `/exchange-rates/latest?base&quote` | 200 | 400, 404 |
-| POST | `/pricing/simulations` | 200 | 400, 422, 503 |
+| POST | `/pricing/simulations` | 200 | 400, 404, 422, 500 |
 | POST | `/settlements` | 201 + `Location` | 400, 409, 422, 503 |
 | GET | `/settlements/{id}` | 200 | 404 |
 | GET | `/reports/settlements?from&to&assignorId&currency&page&size&sort` | 200 | 400 |
@@ -46,47 +46,43 @@ O sucesso retorna `202 Accepted`, `Location` e o mesmo DTO decimal do cadastro m
 
 O provider local recebe somente `base` e `quote`; cenários de teste são selecionados pela API administrativa do WireMock, nunca por parâmetros ou headers enviados pelo backend.
 
-## Simular precificação
+## Simular na moeda do título
 
 ```json
 {
-  "paymentCurrency": "USD",
-  "items": [
-    {
-      "externalReceivableId": "REC-2026-0001",
-      "receivableType": "DUPLICATA_MERCANTIL",
-      "faceValue": "10000.00",
-      "faceCurrency": "BRL",
-      "dueDate": "2026-12-23"
-    }
-  ]
+  "faceValue": "1000.00",
+  "currency": "BRL",
+  "receivableTypeCode": "DUPLICATA_MERCANTIL",
+  "calculationDate": "2026-01-02",
+  "dueDate": "2026-02-01"
 }
 ```
 
-Resposta proposta:
+Resposta implementada:
 
 ```json
 {
-  "calculationDate": "2026-09-23",
-  "paymentCurrency": "USD",
-  "totalNetValue": "0.00",
-  "items": [
-    {
-      "externalReceivableId": "REC-2026-0001",
-      "termDays": 91,
-      "baseRateApplied": "0.000000",
-      "spreadApplied": "0.015000",
-      "presentValueInFaceCurrency": "0.00",
-      "discountInFaceCurrency": "0.00",
-      "fxPair": "USD/BRL",
-      "fxRateApplied": "5.10000000",
-      "netValue": "0.00"
-    }
-  ]
+  "faceValue": "1000.00",
+  "currency": "BRL",
+  "receivableTypeCode": "DUPLICATA_MERCANTIL",
+  "calculationDate": "2026-01-02",
+  "dueDate": "2026-02-01",
+  "adjustedDueDate": "2026-02-02",
+  "termDays": 31,
+  "termMonths": "1.033333333333333333333333333333333",
+  "baseRate": "0.010000000000",
+  "baseRateId": "11111111-1111-4111-8111-111111111111",
+  "baseRateSource": "DEMO_SEED",
+  "spread": "0.015",
+  "monthlyRate": "0.025000000000",
+  "presentValue": "974.81",
+  "discount": "25.19"
 }
 ```
 
-Os zeros são placeholders de formato, não exemplos financeiros aprovados.
+`calculationDate` governa vigência e prazo. O vencimento é ajustado pelo calendário
+ANBIMA versionado de 2025–2030; ano fora da cobertura retorna
+`422 BUSINESS_CALENDAR_NOT_AVAILABLE`. A operação não persiste a simulação.
 
 ## Liquidar lote
 
