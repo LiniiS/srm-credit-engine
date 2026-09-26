@@ -43,7 +43,10 @@ final class ArchitectureRules {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage(
-                "org.springframework.web..", "jakarta.persistence..", "com.fasterxml.jackson..")
+                "org.springframework..",
+                "jakarta.persistence..",
+                "com.fasterxml.jackson..",
+                "ch.obermuhlner.math.big..")
             .allowEmptyShould(true),
         noClasses()
             .that()

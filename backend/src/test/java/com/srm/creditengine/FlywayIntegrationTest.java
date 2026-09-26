@@ -1,10 +1,12 @@
 package com.srm.creditengine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -62,6 +64,22 @@ class FlywayIntegrationTest {
                 "SELECT installed_rank FROM flyway_schema_history WHERE version = '4' AND success",
                 Integer.class))
         .isEqualTo(4);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT installed_rank FROM flyway_schema_history WHERE version = '5' AND success",
+                Integer.class))
+        .isEqualTo(5);
+    assertThat(jdbcTemplate.queryForMap("SELECT minor_units FROM currency WHERE code='BRL'"))
+        .containsEntry("minor_units", 2);
+    assertThat(jdbcTemplate.queryForMap("SELECT minor_units FROM currency WHERE code='USD'"))
+        .containsEntry("minor_units", 2);
+    assertThatThrownBy(
+            () -> jdbcTemplate.update("UPDATE currency SET minor_units = 7 WHERE code = 'BRL'"))
+        .isInstanceOf(DataIntegrityViolationException.class);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT minor_units FROM currency WHERE code = 'BRL'", Integer.class))
+        .isEqualTo(2);
     assertThat(restTemplate.getForEntity("/actuator/health/readiness", String.class).getBody())
         .isEqualTo("{\"status\":\"UP\"}");
   }
