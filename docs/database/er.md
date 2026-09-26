@@ -1,9 +1,10 @@
 # Diagrama entidade-relacionamento
 
-## Estado implementado até E1-S3
+## Estado implementado até E2-S1
 
 A fundação mantém metadados técnicos, o catálogo USD/BRL, o histórico append-only de
-câmbio e as taxas base mensais versionadas por moeda e vigência.
+câmbio, as taxas base mensais versionadas por moeda e vigência e o catálogo interno
+de tipos de recebível.
 
 ```mermaid
 erDiagram
@@ -35,11 +36,19 @@ erDiagram
     date effective_from
     varchar source
   }
+  RECEIVABLE_TYPE {
+    uuid id PK
+    varchar code UK
+    varchar name
+    varchar strategy_key
+    boolean active
+    bigint version
+  }
 ```
 
 O DDL vigente está em `docs/database/ddl.sql` e deriva da migration Flyway
-`V1__initialize_platform.sql`, `V2__create_exchange_rates.sql` e
-`V3__create_base_rates.sql`.
+`V1__initialize_platform.sql`, `V2__create_exchange_rates.sql`,
+`V3__create_base_rates.sql` e `V4__create_receivable_types.sql`.
 
 ## Modelo de negócio aprovado para stories posteriores
 
@@ -76,7 +85,6 @@ erDiagram
     uuid id PK
     varchar code UK
     varchar name
-    numeric spread_monthly
     varchar strategy_key
     boolean active
     bigint version
