@@ -2,24 +2,25 @@
 title: 'E2-S2 — Simular em moeda do título'
 type: 'feature'
 created: '2026-09-26'
-status: 'ready-for-dev'
+status: 'in-review'
+baseline_commit: '88d2e15903719da8ba7f9fafdecdea04e845ec85'
 route: 'full'
 route_source: 'auto'
-review: ''
-review_source: ''
-lenses_ran: []
+review: 'thorough'
+review_source: 'auto'
+lenses_ran: ['blind-hunter', 'edge-case-hunter', 'verification-gap', 'intent-alignment']
 review_loop_iteration: 0
 context:
   - 'docs/adr/0001-adotar-monolito-modular-hexagonal.md'
   - 'docs/adr/0002-adotar-postgresql-flyway-jpa-jooq.md'
   - 'docs/adr/0003-padronizar-calculo-financeiro-decimal.md'
   - 'docs/adr/0006-padronizar-contratos-e-erros-http.md'
-  - 'docs/adr/0007-padronizar-observabilidade-e-resiliencia.md'
+  - 'docs/adr/0007-adotar-observabilidade-e-resiliencia-seletiva.md'
 ---
 
 # E2-S2 — Simular em moeda do título
 
-**Status:** Ready for Dev
+**Status:** Review
 
 <frozen-after-approval reason="intenção e critérios pertencem à responsável humana">
 
@@ -102,13 +103,13 @@ Intermediários de referência: caso 1, PV ≈ `974.807074689671`; caso 2, PV �
 
 ## Tarefas técnicas ordenadas
 
-- [ ] **T1 (AC6):** criar V5 para substituir a constraint 0–8 por 0–6 sem alterar V2, provar catálogo BRL/USD=2 em PostgreSQL 16 e atualizar DDL/ER/modelo.
-- [ ] **T2 (AC4/AC6):** criar `CurrencyMetadataQuery` e adapter de leitura, com tradução de infraestrutura e guardrail da única exposição autorizada.
-- [ ] **T3 (AC2):** criar `BusinessCalendar`, `BrazilBusinessCalendar` e recurso versionado ANBIMA 2025–2030 com metadados; testar útil, sábado, domingo, feriado, virada e indisponibilidade.
-- [ ] **T4 (AC3):** fixar versão exata validada de `big-math`, encapsular em `DecimalPower` interno e implementar VOs/cálculo puro conforme DECIMAL128, expoente zero e base positiva.
-- [ ] **T5 (AC1/AC4/AC5):** orquestrar a simulação com as portas existentes, validação após ajuste e zero escrita; instrumentar `srm.pricing.duration` e logs estruturados de resultado/código, sem valores de alta cardinalidade.
-- [ ] **T6 (AC1/AC5):** implementar request/response/controller/OpenAPI e integrar o handler RFC 9457 com 400/404/422/500 aplicáveis.
-- [ ] **T7 (AC1–AC6):** implementar testes unitários, contrato, OpenAPI, integração/Testcontainers e ArchUnit; atualizar documentação acionada e executar todos os gates.
+- [x] **T1 (AC6):** criar V5 para substituir a constraint 0–8 por 0–6 sem alterar V2, provar catálogo BRL/USD=2 em PostgreSQL 16 e atualizar DDL/ER/modelo.
+- [x] **T2 (AC4/AC6):** criar `CurrencyMetadataQuery` e adapter de leitura, com tradução de infraestrutura e guardrail da única exposição autorizada.
+- [x] **T3 (AC2):** criar `BusinessCalendar`, `BrazilBusinessCalendar` e recurso versionado ANBIMA 2025–2030 com metadados; testar útil, sábado, domingo, feriado, virada e indisponibilidade.
+- [x] **T4 (AC3):** fixar versão exata validada de `big-math`, encapsular em `DecimalPower` interno e implementar VOs/cálculo puro conforme DECIMAL128, expoente zero e base positiva.
+- [x] **T5 (AC1/AC4/AC5):** orquestrar a simulação com as portas existentes, validação após ajuste e zero escrita; instrumentar `srm.pricing.duration` e logs estruturados de resultado/código, sem valores de alta cardinalidade.
+- [x] **T6 (AC1/AC5):** implementar request/response/controller/OpenAPI e integrar o handler RFC 9457 com 400/404/422/500 aplicáveis.
+- [x] **T7 (AC1–AC6):** implementar testes unitários, contrato, OpenAPI, integração/Testcontainers e ArchUnit; atualizar documentação acionada e executar todos os gates.
 
 ## Code Map e arquivos previstos
 
@@ -155,39 +156,66 @@ Intermediários de referência: caso 1, PV ≈ `974.807074689671`; caso 2, PV �
 
 ## Definition of Done
 
-- [ ] AC1–AC6 atendidos com evidências reais e nenhuma persistência de simulação.
-- [ ] Três casos aprovados e todas as bordas passam; finais exatos, intermediários sob tolerância documentada.
-- [ ] V5, catálogo, calendário/metadata, portas e erros comprovados em PostgreSQL 16/Testcontainers.
-- [ ] Spotless, verify, JaCoCo, ArchUnit e regressão frontend passam sem gate relaxado.
-- [ ] Compose saudável; smoke, logs, métrica, OpenAPI e ausência de escrita comprovados.
-- [ ] DDL, ER, modelo, contrato, observabilidade, README e AI_USAGE refletem o runtime.
-- [ ] Gate documental e `git diff --check` passam; revisão não deixa Bloqueantes/Importantes.
+- [x] AC1–AC6 atendidos com evidências reais e nenhuma persistência de simulação.
+- [x] Três casos aprovados e todas as bordas passam; finais exatos, intermediários sob tolerância documentada.
+- [x] V5, catálogo, calendário/metadata, portas e erros comprovados em PostgreSQL 16/Testcontainers.
+- [x] Spotless, verify, JaCoCo, ArchUnit e regressão frontend passam sem gate relaxado.
+- [x] Compose saudável; smoke, logs, métrica, OpenAPI e ausência de escrita comprovados.
+- [x] DDL, ER, modelo, contrato, observabilidade, README e AI_USAGE refletem o runtime.
+- [x] Gate documental e `git diff --check` passam; revisão não deixa Bloqueantes/Importantes.
 - [ ] Aprovação humana final registrada antes de Done.
 
 ## Dev Agent Record
 
 ### File List
 
-- `_bmad-output/implementation-artifacts/e2-s2-simular-em-moeda-do-titulo.md` — criada e refinada para Ready for Dev.
+- `backend/pom.xml`; `backend/src/main/resources/db/migration/V5__restrict_currency_minor_units.sql`; `backend/src/main/resources/calendars/anbima-brazil-2025-2030.csv`.
+- `backend/src/main/java/com/srm/creditengine/currency/{domain/port,persistence}/` — consulta interna de minor units e adapter PostgreSQL.
+- `backend/src/main/java/com/srm/creditengine/pricing/{api,domain,service}/` — contrato HTTP, calendário, potência decimal, cálculo e orquestração.
+- `backend/src/test/java/com/srm/creditengine/{CreditEngineApplicationTest,FlywayIntegrationTest,architecture,pricing}/` — testes de unidade, integração, migration, contrato e arquitetura.
+- `docs/api/contracts.md`; `docs/database/{ddl.sql,er.md,data-model.md}`; `docs/observability.md`; `README.md`; `AI_USAGE.md`.
+- `_bmad-output/implementation-artifacts/e2-s2-simular-em-moeda-do-titulo.md` — execução, evidências e revisão.
+- Os arquivos de implementação, testes e documentação acima foram registrados nos commits humanos `e26c0cc`, `a5ab6e2`, `c721f73` e `1939fcd`; a atualização corrente da story permanece sem commit.
 
 ### Completion Notes
 
-- Planejamento apenas; nenhuma implementação executada.
-- D1–D6 incorporadas. A baseline existente de `minor_units` foi preservada e a alteração prevista foi expressa como migration aditiva de constraint.
+- Implementados endpoint de simulação sem persistência, ACT/30, calendário ANBIMA local 2025–2030, Strategy por tipo, taxa-base vigente, metadata monetária, potência decimal isolada e erros RFC 9457.
+- `big-math` foi fixado em `2.3.2`; intermediários usam `MathContext.DECIMAL128` e somente os resultados monetários finais usam `HALF_EVEN` com os minor units consultados.
+- Revisão crítica corrigiu validação positiva no DTO, precedência da validação temporal, metadados/limites do calendário, cobertura do contrato de resposta e guardrails do domínio/HTTP.
+- Nenhum endpoint de câmbio, snapshot, settlement, frontend ou persistência de simulação foi introduzido.
+- O agente não executou commits. Posteriormente, a autora registrou a implementação em quatro commits atômicos: `e26c0cc`, `a5ab6e2`, `c721f73` e `1939fcd`.
 
 ### Evidências
 
 - Aprovação humana das decisões D1–D6 registrada em 2026-09-26.
-- `check-docs.sh . story`: aprovado em 2026-09-26 com 0 erros e 3 avisos de documentos exigidos somente no release.
-- `git diff --check`: aprovado em 2026-09-26.
-- `git status --short`: somente esta story não rastreada; nenhuma operação Git mutável executada.
+- Dependência financeira efetivamente resolvida e testada: `ch.obermuhlner:big-math:2.3.2`, isolada atrás de `DecimalPower`.
+- Calendário ANBIMA 2025–2030 efetivamente versionado em `backend/src/main/resources/calendars/anbima-brazil-2025-2030.csv`, com fonte, cobertura e data de atualização validadas no carregamento.
+- Commits executados posteriormente pela autora, nunca pelo agente: `e26c0cc feat(db): add currency minor-unit metadata`; `a5ab6e2 feat(pricing): simulate present value in title currency`; `c721f73 test(pricing): prove title-currency simulation contracts`; `1939fcd docs(pricing): document title-currency simulation`.
+- Backend: `spotless:check` e `verify` aprovados; 22 suítes, 117 testes, 0 falhas/erros/skips; ArchUnit e PostgreSQL 16/Testcontainers verdes; JaCoCo 686/718 linhas (95,54%) e 132/166 branches (79,52%).
+- Frontend em cópia limpa devido a lock `EPERM` local em `node_modules`: `npm ci`, lint, typecheck, 14 testes e build aprovados; 0 vulnerabilidades; linhas 100% e branches 87,5%. A imagem Docker também executou `npm ci`/build com sucesso.
+- Compose final: PostgreSQL, WireMock, backend e frontend healthy. Smokes: BRL `974.81/25.19`, USD `2391.58/108.42`, prazo zero `1000.00/0.00`; OpenAPI expõe `200/400/404/422/500`; métrica observada com 3 chamadas e zero tags.
+- Testes comprovam ausência de escrita, V5/minor units, calendário, erros seguros, domínio sem Spring/JPA/Jackson/big-math e representação decimal por string.
+- O primeiro `verify` pós-revisão expôs uma falha transitória no teste preexistente de backoff da E1-S2; a repetição integral passou sem alteração nesse teste. Permanece como limitação operacional conhecida, não como falha funcional da E2-S2.
 
 ## Review Record
 
-- Revisão de implementação: pendente.
+- Revisão de implementação: concluída em 2026-09-26; nenhum achado Bloqueante ou Importante permanece aberto. Recomendação: pronta para revisão humana/PR, mantendo status Review.
 - Aprovação humana da especificação: concedida em 2026-09-26.
+- Registro de autoria: os quatro commits da implementação foram executados posteriormente pela autora; nenhuma operação Git mutável foi executada pelo agente.
+
+### Review Triage Log
+
+- **Importante — resolvido:** `faceValue=0` atravessava o DTO sem violação por campo; regex e teste HTTP foram corrigidos.
+- **Importante — resolvido:** validação de cobertura/calendário e vencimento ocorria depois de consultas; agora precede metadata, tipo e taxa-base.
+- **Importante — resolvido:** guardrails não explicitavam ausência de Spring e `big-math` no domínio nem restringiam controllers por anotação; regras e provas foram ampliadas.
+- **Importante — resolvido:** contrato feliz verificava apenas parte da resposta; todos os campos financeiros e strings decimais relevantes passaram a ser exercitados.
+- **Sugestão — incorporada:** metadados `source_name`, cobertura e data de atualização do CSV são validados no carregamento; fronteiras inferior/superior também são testadas.
+- **Sugestão — não implementada:** derivar dinamicamente todas as tabelas para a prova de zero escrita; a lista explícita cobre integralmente o schema de negócio atual e deverá acompanhar novas tabelas.
+- **Sugestão — não implementada:** ampliar combinações HTTP redundantes já cobertas nas camadas unitária, de serviço, migration e integração.
 
 ## Change Log
 
 - 2026-09-26 — Story criada em Draft a partir do roadmap e baseline concluída.
 - 2026-09-26 — D1–D6 aprovadas humanamente; contratos, precisão, calendário, metadata, casos e testes sincronizados; status alterado para Ready for Dev.
+- 2026-09-26 — E2-S2 implementada e validada; revisão crítica corrigida; status alterado para Review, aguardando aprovação humana.
+- 2026-09-26 — Autoria humana dos commits `e26c0cc`, `a5ab6e2`, `c721f73` e `1939fcd` registrada; File List, Completion Notes, evidências e Review Record sincronizados, mantendo Review.
