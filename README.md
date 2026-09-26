@@ -40,6 +40,22 @@ Os nomes e séries podem ser consultados em `GET /actuator/metrics` no ambiente 
 | POST | `/api/v1/exchange-rates/sync` | `202 Accepted`, `Location` e taxa persistida do provider |
 | GET | `/api/v1/exchange-rates/latest?base=USD&quote=BRL` | versão vigente no relógio UTC do servidor |
 
+## Simulação de precificação
+
+`POST /api/v1/pricing/simulations` calcula o valor presente na moeda do título sem
+persistir dados. O prazo usa ACT/30 após ajuste pelo calendário ANBIMA versionado
+2025–2030; intermediários usam DECIMAL128 e o dinheiro é arredondado uma vez com
+HALF_EVEN nos minor units da moeda.
+
+```bash
+curl -X POST http://localhost:8080/api/v1/pricing/simulations \
+  -H 'Content-Type: application/json' \
+  -d '{"faceValue":"1000.00","currency":"BRL","receivableTypeCode":"DUPLICATA_MERCANTIL","calculationDate":"2026-01-02","dueDate":"2026-02-01"}'
+```
+
+O caso retorna `presentValue="974.81"` e `discount="25.19"`. O contrato completo
+está em [docs/api/contracts.md](docs/api/contracts.md).
+
 ## Como rodar
 
 ### Pré-requisitos

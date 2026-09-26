@@ -1,6 +1,8 @@
 # Diagrama entidade-relacionamento
 
-## Estado implementado até E2-S1
+## Estado implementado até E2-S2
+
+Diagrama conferido contra as migrations V1–V5 em 2026-09-26.
 
 A fundação mantém metadados técnicos, o catálogo USD/BRL, o histórico append-only de
 câmbio, as taxas base mensais versionadas por moeda e vigência e o catálogo interno
@@ -48,7 +50,9 @@ erDiagram
 
 O DDL vigente está em `docs/database/ddl.sql` e deriva da migration Flyway
 `V1__initialize_platform.sql`, `V2__create_exchange_rates.sql`,
-`V3__create_base_rates.sql` e `V4__create_receivable_types.sql`.
+`V3__create_base_rates.sql`, `V4__create_receivable_types.sql` e
+`V5__restrict_currency_minor_units.sql`. A V5 preserva BRL/USD com duas casas e
+restringe `minor_units` ao intervalo 0–6.
 
 ## Modelo de negócio aprovado para stories posteriores
 
