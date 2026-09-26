@@ -84,6 +84,23 @@ Resposta implementada:
 ANBIMA versionado de 2025–2030; ano fora da cobertura retorna
 `422 BUSINESS_CALENDAR_NOT_AVAILABLE`. A operação não persiste a simulação.
 
+Erros estáveis de `POST /api/v1/pricing/simulations`:
+
+| HTTP | `code` | Condição pública |
+|---:|---|---|
+| 400 | `VALIDATION_ERROR` | JSON, campo, formato ou valor de entrada inválido. |
+| 400 | `CURRENCY_NOT_SUPPORTED` | Moeda bem formada ausente do catálogo. |
+| 404 | `RECEIVABLE_TYPE_NOT_FOUND` | Tipo de recebível inexistente. |
+| 404 | `BASE_RATE_NOT_FOUND` | Nenhuma taxa-base vigente para moeda/data. |
+| 422 | `RECEIVABLE_TYPE_INACTIVE` | Tipo existente, porém inativo. |
+| 422 | `BUSINESS_CALENDAR_NOT_AVAILABLE` | Data fora da cobertura versionada 2025–2030. |
+| 422 | `DUE_DATE_BEFORE_CALCULATION_DATE` | Vencimento ajustado anterior à data econômica. |
+| 500 | `PRICING_STRATEGY_NOT_CONFIGURED` | Inconsistência interna entre tipo ativo e Strategy implantada. |
+| 500 | `PRICING_CALCULATION_FAILED` | Falha interna segura de metadata, taxa-base ou cálculo. |
+
+Respostas `500` nunca transformam defeitos internos em `VALIDATION_ERROR` nem expõem
+mensagens de exceção, stack trace, SQL ou resultados financeiros parciais.
+
 ## Liquidar lote
 
 Usa header obrigatório `Idempotency-Key` e o mesmo corpo da simulação, acrescido de:
