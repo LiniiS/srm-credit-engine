@@ -18,7 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice
+@RestControllerAdvice(assignableTypes = ExchangeRateController.class)
 class ExchangeRateExceptionHandler {
   @ExceptionHandler(FxProviderUnavailableException.class)
   ResponseEntity<ProblemDetail> providerUnavailable(HttpServletRequest request) {
@@ -39,11 +39,6 @@ class ExchangeRateExceptionHandler {
   ResponseEntity<ProblemDetail> notFound(HttpServletRequest request) {
     return problem(
         HttpStatus.NOT_FOUND, "EXCHANGE_RATE_NOT_FOUND", "Exchange rate not found", request);
-  }
-
-  @ExceptionHandler(IllegalArgumentException.class)
-  ResponseEntity<ProblemDetail> invalid(HttpServletRequest request) {
-    return validation(request, List.of());
   }
 
   @ExceptionHandler(InvalidExchangeRateException.class)
