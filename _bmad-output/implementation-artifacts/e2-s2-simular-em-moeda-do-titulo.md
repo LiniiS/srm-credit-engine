@@ -2,8 +2,8 @@
 title: 'E2-S2 — Simular em moeda do título'
 type: 'feature'
 created: '2026-09-26'
-status: 'in-review'
-baseline_commit: '88d2e15903719da8ba7f9fafdecdea04e845ec85'
+status: 'done'
+baseline_commit: '4b42f0b'
 route: 'full'
 route_source: 'auto'
 review: 'thorough'
@@ -20,7 +20,7 @@ context:
 
 # E2-S2 — Simular em moeda do título
 
-**Status:** Review
+**Status:** Done
 
 <frozen-after-approval reason="intenção e critérios pertencem à responsável humana">
 
@@ -163,7 +163,7 @@ Intermediários de referência: caso 1, PV ≈ `974.807074689671`; caso 2, PV �
 - [x] Compose saudável; smoke, logs, métrica, OpenAPI e ausência de escrita comprovados.
 - [x] DDL, ER, modelo, contrato, observabilidade, README e AI_USAGE refletem o runtime.
 - [x] Gate documental e `git diff --check` passam; revisão não deixa Bloqueantes/Importantes.
-- [ ] Aprovação humana final registrada antes de Done.
+- [x] Aprovação humana final registrada antes de Done.
 
 ## Dev Agent Record
 
@@ -176,7 +176,7 @@ Intermediários de referência: caso 1, PV ≈ `974.807074689671`; caso 2, PV �
 - `backend/src/test/java/com/srm/creditengine/pricing/api/PricingSimulationFailureHttpTest.java` — matriz HTTP negativa da simulação e contenção de falhas internas.
 - `docs/api/contracts.md`; `docs/database/{ddl.sql,er.md,data-model.md}`; `docs/observability.md`; `README.md`; `AI_USAGE.md`.
 - `_bmad-output/implementation-artifacts/e2-s2-simular-em-moeda-do-titulo.md` — execução, evidências e revisão.
-- Os arquivos de implementação, testes e documentação foram registrados nos commits humanos `e26c0cc`, `a5ab6e2`, `c721f73` e `1939fcd`; as correções da revisão foram registradas nos commits humanos `e77f1b1`, `254c04f`, `8031781` e `b1b4430`. A atualização corrente da story permanece sem commit.
+- Os arquivos de implementação, testes, documentação e revisão foram integrados à `main` nos commits definitivos `4b42f0b`, `c39a2c7`, `2255973`, `78da775`, `af8bf26`, `e34194c`, `4bf23e6`, `030642c`, `0028779`, `90f8fac` e `1f1c587`.
 
 ### Completion Notes
 
@@ -185,7 +185,7 @@ Intermediários de referência: caso 1, PV ≈ `974.807074689671`; caso 2, PV �
 - Revisão crítica corrigiu validação positiva no DTO, precedência da validação temporal, metadados/limites do calendário, cobertura do contrato de resposta e guardrails do domínio/HTTP.
 - Correção da revisão final isolou o tratamento HTTP em pricing, removeu o mapeamento genérico de `IllegalArgumentException` para 400, garantiu `presentValue + discount = faceValue`, completou as fronteiras da V5, ampliou a matriz HTTP negativa e enumerou os códigos públicos no contrato.
 - Nenhum endpoint de câmbio, snapshot, settlement, frontend ou persistência de simulação foi introduzido.
-- O agente não executou commits. Posteriormente, a autora registrou a implementação nos commits `e26c0cc`, `a5ab6e2`, `c721f73` e `1939fcd` e as correções finais nos commits `e77f1b1`, `254c04f`, `8031781` e `b1b4430`.
+- O agente não executou commits nem merge. Posteriormente, a autora realizou todos os commits definitivos e integrou o PR à `main` por Rebase and merge.
 - Todos os achados Importantes foram resolvidos; não restam achados Bloqueantes ou Importantes. As Sugestões permanecem deliberadamente não implementadas.
 
 ### Evidências
@@ -193,8 +193,8 @@ Intermediários de referência: caso 1, PV ≈ `974.807074689671`; caso 2, PV �
 - Aprovação humana das decisões D1–D6 registrada em 2026-09-26.
 - Dependência financeira efetivamente resolvida e testada: `ch.obermuhlner:big-math:2.3.2`, isolada atrás de `DecimalPower`.
 - Calendário ANBIMA 2025–2030 efetivamente versionado em `backend/src/main/resources/calendars/anbima-brazil-2025-2030.csv`, com fonte, cobertura e data de atualização validadas no carregamento.
-- Commits executados posteriormente pela autora, nunca pelo agente: `e26c0cc feat(db): add currency minor-unit metadata`; `a5ab6e2 feat(pricing): simulate present value in title currency`; `c721f73 test(pricing): prove title-currency simulation contracts`; `1939fcd docs(pricing): document title-currency simulation`.
-- Commits corretivos executados posteriormente pela autora, nunca pelo agente: `e77f1b1 fix(api): isolate pricing error handling`; `254c04f fix(pricing): preserve monetary simulation invariant`; `8031781 test(db): prove currency minor-unit boundaries`; `b1b4430 docs(api): enumerate pricing simulation errors`.
+- Commits definitivos executados pela autora, nunca pelo agente: `4b42f0b docs(story): prepare E2-S2 title-currency simulation`; `c39a2c7 feat(db): add currency minor-unit metadata`; `2255973 feat(pricing): simulate present value in title currency`; `78da775 test(pricing): prove title-currency simulation contracts`; `af8bf26 docs(pricing): document title-currency simulation`; `e34194c docs(story): record E2-S2 implementation evidence`; `4bf23e6 fix(api): isolate pricing error handling`; `030642c fix(pricing): preserve monetary simulation invariant`; `0028779 test(db): prove currency minor-unit boundaries`; `90f8fac docs(api): enumerate pricing simulation errors`; `1f1c587 docs(story): record E2-S2 review corrections`.
+- Jobs remotos `backend`, `frontend` e `repository` aprovados após as correções; PR integrado à `main` pela autora por Rebase and merge.
 - Backend após as correções finais: `spotless:check` e `verify` aprovados; 23 suítes, 124 testes, 0 falhas/erros/skips; ArchUnit e PostgreSQL 16/Testcontainers verdes; JaCoCo 717/743 linhas (96,50%) e 141/176 branches (80,11%).
 - Frontend em cópia limpa devido a lock `EPERM` local em `node_modules`: `npm ci`, lint, typecheck, 14 testes e build aprovados; 0 vulnerabilidades; linhas 100% e branches 87,5%. A imagem Docker também executou `npm ci`/build com sucesso.
 - Compose reconstruído após as correções: PostgreSQL, WireMock, backend e frontend healthy. Smokes: BRL `974.81/25.19`, USD `2391.58/108.42`, prazo zero `1000.00/0.00`; em todos, `presentValue + discount = faceValue`. OpenAPI HTTP 200 expõe `200/400/404/422/500`, todos os erros referenciam `PricingSimulationProblemDetail`; Swagger UI e frontend responderam HTTP 200.
@@ -205,14 +205,14 @@ Intermediários de referência: caso 1, PV ≈ `974.807074689671`; caso 2, PV �
 
 ## Review Record
 
-- Revisão crítica da implementação anterior: concluída em 2026-09-26 e registrada como etapa intermediária; a revisão final abaixo substitui sua recomendação, mantendo status Review.
+- Revisão crítica da implementação anterior: concluída em 2026-09-26 e registrada como etapa intermediária; a revisão final abaixo substitui sua recomendação.
 - Aprovação humana da especificação: concedida em 2026-09-26.
-- Registro de autoria: os quatro commits da implementação foram executados posteriormente pela autora; nenhuma operação Git mutável foi executada pelo agente.
-- Revisão final contra `origin/main`: executada em 2026-09-26 sobre os commits `e26c0cc`, `a5ab6e2`, `c721f73`, `1939fcd` e `709faa0`, mais os registros documentais locais.
-- Checks remotos confirmados pela autora: jobs `backend`, `frontend` e `repository` aprovados no PR.
-- Resultado da revisão final original: 0 Bloqueantes, 6 Importantes e 12 Sugestões/refutações; os seis Importantes foram corrigidos e revalidados, sem implementar as Sugestões opcionais. Após revisão crítica das correções: 0 Bloqueantes e 0 Importantes remanescentes. Recomendação: **Aprovar para merge**, mantendo a story em Review até decisão humana.
-- Gates corretivos aprovados com 124 testes backend, 0 falhas/erros/skips, incluindo ArchUnit, PostgreSQL/Testcontainers e a prova de que `presentValue + discount = faceValue`; a story permanece em Review.
-- Autoria das correções: os commits `e77f1b1`, `254c04f`, `8031781` e `b1b4430` foram executados posteriormente pela autora, nunca pelo agente.
+- Registro de autoria: commits e merge foram executados pela autora; nenhuma operação Git mutável foi executada pelo agente.
+- Revisão final contra `origin/main`: concluída em 2026-09-26; AC1–AC6 atendidos.
+- Checks remotos finais confirmados pela autora: jobs `backend`, `frontend` e `repository` aprovados após as correções.
+- Resultado final: 0 Bloqueantes e 0 Importantes remanescentes. Sugestões preservadas como melhorias futuras. Recomendação final: **Aprovada**.
+- Gates corretivos aprovados com 124 testes backend, 0 falhas/erros/skips, incluindo ArchUnit, PostgreSQL/Testcontainers e a prova de que `presentValue + discount = faceValue`.
+- Aprovação e conclusão humanas registradas; PR integrado à `main` por Rebase and merge e status alterado de Review para Done.
 - Limitação da revisão automatizada: as lentes BMAD `edge-case-hunter` e `verification-gap` não conseguiram ler seus prompts renderizados por restrição de acesso; `blind-hunter` e `intent-alignment` concluíram, e as alegações relevantes foram verificadas manualmente contra código, testes, story e ADRs.
 
 ### Review Triage Log
@@ -252,6 +252,7 @@ Intermediários de referência: caso 1, PV ≈ `974.807074689671`; caso 2, PV �
 - 2026-09-26 — Story criada em Draft a partir do roadmap e baseline concluída.
 - 2026-09-26 — D1–D6 aprovadas humanamente; contratos, precisão, calendário, metadata, casos e testes sincronizados; status alterado para Ready for Dev.
 - 2026-09-26 — E2-S2 implementada e validada; revisão crítica corrigida; status alterado para Review, aguardando aprovação humana.
-- 2026-09-26 — Autoria humana dos commits `e26c0cc`, `a5ab6e2`, `c721f73` e `1939fcd` registrada; File List, Completion Notes, evidências e Review Record sincronizados, mantendo Review.
+- 2026-09-26 — Autoria humana dos commits de implementação definitivos `c39a2c7`, `2255973`, `78da775` e `af8bf26` registrada; File List, Completion Notes, evidências e Review Record sincronizados, mantendo Review.
 - 2026-09-26 — Seis achados Importantes da revisão final corrigidos e revalidados; nenhuma Sugestão opcional implementada; recomendação alterada para Aprovar para merge, mantendo Review.
-- 2026-09-26 — Commits corretivos humanos `e77f1b1`, `254c04f`, `8031781` e `b1b4430` registrados; gates com 124 testes e identidade monetária confirmados; nenhum Bloqueante ou Importante remanescente; Review preservado.
+- 2026-09-26 — Commits corretivos humanos definitivos `4bf23e6`, `030642c`, `0028779` e `90f8fac` registrados; gates com 124 testes e identidade monetária confirmados; nenhum Bloqueante ou Importante remanescente; Review preservado.
+- 2026-09-26 — Jobs `backend`, `frontend` e `repository` aprovados após as correções; PR integrado à `main` por Rebase and merge pela autora; AC1–AC6 aceitos; sugestões mantidas como melhorias futuras; status alterado para Done.
