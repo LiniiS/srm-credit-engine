@@ -7,7 +7,7 @@ baseline_commit: '88d2e15903719da8ba7f9fafdecdea04e845ec85'
 route: 'full'
 route_source: 'auto'
 review: 'thorough'
-review_source: 'auto'
+review_source: 'pinned'
 lenses_ran: ['blind-hunter', 'edge-case-hunter', 'verification-gap', 'intent-alignment']
 review_loop_iteration: 0
 context:
@@ -173,17 +173,20 @@ Intermediários de referência: caso 1, PV ≈ `974.807074689671`; caso 2, PV �
 - `backend/src/main/java/com/srm/creditengine/currency/{domain/port,persistence}/` — consulta interna de minor units e adapter PostgreSQL.
 - `backend/src/main/java/com/srm/creditengine/pricing/{api,domain,service}/` — contrato HTTP, calendário, potência decimal, cálculo e orquestração.
 - `backend/src/test/java/com/srm/creditengine/{CreditEngineApplicationTest,FlywayIntegrationTest,architecture,pricing}/` — testes de unidade, integração, migration, contrato e arquitetura.
+- `backend/src/test/java/com/srm/creditengine/pricing/api/PricingSimulationFailureHttpTest.java` — matriz HTTP negativa da simulação e contenção de falhas internas.
 - `docs/api/contracts.md`; `docs/database/{ddl.sql,er.md,data-model.md}`; `docs/observability.md`; `README.md`; `AI_USAGE.md`.
 - `_bmad-output/implementation-artifacts/e2-s2-simular-em-moeda-do-titulo.md` — execução, evidências e revisão.
-- Os arquivos de implementação, testes e documentação acima foram registrados nos commits humanos `e26c0cc`, `a5ab6e2`, `c721f73` e `1939fcd`; a atualização corrente da story permanece sem commit.
+- Os arquivos de implementação, testes e documentação foram registrados nos commits humanos `e26c0cc`, `a5ab6e2`, `c721f73` e `1939fcd`; as correções da revisão foram registradas nos commits humanos `e77f1b1`, `254c04f`, `8031781` e `b1b4430`. A atualização corrente da story permanece sem commit.
 
 ### Completion Notes
 
 - Implementados endpoint de simulação sem persistência, ACT/30, calendário ANBIMA local 2025–2030, Strategy por tipo, taxa-base vigente, metadata monetária, potência decimal isolada e erros RFC 9457.
 - `big-math` foi fixado em `2.3.2`; intermediários usam `MathContext.DECIMAL128` e somente os resultados monetários finais usam `HALF_EVEN` com os minor units consultados.
 - Revisão crítica corrigiu validação positiva no DTO, precedência da validação temporal, metadados/limites do calendário, cobertura do contrato de resposta e guardrails do domínio/HTTP.
+- Correção da revisão final isolou o tratamento HTTP em pricing, removeu o mapeamento genérico de `IllegalArgumentException` para 400, garantiu `presentValue + discount = faceValue`, completou as fronteiras da V5, ampliou a matriz HTTP negativa e enumerou os códigos públicos no contrato.
 - Nenhum endpoint de câmbio, snapshot, settlement, frontend ou persistência de simulação foi introduzido.
-- O agente não executou commits. Posteriormente, a autora registrou a implementação em quatro commits atômicos: `e26c0cc`, `a5ab6e2`, `c721f73` e `1939fcd`.
+- O agente não executou commits. Posteriormente, a autora registrou a implementação nos commits `e26c0cc`, `a5ab6e2`, `c721f73` e `1939fcd` e as correções finais nos commits `e77f1b1`, `254c04f`, `8031781` e `b1b4430`.
+- Todos os achados Importantes foram resolvidos; não restam achados Bloqueantes ou Importantes. As Sugestões permanecem deliberadamente não implementadas.
 
 ### Evidências
 
@@ -191,17 +194,26 @@ Intermediários de referência: caso 1, PV ≈ `974.807074689671`; caso 2, PV �
 - Dependência financeira efetivamente resolvida e testada: `ch.obermuhlner:big-math:2.3.2`, isolada atrás de `DecimalPower`.
 - Calendário ANBIMA 2025–2030 efetivamente versionado em `backend/src/main/resources/calendars/anbima-brazil-2025-2030.csv`, com fonte, cobertura e data de atualização validadas no carregamento.
 - Commits executados posteriormente pela autora, nunca pelo agente: `e26c0cc feat(db): add currency minor-unit metadata`; `a5ab6e2 feat(pricing): simulate present value in title currency`; `c721f73 test(pricing): prove title-currency simulation contracts`; `1939fcd docs(pricing): document title-currency simulation`.
-- Backend: `spotless:check` e `verify` aprovados; 22 suítes, 117 testes, 0 falhas/erros/skips; ArchUnit e PostgreSQL 16/Testcontainers verdes; JaCoCo 686/718 linhas (95,54%) e 132/166 branches (79,52%).
+- Commits corretivos executados posteriormente pela autora, nunca pelo agente: `e77f1b1 fix(api): isolate pricing error handling`; `254c04f fix(pricing): preserve monetary simulation invariant`; `8031781 test(db): prove currency minor-unit boundaries`; `b1b4430 docs(api): enumerate pricing simulation errors`.
+- Backend após as correções finais: `spotless:check` e `verify` aprovados; 23 suítes, 124 testes, 0 falhas/erros/skips; ArchUnit e PostgreSQL 16/Testcontainers verdes; JaCoCo 717/743 linhas (96,50%) e 141/176 branches (80,11%).
 - Frontend em cópia limpa devido a lock `EPERM` local em `node_modules`: `npm ci`, lint, typecheck, 14 testes e build aprovados; 0 vulnerabilidades; linhas 100% e branches 87,5%. A imagem Docker também executou `npm ci`/build com sucesso.
-- Compose final: PostgreSQL, WireMock, backend e frontend healthy. Smokes: BRL `974.81/25.19`, USD `2391.58/108.42`, prazo zero `1000.00/0.00`; OpenAPI expõe `200/400/404/422/500`; métrica observada com 3 chamadas e zero tags.
+- Compose reconstruído após as correções: PostgreSQL, WireMock, backend e frontend healthy. Smokes: BRL `974.81/25.19`, USD `2391.58/108.42`, prazo zero `1000.00/0.00`; em todos, `presentValue + discount = faceValue`. OpenAPI HTTP 200 expõe `200/400/404/422/500`, todos os erros referenciam `PricingSimulationProblemDetail`; Swagger UI e frontend responderam HTTP 200.
+- ProblemDetail real de entrada inválida respondeu `400 application/problem+json`, `VALIDATION_ERROR`, violação por campo e nenhum resultado parcial; testes HTTP adicionais cobrem tipo inativo, Strategy ausente e falhas internas de metadata, taxa-base, potência e argumento inesperado sem detalhes internos.
+- A V5 foi exercitada em PostgreSQL real nas fronteiras: `minor_units=0` e `6` aceitos, `-1` e `7` rejeitados, com BRL/USD restaurados e comprovados como `2`.
 - Testes comprovam ausência de escrita, V5/minor units, calendário, erros seguros, domínio sem Spring/JPA/Jackson/big-math e representação decimal por string.
 - O primeiro `verify` pós-revisão expôs uma falha transitória no teste preexistente de backoff da E1-S2; a repetição integral passou sem alteração nesse teste. Permanece como limitação operacional conhecida, não como falha funcional da E2-S2.
 
 ## Review Record
 
-- Revisão de implementação: concluída em 2026-09-26; nenhum achado Bloqueante ou Importante permanece aberto. Recomendação: pronta para revisão humana/PR, mantendo status Review.
+- Revisão crítica da implementação anterior: concluída em 2026-09-26 e registrada como etapa intermediária; a revisão final abaixo substitui sua recomendação, mantendo status Review.
 - Aprovação humana da especificação: concedida em 2026-09-26.
 - Registro de autoria: os quatro commits da implementação foram executados posteriormente pela autora; nenhuma operação Git mutável foi executada pelo agente.
+- Revisão final contra `origin/main`: executada em 2026-09-26 sobre os commits `e26c0cc`, `a5ab6e2`, `c721f73`, `1939fcd` e `709faa0`, mais os registros documentais locais.
+- Checks remotos confirmados pela autora: jobs `backend`, `frontend` e `repository` aprovados no PR.
+- Resultado da revisão final original: 0 Bloqueantes, 6 Importantes e 12 Sugestões/refutações; os seis Importantes foram corrigidos e revalidados, sem implementar as Sugestões opcionais. Após revisão crítica das correções: 0 Bloqueantes e 0 Importantes remanescentes. Recomendação: **Aprovar para merge**, mantendo a story em Review até decisão humana.
+- Gates corretivos aprovados com 124 testes backend, 0 falhas/erros/skips, incluindo ArchUnit, PostgreSQL/Testcontainers e a prova de que `presentValue + discount = faceValue`; a story permanece em Review.
+- Autoria das correções: os commits `e77f1b1`, `254c04f`, `8031781` e `b1b4430` foram executados posteriormente pela autora, nunca pelo agente.
+- Limitação da revisão automatizada: as lentes BMAD `edge-case-hunter` e `verification-gap` não conseguiram ler seus prompts renderizados por restrição de acesso; `blind-hunter` e `intent-alignment` concluíram, e as alegações relevantes foram verificadas manualmente contra código, testes, story e ADRs.
 
 ### Review Triage Log
 
@@ -213,9 +225,33 @@ Intermediários de referência: caso 1, PV ≈ `974.807074689671`; caso 2, PV �
 - **Sugestão — não implementada:** derivar dinamicamente todas as tabelas para a prova de zero escrita; a lista explícita cobre integralmente o schema de negócio atual e deverá acompanhar novas tabelas.
 - **Sugestão — não implementada:** ampliar combinações HTTP redundantes já cobertas nas camadas unitária, de serviço, migration e integração.
 
+### Final Review Triage — `origin/main...HEAD`
+
+- **Sugestão — transação de leitura:** metadata, tipo e taxa-base são lidos separadamente. Os catálogos atuais são append-only/sem escrita pública, portanto não há inconsistência reproduzível nesta story; uma fronteira de snapshot consistente pode ser considerada quando houver edição concorrente.
+- **Refutado — precedência temporal:** a validação de calendário antes dos catálogos é decisão explícita de T5 e garante que datas econômicas inválidas falhem antes de I/O; não existe precedência diferente aprovada para requisições com múltiplos erros.
+- **Importante — resolvido — tratamento HTTP acoplado:** o advice de pricing passou a possuir validação e tradução do fluxo de simulação e ambos os advices foram limitados aos respectivos controllers, eliminando a dependência de pricing no handler de currency.
+- **Importante — resolvido — `IllegalArgumentException` genérica:** removido o mapeamento global para 400; violações conhecidas continuam explícitas e defeitos inesperados produzem 500 seguro `PRICING_CALCULATION_FAILED`, com prova HTTP negativa.
+- **Importante — resolvido — identidade monetária:** o valor presente é arredondado uma única vez e o deságio é derivado de `faceValue - presentValue` na escala monetária; BRL, USD, prazo zero e fronteira `HALF_EVEN` comprovam a identidade exata.
+- **Refutado — escala de entrada por minor units:** a story congelada limita explicitamente `faceValue` a duas casas; suportar moeda com valor nominal de seis casas não pertence à E2-S2.
+- **Sugestão — representação do nominal:** a resposta preserva a escala textual recebida (`1000`, `1000.0` ou `1000.00`). O contrato exige string decimal, mas não uma escala canônica; padronização pode ser futura.
+- **Refutado — invariante de metadata:** `CurrencyMetadata` valida explicitamente `minorUnits` entre 0 e 6 no construtor, além da constraint PostgreSQL.
+- **Sugestão — integridade do CSV:** o carregamento valida fonte, cobertura e data, mas não ordenação, duplicatas e pertencimento de cada data ao intervalo. O recurso é imutável/versionado e as datas de negócio exercitadas passam; validação estrutural adicional reduziria risco de manutenção.
+- **Sugestão — completude ANBIMA:** os testes amostram fins de semana, Carnaval, Corpus Christi, virada e limites, mas não comparam todos os anos contra um manifesto autoritativo; preservar a conferência integral como melhoria documental/testável.
+- **Refutado — nome da constraint V5:** V2 é a única fonte do schema e o PostgreSQL determina `currency_minor_units_check` para o `CHECK` inline; Testcontainers executa V1–V5 do zero com sucesso.
+- **Importante — resolvido — falso verde da V5:** Testcontainers/PostgreSQL comprova aceitação de `0`/`6`, rejeição de `-1`/`7` e BRL/USD=`2`.
+- **Importante — resolvido — matriz HTTP incompleta:** testes pela fronteira MVC cobrem tipo inativo, Strategy ausente, falhas internas de metadata/taxa/potência e `IllegalArgumentException` inesperada, verificando status, media type, código seguro e ausência de resultado parcial.
+- **Sugestão — OpenAPI:** o teste comprova rota, status e presença geral dos schemas, mas usa busca textual global para propriedades; asserts direcionados aos `$ref`, media types, required e formatos evitariam falsos verdes.
+- **Sugestão — ausência de persistência:** as contagens cobrem todas as quatro tabelas de negócio atuais e o código não possui porta de escrita no fluxo. A prova deverá ser ampliada quando novas tabelas de simulação/auditoria surgirem.
+- **Importante — resolvido — contrato documental incompleto:** `docs/api/contracts.md` enumera todos os códigos estáveis, status e condições da simulação, alinhados ao OpenAPI e ao runtime.
+- **Sugestão — logs:** a baixa cardinalidade é visível no código (`outcome`, moeda e tipo no sucesso; código na falha), mas ainda não há captura automatizada que impeça inclusão futura de payload/valores.
+- **Refutado — evidência remota:** a autora confirmou jobs `backend`, `frontend` e `repository` verdes; a story também registra comandos, contagens, cobertura, smokes e a limitação operacional, sem atribuir execução ao agente nesta revisão.
+- **Sugestão — reutilização posterior:** o caso de uso existe e a integração feliz é provada ponta a ponta, mas a maior parte da evidência passa pela API HTTP; uma futura story consumidora deverá formalizar a porta pública reutilizável sem furar os limites modulares.
+
 ## Change Log
 
 - 2026-09-26 — Story criada em Draft a partir do roadmap e baseline concluída.
 - 2026-09-26 — D1–D6 aprovadas humanamente; contratos, precisão, calendário, metadata, casos e testes sincronizados; status alterado para Ready for Dev.
 - 2026-09-26 — E2-S2 implementada e validada; revisão crítica corrigida; status alterado para Review, aguardando aprovação humana.
 - 2026-09-26 — Autoria humana dos commits `e26c0cc`, `a5ab6e2`, `c721f73` e `1939fcd` registrada; File List, Completion Notes, evidências e Review Record sincronizados, mantendo Review.
+- 2026-09-26 — Seis achados Importantes da revisão final corrigidos e revalidados; nenhuma Sugestão opcional implementada; recomendação alterada para Aprovar para merge, mantendo Review.
+- 2026-09-26 — Commits corretivos humanos `e77f1b1`, `254c04f`, `8031781` e `b1b4430` registrados; gates com 124 testes e identidade monetária confirmados; nenhum Bloqueante ou Importante remanescente; Review preservado.
