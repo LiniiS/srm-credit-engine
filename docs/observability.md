@@ -5,8 +5,14 @@
 Cada chamada de `POST /api/v1/pricing/simulations` registra o timer Micrometer
 `srm.pricing.duration`. Logs estruturados registram `outcome` e, no sucesso,
 `currency` e `receivableType`; em falha registram somente o código estável. Valores
-monetários, payloads e identificadores de alta cardinalidade não são usados como
-tags nem campos de log.
+monetários e payloads não são usados como tags nem campos de log; identificadores
+de alta cardinalidade nunca são tags de métricas.
+
+Conversões cambiais recusadas incrementam
+`srm.fx.conversion.failures{reason=not_found|expired}`. As únicas tags são motivos
+técnicos de baixa cardinalidade. O log correspondente informa o par solicitado;
+para expiração também registra `ageSeconds` e `exchangeRateId`. Simulações na mesma
+moeda não consultam a porta cambial e não emitem métrica ou log de conversão FX.
 
 As métricas podem ser inspecionadas no endpoint Actuator `metrics`; a exposição
 Prometheus será habilitada quando o profile de observabilidade planejado for

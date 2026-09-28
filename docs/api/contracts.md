@@ -46,12 +46,13 @@ O sucesso retorna `202 Accepted`, `Location` e o mesmo DTO decimal do cadastro m
 
 O provider local recebe somente `base` e `quote`; cenários de teste são selecionados pela API administrativa do WireMock, nunca por parâmetros ou headers enviados pelo backend.
 
-## Simular na moeda do título
+## Simular e converter para a moeda de pagamento
 
 ```json
 {
   "faceValue": "1000.00",
   "currency": "BRL",
+  "paymentCurrencyCode": "USD",
   "receivableTypeCode": "DUPLICATA_MERCANTIL",
   "calculationDate": "2026-01-02",
   "dueDate": "2026-02-01"
@@ -64,6 +65,7 @@ Resposta implementada:
 {
   "faceValue": "1000.00",
   "currency": "BRL",
+  "paymentCurrencyCode": "USD",
   "receivableTypeCode": "DUPLICATA_MERCANTIL",
   "calculationDate": "2026-01-02",
   "dueDate": "2026-02-01",
@@ -76,13 +78,28 @@ Resposta implementada:
   "spread": "0.015",
   "monthlyRate": "0.025000000000",
   "presentValue": "974.81",
+  "presentValueInPaymentCurrency": "190.02",
+  "exchangeRate": {
+    "id": "55555555-5555-4555-8555-555555555555",
+    "baseCurrencyCode": "USD",
+    "quoteCurrencyCode": "BRL",
+    "rate": "5.13000000",
+    "source": "REFERENCE_CASE",
+    "effectiveAt": "2026-01-05T11:50:00Z",
+    "createdAt": "2026-01-05T11:51:00Z"
+  },
   "discount": "25.19"
 }
 ```
 
-`calculationDate` governa vigência e prazo. O vencimento é ajustado pelo calendário
+`calculationDate` governa a vigência da taxa-base e o prazo econômico. O vencimento é ajustado pelo calendário
 ANBIMA versionado de 2025–2030; ano fora da cobertura retorna
 `422 BUSINESS_CALENDAR_NOT_AVAILABLE`. A operação não persiste a simulação.
+Quando `paymentCurrencyCode` é omitido, ele assume `currency`, o valor de pagamento
+é igual ao `presentValue` e `exchangeRate` é `null`. Conversões usam o PV interno
+não arredondado. A vigência e a expiração cambiais usam `Clock.instant()`; taxa
+ausente retorna `404 EXCHANGE_RATE_NOT_FOUND` e taxa expirada
+retorna `422 EXCHANGE_RATE_EXPIRED`.
 
 Erros estáveis de `POST /api/v1/pricing/simulations`:
 
@@ -92,9 +109,11 @@ Erros estáveis de `POST /api/v1/pricing/simulations`:
 | 400 | `CURRENCY_NOT_SUPPORTED` | Moeda bem formada ausente do catálogo. |
 | 404 | `RECEIVABLE_TYPE_NOT_FOUND` | Tipo de recebível inexistente. |
 | 404 | `BASE_RATE_NOT_FOUND` | Nenhuma taxa-base vigente para moeda/data. |
+| 404 | `EXCHANGE_RATE_NOT_FOUND` | Nenhuma taxa cambial vigente para o par. |
 | 422 | `RECEIVABLE_TYPE_INACTIVE` | Tipo existente, porém inativo. |
 | 422 | `BUSINESS_CALENDAR_NOT_AVAILABLE` | Data fora da cobertura versionada 2025–2030. |
 | 422 | `DUE_DATE_BEFORE_CALCULATION_DATE` | Vencimento ajustado anterior à data econômica. |
+| 422 | `EXCHANGE_RATE_EXPIRED` | Snapshot vigente excedeu a idade máxima configurada. |
 | 500 | `PRICING_STRATEGY_NOT_CONFIGURED` | Inconsistência interna entre tipo ativo e Strategy implantada. |
 | 500 | `PRICING_CALCULATION_FAILED` | Falha interna segura de metadata, taxa-base ou cálculo. |
 
