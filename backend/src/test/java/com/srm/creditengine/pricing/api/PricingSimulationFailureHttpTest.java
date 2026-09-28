@@ -1,6 +1,7 @@
 package com.srm.creditengine.pricing.api;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -8,12 +9,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.srm.creditengine.currency.domain.CurrencyCode;
+import com.srm.creditengine.currency.domain.port.ApplicableExchangeRateQuery;
 import com.srm.creditengine.currency.domain.port.BaseRate;
 import com.srm.creditengine.currency.domain.port.BaseRateQuery;
 import com.srm.creditengine.currency.domain.port.BaseRateQueryException;
 import com.srm.creditengine.currency.domain.port.CurrencyMetadata;
 import com.srm.creditengine.currency.domain.port.CurrencyMetadataQuery;
 import com.srm.creditengine.currency.domain.port.CurrencyMetadataQueryException;
+import com.srm.creditengine.currency.domain.port.ExchangeRateExpiredException;
+import com.srm.creditengine.currency.domain.port.ExchangeRateNotFoundException;
+import com.srm.creditengine.currency.domain.port.ExchangeRateQueryException;
 import com.srm.creditengine.pricing.domain.BusinessCalendar;
 import com.srm.creditengine.pricing.domain.DecimalPower;
 import com.srm.creditengine.pricing.domain.PricingCalculationException;
@@ -26,6 +31,8 @@ import com.srm.creditengine.pricing.service.PricingSimulationService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,11 +59,20 @@ class PricingSimulationFailureHttpTest {
        "receivableTypeCode":"DUPLICATA_MERCANTIL",
        "calculationDate":"2026-01-02","dueDate":"2026-02-02"}
       """;
+  private static final String FX_REQUEST =
+      """
+      {"faceValue":"1000.00","currency":"BRL","paymentCurrencyCode":"USD",
+       "receivableTypeCode":"DUPLICATA_MERCANTIL",
+       "calculationDate":"2026-01-02","dueDate":"2026-02-02"}
+      """;
 
   @Autowired MockMvc mockMvc;
+  @Autowired MeterRegistry meterRegistry;
   @MockBean ReceivableTypePricingResolver pricingResolver;
   @MockBean BaseRateQuery baseRateQuery;
   @MockBean CurrencyMetadataQuery currencyMetadataQuery;
+  @MockBean ApplicableExchangeRateQuery exchangeRateQuery;
+  @MockBean Clock clock;
   @MockBean BusinessCalendar businessCalendar;
   @MockBean DecimalPower decimalPower;
 
@@ -66,6 +82,9 @@ class PricingSimulationFailureHttpTest {
         .thenAnswer(invocation -> invocation.getArgument(0));
     when(currencyMetadataQuery.find("BRL"))
         .thenReturn(new CurrencyMetadata(new CurrencyCode("BRL"), 2));
+    when(currencyMetadataQuery.find("USD"))
+        .thenReturn(new CurrencyMetadata(new CurrencyCode("USD"), 2));
+    when(clock.instant()).thenReturn(Instant.parse("2026-01-05T12:00:00Z"));
     when(pricingResolver.resolve("DUPLICATA_MERCANTIL"))
         .thenReturn(
             new ResolvedPricingStrategy(
@@ -134,6 +153,48 @@ class PricingSimulationFailureHttpTest {
     assertProblem(500, "PRICING_CALCULATION_FAILED");
   }
 
+  @Test
+  void missing_exchange_rate_is_a_safe_404_without_partial_result() throws Exception {
+    when(exchangeRateQuery.find("BRL", "USD", Instant.parse("2026-01-05T12:00:00Z")))
+        .thenThrow(new ExchangeRateNotFoundException());
+
+    assertFxProblem(404, "EXCHANGE_RATE_NOT_FOUND");
+  }
+
+  @Test
+  void expired_exchange_rate_is_a_safe_422_without_partial_result() throws Exception {
+    when(exchangeRateQuery.find("BRL", "USD", Instant.parse("2026-01-05T12:00:00Z")))
+        .thenThrow(new ExchangeRateExpiredException());
+
+    assertFxProblem(422, "EXCHANGE_RATE_EXPIRED");
+  }
+
+  @Test
+  void exchange_rate_infrastructure_failure_is_a_safe_500_without_partial_result()
+      throws Exception {
+    when(exchangeRateQuery.find("BRL", "USD", Instant.parse("2026-01-05T12:00:00Z")))
+        .thenThrow(new ExchangeRateQueryException(new IllegalStateException("secret-sql")));
+
+    assertFxProblem(500, "PRICING_CALCULATION_FAILED");
+  }
+
+  @Test
+  void same_currency_does_not_query_or_emit_fx_metrics() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/v1/pricing/simulations")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(REQUEST))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.presentValueInPaymentCurrency").value("975.61"))
+        .andExpect(jsonPath("$.exchangeRate").value(org.hamcrest.Matchers.nullValue()));
+
+    verifyNoInteractions(exchangeRateQuery);
+    org.assertj.core.api.Assertions.assertThat(
+            meterRegistry.find("srm.fx.conversion.failures").meters())
+        .isEmpty();
+  }
+
   private void assertProblem(int expectedStatus, String expectedCode) throws Exception {
     mockMvc
         .perform(
@@ -144,6 +205,26 @@ class PricingSimulationFailureHttpTest {
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
         .andExpect(jsonPath("$.code").value(expectedCode))
         .andExpect(jsonPath("$.presentValue").doesNotExist())
+        .andExpect(jsonPath("$.presentValueInPaymentCurrency").doesNotExist())
+        .andExpect(jsonPath("$.exchangeRate").doesNotExist())
+        .andExpect(jsonPath("$.discount").doesNotExist())
+        .andExpect(
+            jsonPath("$.detail")
+                .value(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("secret"))));
+  }
+
+  private void assertFxProblem(int expectedStatus, String expectedCode) throws Exception {
+    mockMvc
+        .perform(
+            post("/api/v1/pricing/simulations")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(FX_REQUEST))
+        .andExpect(status().is(expectedStatus))
+        .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(jsonPath("$.code").value(expectedCode))
+        .andExpect(jsonPath("$.presentValue").doesNotExist())
+        .andExpect(jsonPath("$.presentValueInPaymentCurrency").doesNotExist())
+        .andExpect(jsonPath("$.exchangeRate").doesNotExist())
         .andExpect(jsonPath("$.discount").doesNotExist())
         .andExpect(
             jsonPath("$.detail")

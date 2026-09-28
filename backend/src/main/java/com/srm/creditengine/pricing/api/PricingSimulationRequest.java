@@ -12,6 +12,7 @@ public record PricingSimulationRequest(
             message = "must be a positive decimal string with at most 2 fraction digits")
         String faceValue,
     @NotBlank @Pattern(regexp = "[A-Z]{3}") String currency,
+    @Pattern(regexp = "[A-Z]{3}") String paymentCurrencyCode,
     @NotBlank @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String receivableTypeCode,
     @NotNull LocalDate calculationDate,
     @NotNull LocalDate dueDate) {}

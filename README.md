@@ -45,7 +45,9 @@ Os nomes e séries podem ser consultados em `GET /actuator/metrics` no ambiente 
 `POST /api/v1/pricing/simulations` calcula o valor presente na moeda do título sem
 persistir dados. O prazo usa ACT/30 após ajuste pelo calendário ANBIMA versionado
 2025–2030; intermediários usam DECIMAL128 e o dinheiro é arredondado uma vez com
-HALF_EVEN nos minor units da moeda.
+HALF_EVEN nos minor units da moeda. `paymentCurrencyCode` é opcional e assume
+`currency`; quando diverge, o PV não arredondado é convertido pela taxa USD/BRL
+vigente e com idade máxima configurada por `FX_RATE_MAX_AGE` (default `15m`).
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/pricing/simulations \
@@ -53,7 +55,8 @@ curl -X POST http://localhost:8080/api/v1/pricing/simulations \
   -d '{"faceValue":"1000.00","currency":"BRL","receivableTypeCode":"DUPLICATA_MERCANTIL","calculationDate":"2026-01-02","dueDate":"2026-02-01"}'
 ```
 
-O caso retorna `presentValue="974.81"` e `discount="25.19"`. O contrato completo
+O caso retorna `presentValue="974.81"`, `presentValueInPaymentCurrency="974.81"`,
+`exchangeRate=null` e `discount="25.19"`. O contrato completo
 está em [docs/api/contracts.md](docs/api/contracts.md).
 
 ## Como rodar

@@ -44,6 +44,7 @@ class ArchitectureTest {
     assertThat(publicPortInterfaces)
         .containsExactlyInAnyOrder(
             BaseRateQuery.class.getName(),
+            com.srm.creditengine.currency.domain.port.ApplicableExchangeRateQuery.class.getName(),
             CurrencyMetadataQuery.class.getName(),
             ExchangeRateProvider.class.getName(),
             ExchangeRateRepository.class.getName());

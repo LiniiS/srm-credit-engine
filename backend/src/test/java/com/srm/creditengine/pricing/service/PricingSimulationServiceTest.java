@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.srm.creditengine.currency.domain.port.ApplicableExchangeRateQuery;
 import com.srm.creditengine.currency.domain.port.BaseRateQuery;
 import com.srm.creditengine.currency.domain.port.CurrencyMetadataQuery;
 import com.srm.creditengine.currency.domain.port.CurrencyMetadataQueryException;
@@ -14,6 +15,7 @@ import com.srm.creditengine.pricing.domain.PricingStrategyNotConfiguredException
 import com.srm.creditengine.pricing.domain.port.ReceivableTypePricingResolver;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,11 +24,20 @@ class PricingSimulationServiceTest {
   private final ReceivableTypePricingResolver resolver = mock(ReceivableTypePricingResolver.class);
   private final BaseRateQuery baseRateQuery = mock(BaseRateQuery.class);
   private final CurrencyMetadataQuery metadataQuery = mock(CurrencyMetadataQuery.class);
+  private final ApplicableExchangeRateQuery exchangeRateQuery =
+      mock(ApplicableExchangeRateQuery.class);
   private final BusinessCalendar calendar = mock(BusinessCalendar.class);
   private final DecimalPower power = mock(DecimalPower.class);
   private final PricingSimulationService service =
       new PricingSimulationService(
-          resolver, baseRateQuery, metadataQuery, calendar, power, new SimpleMeterRegistry());
+          resolver,
+          baseRateQuery,
+          metadataQuery,
+          exchangeRateQuery,
+          calendar,
+          power,
+          new SimpleMeterRegistry(),
+          Clock.systemUTC());
 
   @BeforeEach
   void support_valid_calendar_dates() {

@@ -74,6 +74,9 @@ final class PricingSimulationController {
             new PricingSimulationCommand(
                 new BigDecimal(request.faceValue()),
                 request.currency(),
+                request.paymentCurrencyCode() == null
+                    ? request.currency()
+                    : request.paymentCurrencyCode(),
                 request.receivableTypeCode(),
                 request.calculationDate(),
                 request.dueDate()));
@@ -84,6 +87,7 @@ final class PricingSimulationController {
     return new PricingSimulationResponse(
         result.faceValue().toPlainString(),
         result.currency(),
+        result.paymentCurrencyCode(),
         result.receivableTypeCode(),
         result.calculationDate(),
         result.dueDate(),
@@ -96,6 +100,22 @@ final class PricingSimulationController {
         result.spread().toPlainString(),
         result.monthlyRate().toPlainString(),
         result.presentValue().toPlainString(),
+        result.presentValueInPaymentCurrency().toPlainString(),
+        toSnapshot(result),
         result.discount().toPlainString());
+  }
+
+  private ExchangeRateSnapshot toSnapshot(PricingSimulationResult result) {
+    var rate = result.exchangeRate();
+    return rate == null
+        ? null
+        : new ExchangeRateSnapshot(
+            rate.id(),
+            rate.baseCurrencyCode(),
+            rate.quoteCurrencyCode(),
+            rate.rate().toPlainString(),
+            rate.source(),
+            rate.effectiveAt(),
+            rate.createdAt());
   }
 }

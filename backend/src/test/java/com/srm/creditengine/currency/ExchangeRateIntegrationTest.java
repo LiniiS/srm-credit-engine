@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.srm.creditengine.currency.domain.port.ApplicableExchangeRateQuery;
+import com.srm.creditengine.currency.domain.port.ExchangeRateNotFoundException;
 import com.srm.creditengine.currency.domain.port.ExchangeRateProvider;
 import com.srm.creditengine.currency.domain.port.ProvidedExchangeRate;
 import java.math.BigDecimal;
@@ -61,6 +63,7 @@ class ExchangeRateIntegrationTest {
   @Autowired TestRestTemplate http;
   @Autowired JdbcTemplate jdbc;
   @Autowired ObjectMapper objectMapper;
+  @Autowired ApplicableExchangeRateQuery applicableExchangeRateQuery;
 
   @BeforeEach
   void cleanRates() {
@@ -219,6 +222,18 @@ class ExchangeRateIntegrationTest {
         OffsetDateTime.ofInstant(created, ZoneOffset.UTC));
 
     assertLatestRate("5.20000000");
+  }
+
+  @Test
+  void applicable_port_ignores_future_rate_and_reports_absence() {
+    insertRate(
+        "00000000-0000-0000-0000-000000000003",
+        "5.30000000",
+        "2026-09-23T12:00:01Z",
+        "2026-09-23T11:59:00Z");
+
+    assertThatThrownBy(() -> applicableExchangeRateQuery.find("USD", "BRL", NOW))
+        .isInstanceOf(ExchangeRateNotFoundException.class);
   }
 
   @Test

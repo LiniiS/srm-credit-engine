@@ -36,12 +36,13 @@ public final class PricingCalculation {
     var presentValue = rawPresentValue.setScale(minorUnits, RoundingMode.HALF_EVEN);
     var monetaryFaceValue = faceValue.setScale(minorUnits, RoundingMode.UNNECESSARY);
     var discount = monetaryFaceValue.subtract(presentValue);
-    return new Values(termMonths, monthlyRate, presentValue, discount);
+    return new Values(termMonths, monthlyRate, rawPresentValue, presentValue, discount);
   }
 
   public record Values(
       BigDecimal termMonths,
       BigDecimal monthlyRate,
+      BigDecimal rawPresentValue,
       BigDecimal presentValue,
       BigDecimal discount) {}
 }
