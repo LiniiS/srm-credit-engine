@@ -99,7 +99,10 @@ Quando `paymentCurrencyCode` é omitido, ele assume `currency`, o valor de pagam
 é igual ao `presentValue` e `exchangeRate` é `null`. Conversões usam o PV interno
 não arredondado. A vigência e a expiração cambiais usam `Clock.instant()`; taxa
 ausente retorna `404 EXCHANGE_RATE_NOT_FOUND` e taxa expirada
-retorna `422 EXCHANGE_RATE_EXPIRED`.
+retorna `422 EXCHANGE_RATE_EXPIRED`. A consulta avalia as orientações direta e
+reversa: prefere a direta quando válida, usa a reversa quando a direta está
+ausente, futura ou expirada, e retorna expiração somente quando nenhuma orientação
+é válida e existe ao menos um snapshot temporalmente aplicável já expirado.
 
 Erros estáveis de `POST /api/v1/pricing/simulations`:
 
