@@ -3,6 +3,7 @@ package com.srm.creditengine.pricing;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,6 +36,20 @@ class PricingSimulationIntegrationTest {
   @Autowired TestRestTemplate restTemplate;
   @Autowired JdbcTemplate jdbcTemplate;
 
+  @BeforeEach
+  void insert_reference_exchange_rate() {
+    jdbcTemplate.update(
+        "DELETE FROM exchange_rate WHERE id = ?::uuid", "55555555-5555-4555-8555-555555555555");
+    jdbcTemplate.update(
+        """
+        INSERT INTO exchange_rate
+          (id, base_currency, quote_currency, rate, source, effective_at, created_at)
+        VALUES (?::uuid, 'USD', 'BRL', 5.13000000, 'REFERENCE_CASE',
+                CURRENT_TIMESTAMP - INTERVAL '10 minutes', CURRENT_TIMESTAMP - INTERVAL '9 minutes')
+        """,
+        "55555555-5555-4555-8555-555555555555");
+  }
+
   @Test
   void simulates_approved_case_without_persisting_business_rows() {
     var countsBefore = businessRowCounts();
@@ -52,6 +67,7 @@ class PricingSimulationIntegrationTest {
     assertThat(response.getBody())
         .containsEntry("faceValue", "1000.00")
         .containsEntry("currency", "BRL")
+        .containsEntry("paymentCurrencyCode", "BRL")
         .containsEntry("receivableTypeCode", "DUPLICATA_MERCANTIL")
         .containsEntry("calculationDate", "2026-01-02")
         .containsEntry("dueDate", "2026-02-01")
@@ -63,6 +79,8 @@ class PricingSimulationIntegrationTest {
         .containsEntry("spread", "0.015")
         .containsEntry("monthlyRate", "0.025000000000")
         .containsEntry("presentValue", "974.81")
+        .containsEntry("presentValueInPaymentCurrency", "974.81")
+        .containsEntry("exchangeRate", null)
         .containsEntry("discount", "25.19");
     assertThat(response.getBody().get("baseRateId")).isInstanceOf(String.class);
     assertThat(businessRowCounts()).isEqualTo(countsBefore);
@@ -88,6 +106,52 @@ class PricingSimulationIntegrationTest {
         .containsEntry("spread", "0.025")
         .containsEntry("presentValue", "2391.58")
         .containsEntry("discount", "108.42");
+  }
+
+  @Test
+  void converts_both_directions_with_the_same_persisted_snapshot() {
+    var usdToBrl =
+        restTemplate.postForEntity(
+            "/api/v1/pricing/simulations",
+            Map.of(
+                "faceValue", "2500.00",
+                "currency", "USD",
+                "paymentCurrencyCode", "BRL",
+                "receivableTypeCode", "CHEQUE_PRE_DATADO",
+                "calculationDate", "2026-01-05",
+                "dueDate", "2026-02-19"),
+            Map.class);
+    var brlToUsd =
+        restTemplate.postForEntity(
+            "/api/v1/pricing/simulations",
+            Map.of(
+                "faceValue", "1000.00",
+                "currency", "BRL",
+                "paymentCurrencyCode", "USD",
+                "receivableTypeCode", "DUPLICATA_MERCANTIL",
+                "calculationDate", "2026-01-02",
+                "dueDate", "2026-02-01"),
+            Map.class);
+
+    assertThat(usdToBrl.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(usdToBrl.getBody())
+        .containsEntry("paymentCurrencyCode", "BRL")
+        .containsEntry("presentValue", "2391.58")
+        .containsEntry("presentValueInPaymentCurrency", "12268.78");
+    var snapshot = (Map<?, ?>) usdToBrl.getBody().get("exchangeRate");
+    assertThat(snapshot.get("id")).isEqualTo("55555555-5555-4555-8555-555555555555");
+    assertThat(snapshot.get("baseCurrencyCode")).isEqualTo("USD");
+    assertThat(snapshot.get("quoteCurrencyCode")).isEqualTo("BRL");
+    assertThat(snapshot.get("rate")).isEqualTo("5.13000000");
+    assertThat(snapshot.get("source")).isEqualTo("REFERENCE_CASE");
+    assertThat(snapshot.get("effectiveAt")).isNotNull();
+    assertThat(snapshot.get("createdAt")).isNotNull();
+    assertThat(brlToUsd.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(brlToUsd.getBody())
+        .containsEntry("paymentCurrencyCode", "USD")
+        .containsEntry("presentValue", "974.81")
+        .containsEntry("presentValueInPaymentCurrency", "190.02");
+    assertThat(brlToUsd.getBody().get("exchangeRate")).isEqualTo(snapshot);
   }
 
   @Test
@@ -211,7 +275,44 @@ class PricingSimulationIntegrationTest {
     assertThat(schemas.get("PricingSimulationRequest")).isNotNull();
     assertThat(schemas.get("PricingSimulationResponse")).isNotNull();
     assertThat(schemas.get("PricingSimulationProblemDetail")).isNotNull();
-    assertThat(schemas.toString()).contains("calculationDate", "violations", "code");
+    assertThat(schemas.toString())
+        .contains(
+            "calculationDate",
+            "paymentCurrencyCode",
+            "presentValueInPaymentCurrency",
+            "exchangeRate",
+            "baseCurrencyCode",
+            "quoteCurrencyCode",
+            "effectiveAt",
+            "createdAt",
+            "violations",
+            "code");
+    var responseSchema = (Map<?, ?>) schemas.get("PricingSimulationResponse");
+    var responseProperties = (Map<?, ?>) responseSchema.get("properties");
+    var exchangeRateProperty = (Map<?, ?>) responseProperties.get("exchangeRate");
+    var exchangeRateSchema = (Map<?, ?>) schemas.get("ExchangeRateSnapshot");
+    assertThat(
+            Boolean.TRUE.equals(exchangeRateProperty.get("nullable"))
+                || Boolean.TRUE.equals(exchangeRateSchema.get("nullable"))
+                || openApiTypeIncludesNull(exchangeRateProperty.get("type"))
+                || openApiTypeIncludesNull(exchangeRateSchema.get("type"))
+                || openApiCompositionIncludesNull(exchangeRateProperty.get("oneOf")))
+        .as("exchangeRate must be nullable in OpenAPI: %s", exchangeRateProperty)
+        .isTrue();
+  }
+
+  private boolean openApiTypeIncludesNull(Object type) {
+    return type instanceof java.util.Collection<?> values && values.contains("null");
+  }
+
+  private boolean openApiCompositionIncludesNull(Object schemas) {
+    if (!(schemas instanceof java.util.Collection<?> values)) {
+      return false;
+    }
+    return values.stream()
+        .filter(Map.class::isInstance)
+        .map(Map.class::cast)
+        .anyMatch(schema -> "null".equals(schema.get("type")));
   }
 
   private void assertProblem(Map<String, String> request, HttpStatus status, String code) {
