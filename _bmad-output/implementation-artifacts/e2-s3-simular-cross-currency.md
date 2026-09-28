@@ -2,13 +2,17 @@
 title: 'E2-S3 — Simular cross-currency'
 type: 'feature'
 created: '2026-09-26'
-status: 'ready-for-dev'
+status: 'in-review'
 baseline_commit: 'e58c3cf3643b2dec9745cbeb153dca43efc637f4'
 route: 'full'
 route_source: 'auto'
 review: 'thorough'
 review_source: 'pinned'
-lenses_ran: []
+lenses_ran:
+  - 'blind-hunter'
+  - 'edge-case-hunter'
+  - 'verification-gap'
+  - 'intent-alignment'
 review_loop_iteration: 0
 context:
   - 'docs/adr/0001-adotar-monolito-modular-hexagonal.md'
@@ -149,13 +153,13 @@ Resultados obrigatórios:
 
 ## Tarefas técnicas ordenadas
 
-- [ ] **T1 (AC3–AC5):** definir por testes a porta cambial pública e o snapshot auditável; validar vigência/idade com `Clock` e erros tipados sem expor entidade/repository/service.
-- [ ] **T2 (AC2–AC4):** adaptar a consulta PostgreSQL ao snapshot USD/BRL reutilizável nos dois sentidos; provar ordenação, futura, fronteiras inclusivas, `createdAt` irrelevante e falhas em PostgreSQL 16/Testcontainers.
-- [ ] **T3 (AC2/AC5):** preservar o PV intermediário DECIMAL128 dentro do fluxo, implementar conversão multiplicar/dividir e arredondar uma única vez na moeda de pagamento; mesma moeda usa apenas o PV final.
-- [ ] **T4 (AC1/AC2/AC5):** integrar `CurrencyMetadataQuery`, default da moeda de pagamento e snapshot ao caso de uso, sem escrita, sync, taxa identidade ou inversa persistida.
-- [ ] **T5 (AC1/AC4):** evoluir request/response, ProblemDetail e OpenAPI; documentar `exchangeRate` nullable e mapear 404/422/500 sem internals ou resultado parcial.
-- [ ] **T6 (AC2–AC6):** cobrir casos aprovados, dupla perda de precisão, mesma moeda sem interação, erros/telemetria, ausência de aritmética binária e limites ArchUnit; preservar regressão E2-S2.
-- [ ] **T7 (AC6):** atualizar contratos/README/AI_USAGE/story, validar OpenAPI e Compose com fixture/smoke não produtivo, executar todos os gates e revisar o diff.
+- [x] **T1 (AC3–AC5):** definir por testes a porta cambial pública e o snapshot auditável; validar vigência/idade com `Clock` e erros tipados sem expor entidade/repository/service.
+- [x] **T2 (AC2–AC4):** adaptar a consulta PostgreSQL ao snapshot USD/BRL reutilizável nos dois sentidos; provar ordenação, futura, fronteiras inclusivas, `createdAt` irrelevante e falhas em PostgreSQL 16/Testcontainers.
+- [x] **T3 (AC2/AC5):** preservar o PV intermediário DECIMAL128 dentro do fluxo, implementar conversão multiplicar/dividir e arredondar uma única vez na moeda de pagamento; mesma moeda usa apenas o PV final.
+- [x] **T4 (AC1/AC2/AC5):** integrar `CurrencyMetadataQuery`, default da moeda de pagamento e snapshot ao caso de uso, sem escrita, sync, taxa identidade ou inversa persistida.
+- [x] **T5 (AC1/AC4):** evoluir request/response, ProblemDetail e OpenAPI; documentar `exchangeRate` nullable e mapear 404/422/500 sem internals ou resultado parcial.
+- [x] **T6 (AC2–AC6):** cobrir casos aprovados, dupla perda de precisão, mesma moeda sem interação, erros/telemetria, ausência de aritmética binária e limites ArchUnit; preservar regressão E2-S2.
+- [x] **T7 (AC6):** atualizar contratos/README/AI_USAGE/story, validar OpenAPI e Compose com fixture/smoke não produtivo, executar todos os gates e revisar o diff.
 
 ## Estratégia de testes e gates
 
@@ -190,41 +194,85 @@ Resultados obrigatórios:
 
 ## Definition of Done
 
-- [ ] AC1–AC6 atendidos com evidências reais e regressão E2-S2.
-- [ ] Casos aprovados retornam exatamente `12268.78 BRL`, `190.02 USD` e igualdade na mesma moeda.
-- [ ] Teste comprova conversão do PV não arredondado e rejeita o resultado incorreto `12268.81`.
-- [ ] Ausente/expirada, fronteiras temporais, taxa futura, sentidos e mesma moeda são comprovados sem escrita/sync/resultado parcial.
-- [ ] OpenAPI declara snapshot nullable; ProblemDetail, logs e métricas correspondem ao runtime.
-- [ ] ArchUnit, Spotless, verify/JaCoCo/Testcontainers e regressão frontend passam.
-- [ ] Compose/smokes e gate documental passam; documentação reflete o runtime.
+- [x] AC1–AC6 atendidos com evidências reais e regressão E2-S2.
+- [x] Casos aprovados retornam exatamente `12268.78 BRL`, `190.02 USD` e igualdade na mesma moeda.
+- [x] Teste comprova conversão do PV não arredondado e rejeita o resultado incorreto `12268.81`.
+- [x] Ausente/expirada, fronteiras temporais, taxa futura, sentidos e mesma moeda são comprovados sem escrita/sync/resultado parcial.
+- [x] OpenAPI declara snapshot nullable; ProblemDetail, logs e métricas correspondem ao runtime.
+- [x] ArchUnit, Spotless, verify/JaCoCo/Testcontainers e regressão frontend passam.
+- [x] Compose/smokes e gate documental passam; documentação reflete o runtime.
 - [ ] Revisão não deixa Bloqueante/Importante; aprovação humana final antecede Done.
 
 ## Dev Agent Record
 
 ### File List
 
-- `_bmad-output/implementation-artifacts/e2-s3-simular-cross-currency.md` — story refinada e aprovada como Ready for Dev; nenhum código implementado.
+- `.env.example`, `backend/src/main/resources/application.yml` — janela cambial configurável.
+- `backend/src/main/java/com/srm/creditengine/currency/domain/port/{ApplicableExchangeRate,ApplicableExchangeRateQuery,ExchangeRateExpiredException,ExchangeRateNotFoundException,ExchangeRateQueryException}.java` — contrato público e falhas tipadas.
+- `backend/src/main/java/com/srm/creditengine/currency/service/ApplicableExchangeRateService.java` — vigência, validade, logs e métricas.
+- `backend/src/main/java/com/srm/creditengine/pricing/{api,domain,service}/` — contrato REST, PV bruto, conversão e orquestração cross-currency.
+- `backend/src/main/java/com/srm/creditengine/pricing/api/PricingOpenApiConfiguration.java` — nulabilidade explícita do snapshot no OpenAPI 3.1.
+- `backend/src/test/java/com/srm/creditengine/{architecture,currency,pricing}/` — provas unitárias, HTTP, PostgreSQL e ArchUnit.
+- `README.md`, `AI_USAGE.md`, `docs/api/contracts.md`, `docs/observability.md` — contrato, operação e rastreabilidade.
+- `_bmad-output/implementation-artifacts/e2-s3-simular-cross-currency.md` — evidências e promoção para Review.
+- Os arquivos de produção, testes e documentação acima foram distribuídos pela autora nos commits `2e1cad7`, `e42c89d`, `c992ffb` e `4dde935`; este registro documental posterior permanece fora desses commits.
 
 ### Completion Notes
 
 - D1–D6 foram aprovadas e incorporadas ao contrato, precisão, validade, erros, mesma moeda e casos financeiros.
 - A nomenclatura `currencyCode` da decisão foi conciliada com a chave JSON existente `currency`, preservada para compatibilidade com E2-S2.
 - O snapshot fixo foi classificado como fixture de teste/smoke, não como seed de produção.
-- Nenhum código, ADR, story concluída ou outro documento foi alterado nesta preparação.
+- Implementada conversão sobre o PV DECIMAL128 não arredondado, com um único snapshot USD/BRL nos dois sentidos e sem FX para mesma moeda.
+- OpenAPI declara `exchangeRate` nullable; HTTP comprova 404/422/500 seguros e ausência de resultado parcial.
+- A auditoria ArchUnit eliminou o vazamento inicial de tipos internos de `currency`, mantendo apenas o contrato em `domain.port`.
+- `spotless:check` e `verify` passaram em 2026-09-28 com 138 testes; regressão frontend passou em cópia temporária limpa porque um processo do editor bloqueou o `node_modules` local.
+- Compose foi reconstruído com os quatro serviços healthy; smokes reais retornaram `12268.78 BRL`, `190.02 USD` e `974.81`/snapshot nulo para mesma moeda.
+- A validade cambial foi comprovada antes e exatamente na fronteira inclusiva, após a expiração, com taxa futura ignorada e com `createdAt` recente incapaz de renovar `effectiveAt` antigo.
+- A revisão crítica encontrou e corrigiu um falso verde de nulabilidade no OpenAPI, validação ausente da janela cambial, asserções incompletas do snapshot e ambiguidades documentais.
+- O agente não executou commits; posteriormente, a autora realizou `2e1cad7 feat(currency): expose applicable exchange-rate snapshots`, `e42c89d feat(pricing): add cross-currency simulation`, `c992ffb test(pricing): prove cross-currency simulation contracts` e `4dde935 docs(pricing): document cross-currency simulation`.
 
 ### Evidências
 
 - Planejamento: épicos, PRD, matriz de rastreabilidade, Architecture Spine e ADR-0004.
 - Baseline: contrato e implementação concluídos de E1-S1/E1-S2/E1-S3/E2-S1/E2-S2.
 - Decisão humana de 2026-09-27: D1–D6 aprovadas e promoção para Ready for Dev autorizada.
+- Backend: `spotless:check` e `verify` verdes com 138 testes, incluindo ArchUnit e PostgreSQL 16/Testcontainers; JaCoCo registrou 829/858 linhas (96,62%) e 163/204 branches (79,90%) no agregado.
+- Auditoria: OpenAPI nullable/campos do snapshot; 404/422/500; mesma moeda sem porta/métrica FX; taxa futura ignorada.
+- Frontend: `npm ci`, lint, typecheck, 14 testes e build verdes na cópia temporária limpa; cobertura 100% linhas/statements e 87,5% branches.
+- Compose: imagem final reconstruída; PostgreSQL, WireMock, backend e frontend healthy; readiness/frontend/Swagger HTTP 200; OpenAPI 3.1 expõe `exchangeRate.oneOf=[snapshot,null]`; `down` executado sem remoção de volumes.
+- Smokes finais: USD→BRL `12268.78`, BRL→USD `190.02`, mesma moeda `974.81` com `exchangeRate=null`.
+- Validade: testes com `Clock` fixo provam taxa válida antes e em `effectiveAt + maxAge`, expirada depois da fronteira, taxa futura não vigente e irrelevância de `createdAt` para renovar a idade.
+- Histórico humano validado: `2e1cad7` (porta/snapshot cambial), `e42c89d` (simulação cross-currency), `c992ffb` (provas de contrato) e `4dde935` (documentação); nenhum deles foi executado pelo agente.
 
 ## Review Record
 
 - 2026-09-26 — Preparação documental inicial em Draft.
 - 2026-09-27 — Revisão humana aprovou D1–D6, compatibilidade, casos financeiros e prontidão para implementação.
-- Revisão de implementação: não aplicável nesta etapa.
+- 2026-09-27 — Implementação mantida em Review após backend, frontend, Compose, smokes, OpenAPI e documentação verdes; aprovação humana final permanece pendente.
+- 2026-09-28 — Histórico inspecionado: a autora executou posteriormente os commits `2e1cad7`, `e42c89d`, `c992ffb` e `4dde935`; a story permanece em Review e aguarda aprovação humana final.
+
+## Review Triage Log
+
+| Origem | Achado | Veredito e evidência | Rota |
+|---|---|---|---|
+| blind | Estado textual congelado diverge do front matter | `low`: o front matter `in-review` é autoritativo; o texto `Ready for Dev` está no bloco congelado e não pode ser reescrito nesta execução. | rejeitado |
+| blind | T7 e DoD contradiziam as evidências | `medium`: gates e documentação já estavam concluídos; checklists foram sincronizados após a execução final. | patch |
+| blind | `calculationDate` parecia governar também o FX | `medium`: contrato era ambíguo; agora separa data econômica de `Clock.instant()`. | patch |
+| blind | Observabilidade proibia IDs em logs e depois registrava `exchangeRateId` | `medium`: a frase foi corrigida para proibir alta cardinalidade em tags, preservando o ID auditável no log. | patch |
+| blind | Busca direta antes da reversa poderia usar BRL/USD | `false`: não há inversão criada; cada resultado é snapshot persistido e a ordenação total é definida dentro de cada par. | rejeitado |
+| blind/edge | `maxAge` aceitava zero ou negativo | `medium`: configuração inválida expiraria taxas incorretamente; validação fail-fast e testes foram adicionados. | patch |
+| blind/edge | Fronteiras e `createdAt` não eram todas testadas no PostgreSQL | `false`: SQL prova vigência/futuro/desempate; fronteira de idade e irrelevância de `createdAt` pertencem ao serviço e são cobertas com `Clock` determinístico. | rejeitado |
+| blind | Fixture HTTP usa relógio real | `low`: usa offsets relativos e não afeta valores financeiros; os casos temporais exatos permanecem determinísticos em testes unitários. | rejeitado |
+| blind/verification/intent | Snapshot BRL→USD e campos auditáveis incompletamente assertados | `medium`: ambos os sentidos agora verificam o mesmo snapshot e todos os campos observáveis. | patch |
+| verification | `paymentCurrencyCode` explícito não era assertado | `medium`: respostas USD→BRL e BRL→USD agora verificam a moeda de pagamento. | patch |
+| verification | Override da validade não era exercitado | `medium`: teste com janela não padrão de um minuto prova fronteira inclusiva e expiração. | patch |
+| edge | Duas orientações poderiam competir por ordenação global | `false`: o contrato não define ordenação entre pares distintos; a consulta usa o par direto persistido e só recorre ao reverso quando ausente. | rejeitado |
+| intent | Evidências estavam distribuídas entre unidade, HTTP e PostgreSQL | `false`: é a pirâmide de testes deliberada; o conjunto cobre precisão, contrato e persistência sem duplicar todas as provas em E2E. | rejeitado |
 
 ## Change Log
 
 - 2026-09-26 — Story E2-S3 criada em Draft com precedência, escopo, matriz, testes e D1–D6 explícitas; nenhum código alterado.
 - 2026-09-27 — D1–D6 incorporadas; contrato, precisão, validade, erros, mesma moeda, casos, tarefas, testes e DoR sincronizados; status promovido para Ready for Dev por aprovação humana.
+- 2026-09-27 — E2-S3 implementada e auditada: conversão cross-currency, validade, erros seguros, observabilidade, OpenAPI e testes backend; status promovido para Review.
+- 2026-09-27 — Revisão BMAD corrigiu falso verde OpenAPI, configuração temporal, provas do snapshot e documentação; nenhum Bloqueante ou Importante permaneceu aberto.
+- 2026-09-28 — Commits humanos `2e1cad7`, `e42c89d`, `c992ffb` e `4dde935` registrados após validação do histórico; Completion Notes, File List, evidências e Review Record sincronizados sem alterar o status Review.
