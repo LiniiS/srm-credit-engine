@@ -41,6 +41,8 @@ class PricingSimulationIntegrationTest {
     jdbcTemplate.update(
         "DELETE FROM exchange_rate WHERE id = ?::uuid", "55555555-5555-4555-8555-555555555555");
     jdbcTemplate.update(
+        "DELETE FROM exchange_rate WHERE id = ?::uuid", "66666666-6666-4666-8666-666666666666");
+    jdbcTemplate.update(
         """
         INSERT INTO exchange_rate
           (id, base_currency, quote_currency, rate, source, effective_at, created_at)
@@ -152,6 +154,68 @@ class PricingSimulationIntegrationTest {
         .containsEntry("presentValue", "974.81")
         .containsEntry("presentValueInPaymentCurrency", "190.02");
     assertThat(brlToUsd.getBody().get("exchangeRate")).isEqualTo(snapshot);
+  }
+
+  @Test
+  void uses_valid_usd_brl_snapshot_when_direct_brl_usd_is_expired() {
+    jdbcTemplate.update(
+        """
+        INSERT INTO exchange_rate
+          (id, base_currency, quote_currency, rate, source, effective_at, created_at)
+        VALUES (?::uuid, 'BRL', 'USD', 0.19000000, 'EXPIRED_DIRECT',
+                CURRENT_TIMESTAMP - INTERVAL '20 minutes', CURRENT_TIMESTAMP - INTERVAL '19 minutes')
+        """,
+        "66666666-6666-4666-8666-666666666666");
+
+    var response =
+        restTemplate.postForEntity(
+            "/api/v1/pricing/simulations",
+            Map.of(
+                "faceValue", "1000.00",
+                "currency", "BRL",
+                "paymentCurrencyCode", "USD",
+                "receivableTypeCode", "DUPLICATA_MERCANTIL",
+                "calculationDate", "2026-01-02",
+                "dueDate", "2026-02-01"),
+            Map.class);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).containsEntry("presentValueInPaymentCurrency", "190.02");
+    var snapshot = (Map<?, ?>) response.getBody().get("exchangeRate");
+    assertThat(snapshot.get("id")).isEqualTo("55555555-5555-4555-8555-555555555555");
+    assertThat(snapshot.get("baseCurrencyCode")).isEqualTo("USD");
+    assertThat(snapshot.get("quoteCurrencyCode")).isEqualTo("BRL");
+  }
+
+  @Test
+  void prefers_valid_direct_snapshot_and_multiplies_in_its_persisted_orientation() {
+    jdbcTemplate.update(
+        """
+        INSERT INTO exchange_rate
+          (id, base_currency, quote_currency, rate, source, effective_at, created_at)
+        VALUES (?::uuid, 'BRL', 'USD', 0.20000000, 'VALID_DIRECT',
+                CURRENT_TIMESTAMP - INTERVAL '5 minutes', CURRENT_TIMESTAMP - INTERVAL '4 minutes')
+        """,
+        "66666666-6666-4666-8666-666666666666");
+
+    var response =
+        restTemplate.postForEntity(
+            "/api/v1/pricing/simulations",
+            Map.of(
+                "faceValue", "1000.00",
+                "currency", "BRL",
+                "paymentCurrencyCode", "USD",
+                "receivableTypeCode", "DUPLICATA_MERCANTIL",
+                "calculationDate", "2026-01-02",
+                "dueDate", "2026-02-01"),
+            Map.class);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).containsEntry("presentValueInPaymentCurrency", "194.96");
+    var snapshot = (Map<?, ?>) response.getBody().get("exchangeRate");
+    assertThat(snapshot.get("id")).isEqualTo("66666666-6666-4666-8666-666666666666");
+    assertThat(snapshot.get("baseCurrencyCode")).isEqualTo("BRL");
+    assertThat(snapshot.get("quoteCurrencyCode")).isEqualTo("USD");
   }
 
   @Test

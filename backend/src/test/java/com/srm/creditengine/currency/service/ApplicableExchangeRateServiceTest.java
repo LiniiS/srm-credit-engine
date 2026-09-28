@@ -67,6 +67,107 @@ class ApplicableExchangeRateServiceTest {
   }
 
   @Test
+  void uses_valid_reverse_when_direct_rate_is_expired() {
+    var now = EFFECTIVE_AT.plus(Duration.ofMinutes(20));
+    var expiredDirect =
+        rate(
+            "66666666-6666-4666-8666-666666666666",
+            BRL,
+            USD,
+            new BigDecimal("0.19000000"),
+            EFFECTIVE_AT,
+            EFFECTIVE_AT.plusSeconds(1));
+    var validReverse =
+        rate(
+            "55555555-5555-4555-8555-555555555555",
+            USD,
+            BRL,
+            new BigDecimal("5.13000000"),
+            now.minus(Duration.ofMinutes(10)),
+            now.minus(Duration.ofMinutes(9)));
+    when(repository.findLatest(BRL, USD, now)).thenReturn(Optional.of(expiredDirect));
+    when(repository.findLatest(USD, BRL, now)).thenReturn(Optional.of(validReverse));
+
+    var selected = service.find("BRL", "USD", now);
+
+    assertThat(selected.id()).isEqualTo(validReverse.id());
+    assertThat(selected.baseCurrencyCode()).isEqualTo("USD");
+    assertThat(selected.quoteCurrencyCode()).isEqualTo("BRL");
+  }
+
+  @Test
+  void prefers_valid_direct_when_both_orientations_are_valid() {
+    var now = EFFECTIVE_AT.plus(Duration.ofMinutes(10));
+    var direct =
+        rate(
+            "66666666-6666-4666-8666-666666666666",
+            BRL,
+            USD,
+            new BigDecimal("0.20000000"),
+            now.minus(Duration.ofMinutes(5)),
+            now.minus(Duration.ofMinutes(4)));
+    var reverse = rate(EFFECTIVE_AT, EFFECTIVE_AT.plusSeconds(1));
+    when(repository.findLatest(BRL, USD, now)).thenReturn(Optional.of(direct));
+    when(repository.findLatest(USD, BRL, now)).thenReturn(Optional.of(reverse));
+
+    var selected = service.find("BRL", "USD", now);
+
+    assertThat(selected.id()).isEqualTo(direct.id());
+    assertThat(selected.baseCurrencyCode()).isEqualTo("BRL");
+    assertThat(selected.quoteCurrencyCode()).isEqualTo("USD");
+  }
+
+  @Test
+  void reports_expired_when_direct_is_expired_and_reverse_is_absent() {
+    var now = EFFECTIVE_AT.plus(Duration.ofMinutes(16));
+    when(repository.findLatest(USD, BRL, now))
+        .thenReturn(Optional.of(rate(EFFECTIVE_AT, EFFECTIVE_AT.plusSeconds(1))));
+    when(repository.findLatest(BRL, USD, now)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service.find("USD", "BRL", now))
+        .isInstanceOf(ExchangeRateExpiredException.class);
+  }
+
+  @Test
+  void reports_expired_when_both_orientations_are_expired() {
+    var now = EFFECTIVE_AT.plus(Duration.ofMinutes(20));
+    var direct = rate(EFFECTIVE_AT, EFFECTIVE_AT.plusSeconds(1));
+    var reverse =
+        rate(
+            "66666666-6666-4666-8666-666666666666",
+            BRL,
+            USD,
+            new BigDecimal("0.19000000"),
+            EFFECTIVE_AT.minusSeconds(1),
+            EFFECTIVE_AT);
+    when(repository.findLatest(USD, BRL, now)).thenReturn(Optional.of(direct));
+    when(repository.findLatest(BRL, USD, now)).thenReturn(Optional.of(reverse));
+
+    assertThatThrownBy(() -> service.find("USD", "BRL", now))
+        .isInstanceOf(ExchangeRateExpiredException.class);
+  }
+
+  @Test
+  void ignores_future_direct_and_uses_valid_reverse() {
+    var now = EFFECTIVE_AT.plus(Duration.ofMinutes(10));
+    var futureDirect =
+        rate(
+            "66666666-6666-4666-8666-666666666666",
+            BRL,
+            USD,
+            new BigDecimal("0.20000000"),
+            now.plusSeconds(1),
+            now);
+    var validReverse = rate(EFFECTIVE_AT, EFFECTIVE_AT.plusSeconds(1));
+    when(repository.findLatest(BRL, USD, now)).thenReturn(Optional.of(futureDirect));
+    when(repository.findLatest(USD, BRL, now)).thenReturn(Optional.of(validReverse));
+
+    var selected = service.find("BRL", "USD", now);
+
+    assertThat(selected.id()).isEqualTo(validReverse.id());
+  }
+
+  @Test
   void reports_not_found_when_neither_orientation_is_applicable() {
     var now = EFFECTIVE_AT.plus(Duration.ofMinutes(10));
     when(repository.findLatest(USD, BRL, now)).thenReturn(Optional.empty());
@@ -106,13 +207,23 @@ class ApplicableExchangeRateServiceTest {
   }
 
   private ExchangeRate rate(Instant effectiveAt, Instant createdAt) {
-    return new ExchangeRate(
-        UUID.fromString("55555555-5555-4555-8555-555555555555"),
+    return rate(
+        "55555555-5555-4555-8555-555555555555",
         USD,
         BRL,
         new BigDecimal("5.13000000"),
-        "REFERENCE_CASE",
         effectiveAt,
         createdAt);
+  }
+
+  private ExchangeRate rate(
+      String id,
+      CurrencyCode base,
+      CurrencyCode quote,
+      BigDecimal value,
+      Instant effectiveAt,
+      Instant createdAt) {
+    return new ExchangeRate(
+        UUID.fromString(id), base, quote, value, "REFERENCE_CASE", effectiveAt, createdAt);
   }
 }
