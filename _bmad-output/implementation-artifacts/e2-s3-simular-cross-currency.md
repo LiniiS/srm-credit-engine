@@ -216,6 +216,7 @@ Resultados obrigatórios:
 - `README.md`, `AI_USAGE.md`, `docs/api/contracts.md`, `docs/observability.md` — contrato, operação e rastreabilidade.
 - `_bmad-output/implementation-artifacts/e2-s3-simular-cross-currency.md` — evidências e promoção para Review.
 - Os arquivos de produção, testes e documentação acima foram distribuídos pela autora nos commits `2e1cad7`, `e42c89d`, `c992ffb` e `4dde935`; este registro documental posterior permanece fora desses commits.
+- A correção de seleção cambial e suas provas/documentação foram executadas posteriormente pela autora nos commits `f328e7f`, `af07f29` e `950c490`; o agente não executou esses commits.
 
 ### Completion Notes
 
@@ -230,6 +231,9 @@ Resultados obrigatórios:
 - A validade cambial foi comprovada antes e exatamente na fronteira inclusiva, após a expiração, com taxa futura ignorada e com `createdAt` recente incapaz de renovar `effectiveAt` antigo.
 - A revisão crítica encontrou e corrigiu um falso verde de nulabilidade no OpenAPI, validação ausente da janela cambial, asserções incompletas do snapshot e ambiguidades documentais.
 - O agente não executou commits; posteriormente, a autora realizou `2e1cad7 feat(currency): expose applicable exchange-rate snapshots`, `e42c89d feat(pricing): add cross-currency simulation`, `c992ffb test(pricing): prove cross-currency simulation contracts` e `4dde935 docs(pricing): document cross-currency simulation`.
+- A correção da revisão passou a avaliar direto e reverso antes da decisão: direto válido mantém precedência; direto ausente, futuro ou expirado cede ao reverso válido; ausência e expiração permanecem semanticamente distintas, sem criar taxa inversa ou efeito colateral.
+- As três Sugestões opcionais da revisão final permaneceram deliberadamente fora desta correção.
+- Posteriormente, a autora registrou a correção nos commits `f328e7f fix(currency): evaluate both exchange-rate orientations`, `af07f29 test(currency): prove exchange-rate orientation fallback` e `950c490 docs(currency): document exchange-rate orientation selection`; nenhum deles foi executado pelo agente.
 
 ### Evidências
 
@@ -243,6 +247,11 @@ Resultados obrigatórios:
 - Smokes finais: USD→BRL `12268.78`, BRL→USD `190.02`, mesma moeda `974.81` com `exchangeRate=null`.
 - Validade: testes com `Clock` fixo provam taxa válida antes e em `effectiveAt + maxAge`, expirada depois da fronteira, taxa futura não vigente e irrelevância de `createdAt` para renovar a idade.
 - Histórico humano validado: `2e1cad7` (porta/snapshot cambial), `e42c89d` (simulação cross-currency), `c992ffb` (provas de contrato) e `4dde935` (documentação); nenhum deles foi executado pelo agente.
+- Correção da seleção: testes cobrem direto expirado + reverso válido, ambos válidos, direto ausente + reverso válido, direto expirado + reverso ausente, ambos expirados, ambos ausentes e futuro + reverso válido; integração PostgreSQL/HTTP comprova snapshot original e multiplicação/divisão conforme a orientação escolhida.
+- Gates corretivos locais: Spotless e `verify` verdes com 145 testes, zero falhas/erros/ignorados; JaCoCo 838/867 linhas e 168/212 branches; ArchUnit e Testcontainers incluídos no `verify`.
+- Regressão frontend verde em cópia temporária limpa com 14 testes, lint, typecheck e build; o bloqueio `EPERM` do `node_modules` local permanece como limitação operacional já registrada.
+- Compose final: quatro serviços healthy; smoke BRL→USD com direto expirado selecionou o reverso USD/BRL válido e retornou `190.02`; ambiente encerrado com `down` sem `-v`.
+- Histórico corretivo validado: `f328e7f` implementa a avaliação das duas orientações, `af07f29` prova o fallback e a precedência, e `950c490` documenta a política; os commits foram executados posteriormente pela autora, nunca pelo agente.
 
 ## Review Record
 
@@ -250,6 +259,18 @@ Resultados obrigatórios:
 - 2026-09-27 — Revisão humana aprovou D1–D6, compatibilidade, casos financeiros e prontidão para implementação.
 - 2026-09-27 — Implementação mantida em Review após backend, frontend, Compose, smokes, OpenAPI e documentação verdes; aprovação humana final permanece pendente.
 - 2026-09-28 — Histórico inspecionado: a autora executou posteriormente os commits `2e1cad7`, `e42c89d`, `c992ffb` e `4dde935`; a story permanece em Review e aguarda aprovação humana final.
+- 2026-09-28 — Revisão final contra `origin/main...HEAD`: jobs remotos `backend`, `frontend` e `repository` confirmados como aprovados pela autora. AC1, AC2, AC4, AC5 e AC6 atendidos; AC3 requer correção da precedência entre orientações quando a cotação direta está expirada e existe snapshot reverso válido. Resultado: nenhum Bloqueante, um Importante e três Sugestões; recomendação **Corrigir antes do merge**.
+- 2026-09-28 — Achado Importante corrigido e revisado localmente: ambas as orientações são avaliadas, a direta válida mantém precedência e o reverso válido é reutilizado quando a direta está ausente, futura ou expirada. Nenhum Bloqueante ou Importante permanece no diff corretivo; as três Sugestões continuam não implementadas. Story mantida em Review para nova CI e aprovação humana.
+- 2026-09-28 — A autora executou posteriormente os commits corretivos `f328e7f`, `af07f29` e `950c490`. O achado Importante de precedência direta/reversa está resolvido, os gates corretivos passaram com 145 testes e o smoke comprovou direto expirado + reverso válido. Não restam Bloqueantes ou Importantes; as três Sugestões seguem deliberadamente não implementadas e a story permanece em Review.
+
+### Resultado da revisão final
+
+- **Bloqueantes:** nenhum.
+- **Importantes:** nenhum restante; o achado de precedência direta/reversa foi corrigido e coberto por unidade, PostgreSQL/HTTP e smoke na imagem final.
+- **Sugestões:** reutilizar `CurrencyMetadata` na mesma moeda para evitar consulta duplicada; tornar a asserção OpenAPI estrita sobre o `oneOf` da propriedade em vez de aceitar representações alternativas; adicionar uma prova HTTP/PostgreSQL composta para expiração/futuro e ausência de escrita no caminho cross-currency, embora as garantias já estejam cobertas separadamente.
+- **Checks remotos:** `backend`, `frontend` e `repository` aprovados no GitHub Actions, conforme confirmação humana.
+- **Limitações remanescentes:** bloqueio local anterior do `node_modules` continua registrado; documentos de escala e EDA permanecem pendentes apenas para release; a lente automatizada de bordas não conseguiu ler o prompt renderizado no subprocesso, e os mesmos casos foram auditados manualmente no código e nos testes.
+- **Recomendação final:** correção pronta para nova execução dos jobs remotos e aprovação humana; a story permanece em Review.
 
 ## Review Triage Log
 
@@ -268,6 +289,20 @@ Resultados obrigatórios:
 | verification | Override da validade não era exercitado | `medium`: teste com janela não padrão de um minuto prova fronteira inclusiva e expiração. | patch |
 | edge | Duas orientações poderiam competir por ordenação global | `false`: o contrato não define ordenação entre pares distintos; a consulta usa o par direto persistido e só recorre ao reverso quando ausente. | rejeitado |
 | intent | Evidências estavam distribuídas entre unidade, HTTP e PostgreSQL | `false`: é a pirâmide de testes deliberada; o conjunto cobre precisão, contrato e persistência sem duplicar todas as provas em E2E. | rejeitado |
+| blind-final | String vazia em `paymentCurrencyCode` passaria pela validação | `false`: `@Pattern("[A-Z]{3}")` aceita `null`, mas rejeita string vazia; a omissão continua sendo o único comportamento opcional necessário. | rejeitado |
+| blind-final | `null` explícito diverge de campo opcional omitido | `false`: o contrato não proíbe nulabilidade de entrada e o mapper aplica o mesmo default aprovado nos dois casos. | rejeitado |
+| blind-final | Cotação direta expirada oculta cotação reversa válida | `medium`, resolvido: o serviço agora lê ambos os pares, filtra futuro/expirado e escolhe direto válido antes do reverso válido; matriz unitária, PostgreSQL/HTTP e smoke comprovam o comportamento. | corrigido |
+| blind-final | Não há ordenação global entre orientações | `false` (carried): o contrato não exige competição global entre dois pares persistidos; o defeito real e mais estreito é a cotação direta expirada impedir o fallback para o snapshot reverso válido. | rejeitado |
+| blind-final | Snapshot público não repete invariantes de `ExchangeRate` | `false`: o adapter runtime constrói o snapshot a partir de `ExchangeRate`, que valida moedas, taxa, origem e instantes; uma implementação inválida da porta violaria o contrato interno. | rejeitado |
+| blind-final | Snapshot inválido causaria falha não segura em `ExchangeConversion` | `false`: no runtime o snapshot vem do domínio validado e qualquer exceção inesperada ainda é convertida pelo advice de pricing em 500 seguro sem internals. | rejeitado |
+| blind-final | Mesma moeda consulta metadata duas vezes | `low`: não consulta câmbio nem emite telemetria FX, mas repete uma leitura idêntica e amplia desnecessariamente a superfície de falha. | sugestão |
+| blind-final | Resumo OpenAPI ainda menciona apenas moeda do recebível | `low`: descrição está incompleta, porém o schema e o contrato descrevem corretamente a moeda de pagamento e a conversão. | sugestão |
+| blind-final | Teste de nulabilidade OpenAPI aceita alternativas amplas | `low`: o runtime foi comprovado como `oneOf=[snapshot,null]`, mas uma asserção estrita reduziria o risco de falso verde futuro. | sugestão |
+| blind-final | Fronteiras temporais não são todas repetidas no PostgreSQL | `false`: seleção/vigência e taxa futura são cobertas no PostgreSQL; idade inclusiva e irrelevância de `createdAt` são regras do service verificadas deterministicamente com `Clock`. | rejeitado |
+| blind-final | Ausência de sincronização automática não foi verificada por mock do provider | `false`: o fluxo depende somente de `ApplicableExchangeRateQuery` e não possui provider, writer ou caso de uso de sync; a ausência é estrutural e coberta pelo limite arquitetural. | rejeitado |
+| blind-final | Prova de ausência de telemetria na mesma moeda seria incompleta | `false`: não há chamada à porta FX e o código não contém emissão de log/métrica FX no ramo de mesma moeda; o teste também comprova ausência da métrica implementada. | rejeitado |
+| blind-final | Smoke não possui script versionado | `false`: a story exige execução e evidência, não um novo artefato produtivo; os resultados reais e o encerramento do Compose estão registrados. | rejeitado |
+| intent-final | Validade e ausência de escrita estão provadas em superfícies separadas | `low`: a pirâmide combina HTTP, unidade e PostgreSQL; uma prova composta adicional melhoraria legibilidade, sem invalidar as garantias existentes. | sugestão |
 
 ## Change Log
 
@@ -276,3 +311,6 @@ Resultados obrigatórios:
 - 2026-09-27 — E2-S3 implementada e auditada: conversão cross-currency, validade, erros seguros, observabilidade, OpenAPI e testes backend; status promovido para Review.
 - 2026-09-27 — Revisão BMAD corrigiu falso verde OpenAPI, configuração temporal, provas do snapshot e documentação; nenhum Bloqueante ou Importante permaneceu aberto.
 - 2026-09-28 — Commits humanos `2e1cad7`, `e42c89d`, `c992ffb` e `4dde935` registrados após validação do histórico; Completion Notes, File List, evidências e Review Record sincronizados sem alterar o status Review.
+- 2026-09-28 — Revisão final contra `origin/main...HEAD` registrou checks remotos aprovados, um achado Importante na precedência direta/reversa, sugestões opcionais e recomendação **Corrigir antes do merge**; story preservada em Review.
+- 2026-09-28 — Achado Importante corrigido: seleção avalia direto/reverso elegíveis com precedência determinística; 145 testes backend, regressão frontend, Compose e smoke passaram; Sugestões não implementadas e status Review preservado.
+- 2026-09-28 — Commits humanos corretivos `f328e7f`, `af07f29` e `950c490` registrados: achado Importante resolvido, nenhum Bloqueante ou Importante restante, três Sugestões deliberadamente não implementadas e story mantida em Review.
