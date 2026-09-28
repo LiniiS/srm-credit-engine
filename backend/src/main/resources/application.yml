@@ -40,6 +40,8 @@ server:
     include-stacktrace: never
 
 srm:
+  fx-rate:
+    max-age: ${FX_RATE_MAX_AGE:15m}
   fx-provider:
     base-url: ${FX_PROVIDER_URL:http://localhost:8090}
     timeout: ${FX_PROVIDER_TIMEOUT:1s}
