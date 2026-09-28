@@ -7,6 +7,7 @@ import java.util.UUID;
 public record PricingSimulationResult(
     BigDecimal faceValue,
     String currency,
+    String paymentCurrencyCode,
     String receivableTypeCode,
     LocalDate calculationDate,
     LocalDate dueDate,
@@ -19,4 +20,6 @@ public record PricingSimulationResult(
     BigDecimal spread,
     BigDecimal monthlyRate,
     BigDecimal presentValue,
+    BigDecimal presentValueInPaymentCurrency,
+    PricingExchangeRateSnapshot exchangeRate,
     BigDecimal discount) {}

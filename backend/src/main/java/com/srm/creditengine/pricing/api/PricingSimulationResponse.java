@@ -6,6 +6,7 @@ import java.util.UUID;
 public record PricingSimulationResponse(
     String faceValue,
     String currency,
+    String paymentCurrencyCode,
     String receivableTypeCode,
     LocalDate calculationDate,
     LocalDate dueDate,
@@ -18,4 +19,15 @@ public record PricingSimulationResponse(
     String spread,
     String monthlyRate,
     String presentValue,
+    String presentValueInPaymentCurrency,
+    @org.springframework.lang.Nullable ExchangeRateSnapshot exchangeRate,
     String discount) {}
+
+record ExchangeRateSnapshot(
+    UUID id,
+    String baseCurrencyCode,
+    String quoteCurrencyCode,
+    String rate,
+    String source,
+    java.time.Instant effectiveAt,
+    java.time.Instant createdAt) {}

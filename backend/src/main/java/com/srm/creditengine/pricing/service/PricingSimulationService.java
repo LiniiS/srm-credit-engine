@@ -1,5 +1,7 @@
 package com.srm.creditengine.pricing.service;
 
+import com.srm.creditengine.currency.domain.port.ApplicableExchangeRate;
+import com.srm.creditengine.currency.domain.port.ApplicableExchangeRateQuery;
 import com.srm.creditengine.currency.domain.port.BaseRateCurrencyNotSupportedException;
 import com.srm.creditengine.currency.domain.port.BaseRateNotFoundException;
 import com.srm.creditengine.currency.domain.port.BaseRateQuery;
@@ -7,10 +9,14 @@ import com.srm.creditengine.currency.domain.port.BaseRateQueryException;
 import com.srm.creditengine.currency.domain.port.CurrencyMetadataNotFoundException;
 import com.srm.creditengine.currency.domain.port.CurrencyMetadataQuery;
 import com.srm.creditengine.currency.domain.port.CurrencyMetadataQueryException;
+import com.srm.creditengine.currency.domain.port.ExchangeRateExpiredException;
+import com.srm.creditengine.currency.domain.port.ExchangeRateNotFoundException;
+import com.srm.creditengine.currency.domain.port.ExchangeRateQueryException;
 import com.srm.creditengine.pricing.domain.BusinessCalendar;
 import com.srm.creditengine.pricing.domain.BusinessCalendarNotAvailableException;
 import com.srm.creditengine.pricing.domain.DecimalPower;
 import com.srm.creditengine.pricing.domain.DueDateBeforeCalculationDateException;
+import com.srm.creditengine.pricing.domain.ExchangeConversion;
 import com.srm.creditengine.pricing.domain.PricingCalculation;
 import com.srm.creditengine.pricing.domain.PricingCalculationException;
 import com.srm.creditengine.pricing.domain.PricingStrategyNotConfiguredException;
@@ -20,6 +26,8 @@ import com.srm.creditengine.pricing.domain.ReceivableTypeQueryException;
 import com.srm.creditengine.pricing.domain.port.ReceivableTypePricingResolver;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -33,23 +41,29 @@ public final class PricingSimulationService {
   private final ReceivableTypePricingResolver pricingResolver;
   private final BaseRateQuery baseRateQuery;
   private final CurrencyMetadataQuery currencyMetadataQuery;
+  private final ApplicableExchangeRateQuery exchangeRateQuery;
   private final BusinessCalendar businessCalendar;
   private final PricingCalculation calculation;
   private final MeterRegistry meterRegistry;
+  private final Clock clock;
 
   PricingSimulationService(
       ReceivableTypePricingResolver pricingResolver,
       BaseRateQuery baseRateQuery,
       CurrencyMetadataQuery currencyMetadataQuery,
+      ApplicableExchangeRateQuery exchangeRateQuery,
       BusinessCalendar businessCalendar,
       DecimalPower decimalPower,
-      MeterRegistry meterRegistry) {
+      MeterRegistry meterRegistry,
+      Clock clock) {
     this.pricingResolver = pricingResolver;
     this.baseRateQuery = baseRateQuery;
     this.currencyMetadataQuery = currencyMetadataQuery;
+    this.exchangeRateQuery = exchangeRateQuery;
     this.businessCalendar = businessCalendar;
     this.calculation = new PricingCalculation(decimalPower);
     this.meterRegistry = meterRegistry;
+    this.clock = clock;
   }
 
   public PricingSimulationResult simulate(PricingSimulationCommand command) {
@@ -86,6 +100,18 @@ public final class PricingSimulationService {
           "BASE_RATE_NOT_FOUND",
           "Base rate not found",
           PricingSimulationException.Kind.NOT_FOUND);
+    } catch (ExchangeRateNotFoundException exception) {
+      throw failure(
+          exception,
+          "EXCHANGE_RATE_NOT_FOUND",
+          "Exchange rate not found",
+          PricingSimulationException.Kind.NOT_FOUND);
+    } catch (ExchangeRateExpiredException exception) {
+      throw failure(
+          exception,
+          "EXCHANGE_RATE_EXPIRED",
+          "Exchange rate expired",
+          PricingSimulationException.Kind.UNPROCESSABLE);
     } catch (ReceivableTypeNotFoundException exception) {
       throw failure(
           exception,
@@ -106,6 +132,7 @@ public final class PricingSimulationService {
           PricingSimulationException.Kind.INTERNAL);
     } catch (PricingCalculationException
         | BaseRateQueryException
+        | ExchangeRateQueryException
         | CurrencyMetadataQueryException
         | ReceivableTypeQueryException exception) {
       throw failure(
@@ -132,6 +159,7 @@ public final class PricingSimulationService {
       throw new IllegalArgumentException("faceValue must be positive");
     }
     Objects.requireNonNull(command.currency(), "currency");
+    Objects.requireNonNull(command.paymentCurrencyCode(), "paymentCurrencyCode");
     Objects.requireNonNull(command.receivableTypeCode(), "receivableTypeCode");
     Objects.requireNonNull(command.calculationDate(), "calculationDate");
     Objects.requireNonNull(command.dueDate(), "dueDate");
@@ -141,6 +169,7 @@ public final class PricingSimulationService {
       throw new DueDateBeforeCalculationDateException();
     }
     var metadata = currencyMetadataQuery.find(command.currency());
+    var paymentMetadata = currencyMetadataQuery.find(command.paymentCurrencyCode());
     var resolvedPricing = pricingResolver.resolve(command.receivableTypeCode());
     var baseRate = metadata.findApplicableBaseRate(baseRateQuery, command.calculationDate());
     var termDays = ChronoUnit.DAYS.between(command.calculationDate(), adjustedDueDate);
@@ -151,9 +180,25 @@ public final class PricingSimulationService {
             baseRate.rateMonthly(),
             resolvedPricing.monthlySpread(),
             metadata.minorUnits());
+    ApplicableExchangeRate exchangeRate = null;
+    var presentValueInPaymentCurrency = values.presentValue();
+    if (!command.currency().equals(command.paymentCurrencyCode())) {
+      exchangeRate =
+          exchangeRateQuery.find(
+              command.currency(), command.paymentCurrencyCode(), clock.instant());
+      var converted =
+          ExchangeConversion.convert(
+              values.rawPresentValue(),
+              command.currency(),
+              command.paymentCurrencyCode(),
+              exchangeRate);
+      presentValueInPaymentCurrency =
+          converted.setScale(paymentMetadata.minorUnits(), RoundingMode.HALF_EVEN);
+    }
     return new PricingSimulationResult(
         command.faceValue(),
         command.currency(),
+        command.paymentCurrencyCode(),
         resolvedPricing.receivableTypeCode().value(),
         command.calculationDate(),
         command.dueDate(),
@@ -166,7 +211,22 @@ public final class PricingSimulationService {
         resolvedPricing.monthlySpread(),
         values.monthlyRate(),
         values.presentValue(),
+        presentValueInPaymentCurrency,
+        toPricingSnapshot(exchangeRate),
         values.discount());
+  }
+
+  private PricingExchangeRateSnapshot toPricingSnapshot(ApplicableExchangeRate rate) {
+    return rate == null
+        ? null
+        : new PricingExchangeRateSnapshot(
+            rate.id(),
+            rate.baseCurrencyCode(),
+            rate.quoteCurrencyCode(),
+            rate.rate(),
+            rate.source(),
+            rate.effectiveAt(),
+            rate.createdAt());
   }
 
   private String codeOf(RuntimeException exception) {
